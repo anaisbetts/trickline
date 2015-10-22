@@ -1,3 +1,5 @@
+/*eslint-disable*/
+
 /*
 Copyright (c) 2015 The Polymer Project Authors. All rights reserved.
 This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
@@ -51,9 +53,11 @@ var styleTask = function (stylesPath, srcs) {
 var jshintTask = function (src) {
   return gulp.src(src)
     .pipe($.jshint.extract()) // Extract JS from .html files
-    .pipe($.jshint())
-    .pipe($.jshint.reporter('jshint-stylish'))
-    .pipe($.if(!browserSync.active, $.jshint.reporter('fail')));
+    .pipe($.eslint())
+    .pipe($.eslint.format())
+    .pipe($.eslint.failAfterError());
+    //.pipe($.jshint.reporter('jshint-stylish'))
+    //.pipe($.if(!browserSync.active, $.jshint.reporter('fail')));
 };
 
 var imageOptimizeTask = function (src, dest) {
@@ -116,13 +120,14 @@ gulp.task('jshint', function () {
   return jshintTask([
       'app/scripts/**/*.js',
       'app/elements/**/*.js',
-      'app/elements/**/*.html',
-      'gulpfile.js'
-    ])
+      'app/elements/**/*.html'
+    ]);
+    /*
     .pipe($.jshint.extract()) // Extract JS from .html files
     .pipe($.jshint())
     .pipe($.jshint.reporter('jshint-stylish'))
     .pipe($.if(!browserSync.active, $.jshint.reporter('fail')));
+    */
 });
 
 // Optimize images
