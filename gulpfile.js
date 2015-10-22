@@ -1,3 +1,5 @@
+/*eslint-disable*/
+
 /*
 Copyright (c) 2015 The Polymer Project Authors. All rights reserved.
 This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
@@ -51,9 +53,11 @@ var styleTask = function (stylesPath, srcs) {
 var jshintTask = function (src) {
   return gulp.src(src)
     .pipe($.jshint.extract()) // Extract JS from .html files
-    .pipe($.jshint())
-    .pipe($.jshint.reporter('jshint-stylish'))
-    .pipe($.if(!browserSync.active, $.jshint.reporter('fail')));
+    .pipe($.eslint())
+    .pipe($.eslint.format())
+    .pipe($.eslint.failAfterError());
+    //.pipe($.jshint.reporter('jshint-stylish'))
+    //.pipe($.if(!browserSync.active, $.jshint.reporter('fail')));
 };
 
 var imageOptimizeTask = function (src, dest) {
@@ -67,7 +71,7 @@ var imageOptimizeTask = function (src, dest) {
 };
 
 var optimizeHtmlTask = function (src, dest) {
-  var assets = $.useref.assets({searchPath: ['.tmp', 'app', 'dist']});
+  var assets = $.useref.assets();
 
   return gulp.src(src)
     // Replace path for vulcanized assets
@@ -91,6 +95,17 @@ var optimizeHtmlTask = function (src, dest) {
     .pipe($.size({title: 'html'}));
 };
 
+// Transpile all JS to ES5.
+gulp.task('js', function () {
+  return gulp.src(['app/**/*.{js,html}'])
+    .pipe($.sourcemaps.init())
+    .pipe($.if('*.html', $.crisper())) // Extract JS from .html files
+    .pipe($.if('*.js', $.babel()))
+    .pipe($.sourcemaps.write('.'))
+    .pipe(gulp.dest('.tmp/'))
+    .pipe(gulp.dest('dist/'));
+});
+
 // Compile and automatically prefix stylesheets
 gulp.task('styles', function () {
   return styleTask('styles', ['**/*.css']);
@@ -105,13 +120,14 @@ gulp.task('jshint', function () {
   return jshintTask([
       'app/scripts/**/*.js',
       'app/elements/**/*.js',
-      'app/elements/**/*.html',
-      'gulpfile.js'
-    ])
+      'app/elements/**/*.html'
+    ]);
+    /*
     .pipe($.jshint.extract()) // Extract JS from .html files
     .pipe($.jshint())
     .pipe($.jshint.reporter('jshint-stylish'))
     .pipe($.if(!browserSync.active, $.jshint.reporter('fail')));
+    */
 });
 
 // Optimize images
@@ -162,7 +178,7 @@ gulp.task('fonts', function () {
 // Scan your HTML for assets & optimize them
 gulp.task('html', function () {
   return optimizeHtmlTask(
-    ['app/**/*.html', '!app/{elements,test}/**/*.html'],
+    ['dist/**/*.html', '!dist/{elements,test}/**/*.html'],
     'dist');
 });
 
@@ -216,7 +232,7 @@ gulp.task('clean', function (cb) {
 });
 
 // Watch files for changes & reload
-gulp.task('serve', ['styles', 'elements', 'images'], function () {
+gulp.task('serve', ['styles', 'elements', 'images', 'js'], function () {
   browserSync({
     port: 5000,
     notify: false,
@@ -242,10 +258,10 @@ gulp.task('serve', ['styles', 'elements', 'images'], function () {
     }
   });
 
-  gulp.watch(['app/**/*.html'], reload);
+  gulp.watch(['app/**/*.html'], ['js', reload]);
   gulp.watch(['app/styles/**/*.css'], ['styles', reload]);
   gulp.watch(['app/elements/**/*.css'], ['elements', reload]);
-  gulp.watch(['app/{scripts,elements}/**/{*.js,*.html}'], ['jshint']);
+  gulp.watch(['app/{scripts,elements}/**/{*.js,*.html}'], ['jshint', 'js']);
   gulp.watch(['app/images/**/*'], reload);
 });
 
@@ -277,7 +293,7 @@ gulp.task('default', ['clean'], function (cb) {
   // Uncomment 'cache-config' if you are going to use service workers.
   runSequence(
     ['copy', 'styles'],
-    'elements',
+    ['elements', 'js'],
     ['jshint', 'images', 'fonts', 'html'],
     'vulcanize', // 'cache-config',
     cb);
