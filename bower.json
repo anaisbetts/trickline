@@ -8,17 +8,11 @@
     "paper-elements": "PolymerElements/paper-elements#^1.0.1",
     "platinum-elements": "PolymerElements/platinum-elements#^1.1.0",
     "polymer": "Polymer/polymer#^1.1.0",
-    "polymer-filters": "~0.2.1",
-    "polymer-localforage": "~0.0.1",
-    "pull-to-action": "*",
-    "simple-list": "~0.0.7"
+    "polymer-localforage": "https://github.com/addyosmani/polymer-localforage.git#1745f74",
+    "pull-to-action": "*"
   },
   "devDependencies": {
     "web-component-tester": "*",
     "test-fixture": "PolymerElements/test-fixture#^1.0.0"
-  },
-  "resolutions": {
-    "webcomponentsjs": "^0.7.15",
-    "polymer": "^1.1.0"
   }
 }
