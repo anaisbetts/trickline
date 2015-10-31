@@ -106,6 +106,15 @@ gulp.task('js', function () {
     .pipe(gulp.dest('dist/'));
 });
 
+// Transpile all JS to ES5.
+gulp.task('serverjs', function () {
+  return gulp.src(['server/**/*.js'])
+    .pipe($.sourcemaps.init())
+    .pipe($.if('*.js', $.babel()))
+    .pipe(gulp.dest('server-dist/'));
+});
+
+
 // Compile and automatically prefix stylesheets
 gulp.task('styles', function () {
   return styleTask('styles', ['**/*.css']);
@@ -232,7 +241,7 @@ gulp.task('clean', function (cb) {
 });
 
 // Watch files for changes & reload
-gulp.task('serve', ['styles', 'elements', 'images', 'js'], function () {
+gulp.task('serve', ['styles', 'elements', 'images', 'js', 'serverjs'], function () {
   browserSync({
     port: 5000,
     notify: false,
@@ -245,17 +254,7 @@ gulp.task('serve', ['styles', 'elements', 'images', 'js'], function () {
         }
       }
     },
-    // Run as an https by uncommenting 'https: true'
-    // Note: this uses an unsigned certificate which on first access
-    //       will present a certificate warning in the browser.
-    // https: true,
-    server: {
-      baseDir: ['.tmp', 'app'],
-      middleware: [ historyApiFallback() ],
-      routes: {
-        '/bower_components': 'bower_components'
-      }
-    }
+    proxy: 'http://localhost:8080'
   });
 
   gulp.watch(['app/**/*.html'], ['js', reload]);
@@ -263,6 +262,8 @@ gulp.task('serve', ['styles', 'elements', 'images', 'js'], function () {
   gulp.watch(['app/elements/**/*.css'], ['elements', reload]);
   gulp.watch(['app/{scripts,elements}/**/{*.js,*.html}'], ['jshint', 'js']);
   gulp.watch(['app/images/**/*'], reload);
+
+  require('./app.js');
 });
 
 // Build and serve the output from the dist build
@@ -293,15 +294,15 @@ gulp.task('default', ['clean'], function (cb) {
   // Uncomment 'cache-config' if you are going to use service workers.
   runSequence(
     ['copy', 'styles'],
-    ['elements', 'js'],
+    ['elements', 'js', 'serverjs'],
     ['jshint', 'images', 'fonts', 'html'],
-    'vulcanize', // 'cache-config',
+    'vulcanize', 'cache-config',
     cb);
 });
 
 // Load tasks for web-component-tester
 // Adds tasks for `gulp test:local` and `gulp test:remote`
-require('web-component-tester').gulp.init(gulp);
+//require('web-component-tester').gulp.init(gulp);
 
 // Load custom tasks from the `tasks` directory
 try { require('require-dir')('tasks'); } catch (err) {}
