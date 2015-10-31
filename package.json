@@ -39,7 +39,7 @@
   "scripts": {
     "test": "gulp test:local",
     "start": "gulp serve",
-    "install": "bower install && gulp"
+    "install": "bower install -s && gulp"
   },
   "engines": {
     "node": ">=0.10.0"
