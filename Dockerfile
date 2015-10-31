@@ -73,7 +73,7 @@ RUN npm install         https://storage.googleapis.com/gae_node_packages/semver.
 # as well.
 RUN npm --unsafe-perm install
 COPY bower.json /app/
-RUN /app/node_modules/.bin/bower install -s
+RUN /app/node_modules/.bin/bower install -s --allow-root
 COPY . /app/
 RUN /app/node_modules/.bin/gulp
 
