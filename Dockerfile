@@ -8,14 +8,6 @@ FROM beta.gcr.io/google_appengine/nodejs
 # RUN npm --unsafe-perm install
 # ADD . /app
 COPY package.json /app/
-# You have to specify "--unsafe-perm" with npm install
-# when running as root.  Failing to do this can cause
-# install to appear to succeed even if a preinstall
-# script fails, and may have other adverse consequences
-# as well.
-RUN npm --unsafe-perm install
-COPY . /app/
-RUN /app/node_modules/.bin/bower install -s
 # Check to see if the the version included in the base runtime satisfies \
 # >=0.10.0, if not then do an npm install of the latest available \
 # version that satisfies it. \
@@ -74,4 +66,15 @@ RUN npm install         https://storage.googleapis.com/gae_node_packages/semver.
                  ) \
     ) \
    )
+# You have to specify "--unsafe-perm" with npm install
+# when running as root.  Failing to do this can cause
+# install to appear to succeed even if a preinstall
+# script fails, and may have other adverse consequences
+# as well.
+RUN npm --unsafe-perm install
+COPY bower.json /app/
+RUN /app/node_modules/.bin/bower install -s
+COPY . /app/
+RUN /app/node_modules/.bin/gulp
+
 CMD node /app/app.js
