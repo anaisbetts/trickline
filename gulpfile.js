@@ -106,6 +106,15 @@ gulp.task('js', function () {
     .pipe(gulp.dest('dist/'));
 });
 
+// Transpile all JS to ES5.
+gulp.task('serverjs', function () {
+  return gulp.src(['server/**/*.js'])
+    .pipe($.sourcemaps.init())
+    .pipe($.if('*.js', $.babel()))
+    .pipe(gulp.dest('server-dist/'));
+});
+
+
 // Compile and automatically prefix stylesheets
 gulp.task('styles', function () {
   return styleTask('styles', ['**/*.css']);
@@ -293,9 +302,9 @@ gulp.task('default', ['clean'], function (cb) {
   // Uncomment 'cache-config' if you are going to use service workers.
   runSequence(
     ['copy', 'styles'],
-    ['elements', 'js'],
+    ['elements', 'js', 'serverjs'],
     ['jshint', 'images', 'fonts', 'html'],
-    'vulcanize', // 'cache-config',
+    'vulcanize', 'cache-config',
     cb);
 });
 
