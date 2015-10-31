@@ -42,7 +42,7 @@
   "scripts": {
     "test": "gulp test:local",
     "start": "gulp serve",
-    "postinstall": "bower install -s && gulp"
+    "postinstall": "./node_modules/.bin/bower install -s && ./node_modules/.bin/gulp"
   },
   "engines": {
     "node": ">=0.10.0"

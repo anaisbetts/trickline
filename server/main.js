@@ -6,7 +6,9 @@ const app = express();
 
 app.use(compression());
 
-app.use(express.static(path.resolve(__dirname, '..', 'dist')));
+let thePath = path.resolve(__dirname, '..', 'dist');
+console.log(`Serving up ${thePath}`);
+app.use(express.static(thePath));
 
 let server = app.listen(process.env.PORT || 8080, () => {
   var host = server.address().address;
