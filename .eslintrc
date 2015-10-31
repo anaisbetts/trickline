@@ -31,5 +31,9 @@
         "es6": true,
         "browser": true
     },
+    "globals": {
+      "Polymer": true,
+      "Rx": true
+    },
     "extends": "eslint:recommended"
 }
