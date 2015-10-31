@@ -241,7 +241,7 @@ gulp.task('clean', function (cb) {
 });
 
 // Watch files for changes & reload
-gulp.task('serve', ['styles', 'elements', 'images', 'js'], function () {
+gulp.task('serve', ['styles', 'elements', 'images', 'js', 'serverjs'], function () {
   browserSync({
     port: 5000,
     notify: false,
@@ -254,17 +254,7 @@ gulp.task('serve', ['styles', 'elements', 'images', 'js'], function () {
         }
       }
     },
-    // Run as an https by uncommenting 'https: true'
-    // Note: this uses an unsigned certificate which on first access
-    //       will present a certificate warning in the browser.
-    // https: true,
-    server: {
-      baseDir: ['.tmp', 'app'],
-      middleware: [ historyApiFallback() ],
-      routes: {
-        '/bower_components': 'bower_components'
-      }
-    }
+    proxy: 'http://localhost:8080'
   });
 
   gulp.watch(['app/**/*.html'], ['js', reload]);
@@ -272,6 +262,8 @@ gulp.task('serve', ['styles', 'elements', 'images', 'js'], function () {
   gulp.watch(['app/elements/**/*.css'], ['elements', reload]);
   gulp.watch(['app/{scripts,elements}/**/{*.js,*.html}'], ['jshint', 'js']);
   gulp.watch(['app/images/**/*'], reload);
+
+  require('./app.js');
 });
 
 // Build and serve the output from the dist build
