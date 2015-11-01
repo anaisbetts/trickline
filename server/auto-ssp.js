@@ -34,7 +34,19 @@ function urlToFilePath(urlRoot, fileRoot, currentFile, urlStr) {
   return finalPath;
 }
 
+function dedupeButMaintainOrdering(array) {
+  let lookup = {};
+  
+  return _.filter(array, (x) => {
+    if (x in lookup) return false;
+    
+    lookup[x] = true;
+    return true;
+  });
+}
+
 function determineDependentUrls(targetFile, urlRoot, rootDir, fileInfo={}) {
+  console.log(`Scanning file: ${targetFile}`);
   if (!fs.existsSync(targetFile)) { 
     return null;
   }
@@ -60,24 +72,32 @@ function determineDependentUrls(targetFile, urlRoot, rootDir, fileInfo={}) {
   $('link').map((i, el) => {
     let href = $(el).attr('href');
     if (!href || href.length < 3) return;
+    
+    console.log(`Found href!: ${href}`);
     hrefs.push(href);
   });
   
   $('script').map((i, el) => {
     let href = $(el).attr('src');
     if (!href || href.length < 3) return;
+    
+    console.log(`Found href!: ${href}`);
     hrefs.push(href);
   });
     
-  for (let href of hrefs) {
+  _.each(hrefs, (href) => {
     ret.push(href);
     
     let realFile = urlToFilePath(urlRoot, rootDir, targetFile, href);
     if (!realFile) return;
     
+    if (!href.match(/.html/i)) return;
+    
     let suburls = determineDependentUrls(realFile, urlRoot, rootDir, fileInfo) || [];
-    for (let suburl of suburls) { ret.push(suburl); }
-  }
+    _.each(suburls, (x) => ret.push(x));
+  });
+  
+  return dedupeButMaintainOrdering(ret);
 }
 
 export default function autoPush(fileRoot, urlRoot='') {
@@ -85,15 +105,15 @@ export default function autoPush(fileRoot, urlRoot='') {
   const realRoot = path.resolve(fileRoot);
   
   return (res, filePath) => {
+    if (filePath.match(/bower_components/)) return;
+    
     if (!cache[path]) {
-      cache[path] = determineDependentUrls(urlRoot, realRoot, filePath);
+      cache[path] = determineDependentUrls(filePath, urlRoot, realRoot);
     }
     
-    for (let item of cache[path]) {
-      res.append('Link', `<${item}>; rel=preload`);
-    }
+    _.each(cache[path], (item) => res.append('Link', `<${item}>; rel=preload`));
     
-    res.append(
+    res.set(
       'X-Associated-Content', 
       _.map(cache[path], (x) => `"${x}"`).join(","));
   };
