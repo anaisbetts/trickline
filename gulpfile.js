@@ -75,7 +75,7 @@ var optimizeHtmlTask = function (src, dest) {
 
   return gulp.src(src)
     // Replace path for vulcanized assets
-    .pipe($.if('*.html', $.replace('elements/elements.html', 'elements/elements.vulcanized.html')))
+    //.pipe($.if('*.html', $.replace('elements/elements.html', 'elements/elements.vulcanized.html')))
     .pipe(assets)
     // Concatenate and minify JavaScript
     .pipe($.if('*.js', $.uglify({preserveComments: 'some'})))
@@ -169,11 +169,7 @@ gulp.task('copy', function () {
   var swToolbox = gulp.src(['bower_components/sw-toolbox/*.js'])
     .pipe(gulp.dest('dist/sw-toolbox'));
 
-  var vulcanized = gulp.src(['app/elements/elements.html'])
-    .pipe($.rename('elements.vulcanized.html'))
-    .pipe(gulp.dest('dist/elements'));
-
-  return merge(app, bower, elements, vulcanized, swBootstrap, swToolbox)
+  return merge(app, bower, elements, swBootstrap, swToolbox)
     .pipe($.size({title: 'copy'}));
 });
 
@@ -189,19 +185,6 @@ gulp.task('html', function () {
   return optimizeHtmlTask(
     ['dist/**/*.html', '!dist/{elements,test}/**/*.html'],
     'dist');
-});
-
-// Vulcanize granular configuration
-gulp.task('vulcanize', function () {
-  var DEST_DIR = 'dist/elements';
-  return gulp.src('dist/elements/elements.vulcanized.html')
-    .pipe($.vulcanize({
-      stripComments: true,
-      inlineCss: true,
-      inlineScripts: true
-    }))
-    .pipe(gulp.dest(DEST_DIR))
-    .pipe($.size({title: 'vulcanize'}));
 });
 
 // Generate config data for the <sw-precache-cache> element.
@@ -296,7 +279,7 @@ gulp.task('default', ['clean'], function (cb) {
     ['copy', 'styles'],
     ['elements', 'js', 'serverjs'],
     ['jshint', 'images', 'fonts', 'html'],
-    'vulcanize', 'cache-config',
+    'cache-config',
     cb);
 });
 
