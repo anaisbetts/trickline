@@ -2,7 +2,7 @@ import path from 'path';
 import _ from 'lodash';
 import generatePushManifest from './generate-push-manifest';
 
-export default function autoPush(fileRoot, urlRoot='') {
+export default function autoPush(fileRoot) {
   const realRoot = path.resolve(fileRoot);
   
   let pushManifest = generatePushManifest(realRoot);
@@ -14,8 +14,8 @@ export default function autoPush(fileRoot, urlRoot='') {
       Object.keys(pushManifest[filePath]), 
       (item) => res.append('Link', `<${item}>; rel=preload, type=${pushManifest[filePath][item].type}`));
     
-    res.set(
-      'X-Associated-Content', 
-      _.map(Object.keys(pushManifest[filePath]), (x) => `"${x}"`).join(","));
+    let content = _.map(_.take(Object.keys(pushManifest[filePath]), 3), (x) => `"${x}"`).join(",");
+    console.log(`Content! ${content}`);
+    res.append('X-Associated-Content', content);
   };
 }
