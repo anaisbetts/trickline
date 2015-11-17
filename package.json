@@ -42,9 +42,10 @@
   },
   "scripts": {
     "test": "gulp test:local",
-    "start": "gulp serve"
+    "start": "gulp serve",
+    "install": "bower install && gulp"
   },
   "engines": {
-    "node": ">=4.0.0"
+    "node": ">=5.0.0"
   }
 }
