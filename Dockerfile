@@ -71,7 +71,7 @@ RUN npm install         https://storage.googleapis.com/gae_node_packages/semver.
 # install to appear to succeed even if a preinstall
 # script fails, and may have other adverse consequences
 # as well.
-RUN NODE_ENV="production" npm --unsafe-perm install
+RUN NODE_ENV="development" npm --unsafe-perm install
 COPY bower.json /app/
 RUN /app/node_modules/.bin/bower install -s --allow-root
 COPY ./app /app/app
@@ -79,7 +79,9 @@ COPY ./server /app/server
 COPY ./app.js /app/app.js
 COPY ./gulpfile.js /app/gulpfile.js
 RUN /app/node_modules/.bin/gulp
-RUN /bin/bash -c "rm -rf /app/bower_components/**/tests"
-RUN rm -rf "/app/bower_components/prism"
+RUN /bin/bash -c 'rm -rf /app/bower_components/**/tests'
+RUN rm -rf '/app/bower_components/prism/tests'
+RUN rm -rf '/app/node_modules'
+RUN NODE_ENV="production" npm --unsafe-perm install
 
 CMD node /app/app.js

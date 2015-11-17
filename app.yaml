@@ -27,6 +27,7 @@ skip_files:
  - ^(.*/)?.*\.py[co]$
  - ^(.*/)?.*/RCS/.*$
  - ^(.*/)?\..*$
+ - ^(.*/)?.*/bower_components/.*$
  - ^(.*/)?.*/node_modules/.*$
  - ^(.*/)?.*/dist/.*$
  - ^(.*/)?.*/server-dist/.*$
