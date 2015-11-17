@@ -74,9 +74,12 @@ RUN npm install         https://storage.googleapis.com/gae_node_packages/semver.
 RUN NODE_ENV="production" npm --unsafe-perm install
 COPY bower.json /app/
 RUN /app/node_modules/.bin/bower install -s --allow-root
+COPY ./app /app/app
+COPY ./server /app/server
+COPY ./app.js /app/app.js
+COPY ./gulpfile.js /app/gulpfile.js
 RUN /bin/bash -c "rm -rf /app/bower_components/**/tests"
 RUN rm -rf "/app/bower_components/prism/tests"
-COPY . /app/
 RUN /app/node_modules/.bin/gulp
 
 CMD node /app/app.js
