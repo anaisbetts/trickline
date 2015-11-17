@@ -71,7 +71,7 @@ RUN npm install         https://storage.googleapis.com/gae_node_packages/semver.
 # install to appear to succeed even if a preinstall
 # script fails, and may have other adverse consequences
 # as well.
-RUN npm --unsafe-perm install
+RUN NODE_ENV="production" npm --unsafe-perm install
 COPY bower.json /app/
 RUN /app/node_modules/.bin/bower install -s --allow-root
 RUN rm -rf /app/bower_components/**/tests
