@@ -80,6 +80,6 @@ COPY ./app.js /app/app.js
 COPY ./gulpfile.js /app/gulpfile.js
 RUN /app/node_modules/.bin/gulp
 RUN /bin/bash -c "rm -rf /app/bower_components/**/tests"
-RUN rm -rf "/app/bower_components/prism/tests"
+RUN rm -rf "/app/bower_components/prism"
 
 CMD node /app/app.js
