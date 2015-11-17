@@ -43,7 +43,7 @@
   "scripts": {
     "test": "gulp test:local",
     "start": "gulp serve",
-    "install": "bower install && gulp"
+    "install": "node ./node_modules/bower/bin/bower install --allow-root && node ./node_modules/gulp/bin/gulp.js"
   },
   "engines": {
     "node": ">=5.0.0"
