@@ -9,7 +9,9 @@ app.use(compression());
 
 let thePath = path.resolve(__dirname, '..', 'dist');
 console.log(`Serving up ${thePath}`);
-app.use(express.static(thePath, { setHeaders: autoPush(thePath) }));
+
+app.use('/bower_components', express.static(path.join(thePath, '..', 'bower_components')));
+app.use(express.static(thePath));
 
 let server = app.listen(process.env.PORT || 8080, () => {
   var host = server.address().address;

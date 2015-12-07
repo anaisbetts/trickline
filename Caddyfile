@@ -1,0 +1,6 @@
+localhost
+
+gzip
+ext .html
+proxy /api https://slack.com
+root ./dist
