@@ -1,6 +1,7 @@
-localhost
+{$SERVER_PATH}
 
 gzip
 ext .html
 proxy /api https://slack.com
-root ./dist
+root /srv
+log /var/log/caddy.log
