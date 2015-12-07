@@ -39,7 +39,7 @@
   },
   "scripts": {
     "test": "gulp test:local",
-    "install": "bower install --allow-root && node ./script/clean-bower.js && gulp",
+    "install": "bower install --allow-root && gulp",
     "start": "gulp serve"
   },
   "engines": {
