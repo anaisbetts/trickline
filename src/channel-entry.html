@@ -1,0 +1,51 @@
+<dom-module id="ts-channel-entry">
+<template>
+  <style>
+    :host {
+      display: block;
+    }
+
+    .unread {
+      font-weight: bold;
+    }
+
+    .muted {
+      color: rgba(0, 0, 0, 0.3);
+    }
+
+    #body {
+      padding-top: 2px;
+      padding-bottom: 2px;
+    }
+  </style>
+
+  <h2 id="header" hidden="{{!model.headerText}}">{{model.headerText}}</h2>
+  <div id="body" hidden="{{model.headerText}}">{{model.name}}</div>
+</template>
+
+<script>
+  class ChannelEntry {
+    beforeRegister() {
+      this.is = 'ts-channel-entry';
+
+      this.properties = {
+        model: { type: Object },
+      };
+
+      this.observers = [
+        'modelChanged(model)'
+      ]
+    }
+
+    modelChanged() {
+      this.toggleClass('unread', !this.model.is_muted && this.model.has_unreads, this.$.body);
+      this.toggleClass('muted', this.model.is_muted, this.$.body);
+    }
+
+    ready() {
+    }
+  }
+
+  Polymer(ChannelEntry);
+</script>
+</dom-module>

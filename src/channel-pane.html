@@ -4,6 +4,7 @@
     :host {
       display: flex;
       flex-direction: column;
+      margin-left: 16px;
     }
 
     iron-list {
@@ -21,15 +22,7 @@
 
   <iron-list items="[[virtualList]]" as="item">
     <template>
-      <div>
-        <template is="dom-if" if="{{item.headerText}}">
-          <h3>[[item.headerText]]</h3>
-        </template>
-
-        <template is="dom-if" if="{{item.name}}">
-          <p>[[item.name]]</p>
-        </template>
-      </div>
+      <ts-channel-entry model="[[item]]"></ts-channel-entry>
     </template>
   </iron-list>
 </template>
