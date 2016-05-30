@@ -4,6 +4,7 @@
   "description": "A fast, offline Slack client",
   "main": "main.js",
   "scripts": {
+    "install": "bower install",
     "start": "cross-env DEBUG=logger:* electron . -r . --enable-logging",
     "test": "echo \"Error: no test specified\" && exit 1"
   },

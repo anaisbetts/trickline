@@ -33,10 +33,5 @@ node_modules
 # Mac crap
 .DS_Store
 
-# Atom Shell
-atom-shell/
-
-generated-docs/
-
-# Calls
-node-calls/
+# Bower
+src/components
