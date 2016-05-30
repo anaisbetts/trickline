@@ -34,8 +34,8 @@
         "node": true,
         "browser": true
     },
-    "plugins": [
-      "react"
-    ],
+    "globals": {
+        "Polymer": true
+    },
     "extends": "eslint:recommended"
 }
