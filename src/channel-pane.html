@@ -4,14 +4,13 @@
     :host {
       display: flex;
       flex-direction: column;
-      height: 100vh;
     }
 
     iron-list {
       flex: 1 1 auto;
     }
   </style>
-  
+
   <iron-ajax id="usersCounts"
     auto
     params$='{"token": "{{token}}", "mpim_aware": true, "only_relevant_ims": true, "simple_unreads": true }'
@@ -26,7 +25,7 @@
         <template is="dom-if" if="{{item.headerText}}">
           <h3>[[item.headerText]]</h3>
         </template>
-        
+
         <template is="dom-if" if="{{item.name}}">
           <p>[[item.name]]</p>
         </template>
@@ -45,11 +44,11 @@
         virtualList: { type: Array },
       };
     }
-    
+
     ready() {
       this.token = window.localStorage.getItem('token');
     }
-    
+
     populateList() {
       this.virtualList = [{headerText: "Channels"}]
         .concat(this.$.usersCounts.lastResponse.channels)
@@ -57,7 +56,7 @@
         .concat(this.$.usersCounts.lastResponse.groups);
     }
   }
-  
+
   Polymer(ChannelPane);
 </script>
 </dom-module>
