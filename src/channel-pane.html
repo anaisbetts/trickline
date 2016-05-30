@@ -1,0 +1,63 @@
+<dom-module id="ts-channel-pane">
+<template>
+  <style>
+    :host {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+
+    iron-list {
+      flex: 1 1 auto;
+    }
+  </style>
+  
+  <iron-ajax id="usersCounts"
+    auto
+    params$='{"token": "{{token}}", "mpim_aware": true, "only_relevant_ims": true, "simple_unreads": true }'
+    url="https://slack.com/api/users.counts"
+    on-response='populateList'
+    handle-as="json">
+  </iron-ajax>
+
+  <iron-list items="[[virtualList]]" as="item">
+    <template>
+      <div>
+        <template is="dom-if" if="{{item.headerText}}">
+          <h3>[[item.headerText]]</h3>
+        </template>
+        
+        <template is="dom-if" if="{{item.name}}">
+          <p>[[item.name]]</p>
+        </template>
+      </div>
+    </template>
+  </iron-list>
+</template>
+
+<script>
+  class ChannelPane {
+    beforeRegister() {
+      this.is = 'ts-channel-pane';
+
+      this.properties = {
+        token: { type: String },
+        virtualList: { type: Array },
+      };
+    }
+    
+    ready() {
+      this.token = window.localStorage.getItem('token');
+    }
+    
+    populateList() {
+      this.virtualList = [{headerText: "Channels"}]
+        .concat(this.$.usersCounts.lastResponse.channels)
+        .concat([{headerText: "Groups"}])
+        .concat(this.$.usersCounts.lastResponse.groups);
+    }
+  }
+  
+  Polymer(ChannelPane);
+</script>
+</dom-module>

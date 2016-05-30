@@ -6,11 +6,13 @@
 <link rel="import" href="./components/app-layout/app-header-layout/app-header-layout.html">
 <link rel="import" href="./components/app-layout/app-toolbar/app-toolbar.html">
 <link rel="import" href="./components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="./components/iron-list/iron-list.html">
 <link rel="import" href="./components/iron-pages/iron-pages.html">
-<link rel="import" href="./components/iron-pages/iron-ajax.html">
+<link rel="import" href="./components/iron-ajax/iron-ajax.html">
 <link rel="import" href="./components/iron-selector/iron-selector.html">
 
 <link rel="import" href="./svg-icons.html">
+<link rel="import" href="./channel-pane.html">
 
 <dom-module id="ts-app">
 <template>
@@ -63,8 +65,7 @@
     <!-- Drawer content -->
     <app-drawer>
       <app-toolbar>Menu</app-toolbar>
-      <iron-selector selected="[[page]]" attr-for-selected="name" class="drawer-list" role="navigation">
-      </iron-selector>
+      <ts-channel-pane></ts-channel-pane>
     </app-drawer>
 
     <!-- Main content -->
@@ -90,12 +91,13 @@
   class Application {
     beforeRegister() {
       this.is = 'ts-app';
+      
       this.properties = {
         page: {
           type: String,
           reflectToAttribute: true,
         }
-      }
+      };
     }
   }
 
