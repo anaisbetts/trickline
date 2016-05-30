@@ -3,6 +3,7 @@
   <style>
     :host {
       display: block;
+      margin-right: 16px;
     }
 
     .unread {
@@ -11,6 +12,11 @@
 
     .muted {
       color: rgba(0, 0, 0, 0.3);
+    }
+
+    .selected {
+      background-color: var(--app-primary-color);
+      border-radius: 6px;
     }
 
     #body {
@@ -30,16 +36,22 @@
 
       this.properties = {
         model: { type: Object },
+        selected: { type: Boolean, reflectToAttribute: true },
       };
 
       this.observers = [
-        'modelChanged(model)'
+        'modelChanged(model)',
+        'selectionChanged(selected)',
       ]
     }
 
     modelChanged() {
       this.toggleClass('unread', !this.model.is_muted && this.model.has_unreads, this.$.body);
       this.toggleClass('muted', this.model.is_muted, this.$.body);
+    }
+
+    selectionChanged(isSelected) {
+      this.toggleClass('selected', isSelected, this.$.body);
     }
 
     ready() {

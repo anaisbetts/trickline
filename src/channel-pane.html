@@ -20,9 +20,9 @@
     handle-as="json">
   </iron-ajax>
 
-  <iron-list items="[[virtualList]]" as="item">
+  <iron-list items="[[virtualList]]" as="item" selected-items="{{selectedItems}}" selection-enabled>
     <template>
-      <ts-channel-entry model="[[item]]"></ts-channel-entry>
+      <ts-channel-entry model="[[item]]" selected="{{selected}}"></ts-channel-entry>
     </template>
   </iron-list>
 </template>
@@ -35,6 +35,7 @@
       this.properties = {
         token: { type: String },
         virtualList: { type: Array },
+        selectedItems: { type: Object },
       };
     }
 
