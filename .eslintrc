@@ -24,10 +24,6 @@
         "prefer-template": 1,
         "no-console": 0,
         "vars-on-top": 0,
-        
-        "react/jsx-uses-react": 2,
-        "react/jsx-uses-vars": 2,
-        "react/react-in-jsx-scope": 2
     },
     "env": {
         "es6": true,
