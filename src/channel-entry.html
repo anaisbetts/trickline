@@ -14,14 +14,14 @@
       color: rgba(0, 0, 0, 0.3);
     }
 
-    .selected {
-      background-color: var(--app-primary-color);
-      border-radius: 6px;
-    }
-
     #body {
       padding-top: 2px;
       padding-bottom: 2px;
+      margin-left: 16px;
+    }
+
+    #header {
+      margin-left: 16px;
     }
   </style>
 
@@ -51,7 +51,7 @@
     }
 
     selectionChanged(isSelected) {
-      this.toggleClass('selected', isSelected, this.$.body);
+      this.toggleClass('selected', isSelected);
     }
 
     ready() {
