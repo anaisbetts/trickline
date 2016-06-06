@@ -34,4 +34,4 @@ node_modules
 .DS_Store
 
 # Bower
-src/components
+src/bower_components

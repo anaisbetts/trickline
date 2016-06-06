@@ -1,0 +1,116 @@
+<dom-module id="slack-login">
+<template>
+  <style>
+    :host {
+      display: block;
+    }
+    
+    #card {
+      min-width: 500px;
+    }
+    
+    #team {
+      min-width: 100px;
+      display: inline-block;
+    }
+    
+    .hidden {
+      display: none !important;
+    }
+  </style>
+
+  <paper-card id="card" heading="Login to Slack">
+    <iron-pages id="pages">
+      <div>
+        <paper-input id="team" label="Team Name" bind-value="{{teamName}}"></paper-input><span>.slack.com</span>
+      </div>
+      
+      <div>
+        <paper-input id="username" label="User Name"></paper-input>
+        <paper-input id="password" type="password" label="Password"></paper-input>
+      </div>
+    </iron-pages>
+    
+    <paper-button id="goBack" on-click="_back">Go Back</paper-button>
+    <paper-button id="goForward" on-click="_next">Next</paper-button>
+    <paper-button id="login">Login</paper-button>
+  </paper-card>
+</template>
+
+<script>
+import RxBehavior from './rx-behavior';
+
+class SlackLogin {
+  beforeRegister() {
+    this.is = 'slack-login';
+    
+    this.properties = {
+      teamName: {
+        type: String,
+        notify: true,
+        reflectToAttribute: true
+      },
+      token: {
+        type: String,
+        notify: true
+      }
+    };
+  }
+  
+  get behaviors() {
+    return [RxBehavior];
+  }
+  
+  attached() {
+    let anythingChanged = Rx.Observable.combineLatest(
+      this.when('selected', this.$.pages),
+      this.when('teamName'),
+      this.when('value', this.$.username),
+      this.when('value', this.$.password),
+      (page, teamName, user, pass) => { return {page, teamName, user, pass}; });
+      
+    anythingChanged.subscribe(({page, teamName, user, pass}) => {
+      this.$.goForward.toggleClass('hidden', page === 1);
+      this.$.login.toggleClass('hidden', page !== 1);
+      
+      switch (page) {
+      case 0:
+        this.$.goBack.disabled = true;
+        this.$.goForward.disabled = 
+          this.$.team.invalid =
+          !teamName || (teamName.length < 2 || teamName.length > 30);
+          
+        break;
+      case 1:
+        this.$.goBack.disabled = false;
+        this.$.goForward.disabled = 
+          (user.length < 2 || user.length > 30) ||
+          (pass.length < 2 || pass.length > 30);
+          
+        break;
+      }
+    });
+    
+    let canLogin = Rx.Observable.combineLatest(
+      this.when('value', this.$.username),
+      this.when('value', this.$.password),
+      (u,p) => (u && u.length > 2 && p && p.length > 3));
+    
+    this.asyncButton(this.$.login, canLogin, () => {
+      // Fake something going on in the background
+      return new Promise((resolve) => {
+        setTimeout(() => resolve(5), 5000);
+      });
+    }).subscribe((x) => console.log(x));
+    
+    this.$.pages.selected = 0;
+  }
+
+  _back() { this.$.pages.selectPrevious(); }
+  _next() { this.$.pages.selectNext(); }
+}
+
+Polymer(SlackLogin);
+</script>
+
+</dom-module>

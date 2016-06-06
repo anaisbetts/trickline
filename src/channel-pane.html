@@ -1,0 +1,76 @@
+<dom-module id="ts-channel-pane">
+<template>
+  <style>
+    :host {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .selected {
+      background-color: var(--app-primary-color);
+      border-radius: 6px;
+    }
+
+    iron-list {
+      flex: 1 1 auto;
+    }
+  </style>
+
+  <iron-ajax id="usersCounts"
+    auto
+    params$='{"token": "{{token}}", "mpim_aware": true, "only_relevant_ims": true, "simple_unreads": true }'
+    url="https://slack.com/api/users.counts"
+    on-response='populateList'
+    handle-as="json">
+  </iron-ajax>
+
+  <iron-list items="[[virtualList]]" as="item" selected-items="{{selectedItems}}" selection-enabled>
+    <template>
+      <ts-channel-entry model="[[item]]" selected="{{selected}}"></ts-channel-entry>
+    </template>
+  </iron-list>
+</template>
+
+<script>
+  class ChannelPane {
+    beforeRegister() {
+      this.is = 'ts-channel-pane';
+
+      this.properties = {
+        token: { type: String },
+        virtualList: { type: Array },
+        selectedItems: { type: Object },
+      };
+    }
+
+    ready() {
+      this.token = window.localStorage.getItem('token');
+    }
+
+    populateList() {
+      let allChannels = []
+        .concat(this.$.usersCounts.lastResponse.channels)
+        .concat(this.$.usersCounts.lastResponse.groups)
+        .concat(this.$.usersCounts.lastResponse.ims)
+        .concat(this.$.usersCounts.lastResponse.mpims)
+        .sort((a, b) => a.name.localeCompare(b.name));
+
+      this.virtualList = [{headerText: "Starred"}]
+        .concat(allChannels.filter((x) => x.is_starred))
+        .concat([{headerText: "Channels"}])
+        .concat(this.$.usersCounts.lastResponse.channels
+          .filter((x) => !x.is_starred)
+          .sort((a, b) => a.name.localeCompare(b.name)))
+        .concat([{headerText: "Groups"}])
+        .concat(this.$.usersCounts.lastResponse.groups
+          .filter((x) => !x.is_starred && x.is_open && !x.is_archived)
+          .sort((a, b) => a.name.localeCompare(b.name)))
+        .concat([{headerText: "Direct Messages"}])
+        .concat(this.$.usersCounts.lastResponse.ims.filter((x) => !x.is_starred))
+        .concat(this.$.usersCounts.lastResponse.mpims.filter((x) => !x.is_starred))
+    }
+  }
+
+  Polymer(ChannelPane);
+</script>
+</dom-module>
