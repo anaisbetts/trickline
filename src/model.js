@@ -1,4 +1,4 @@
-import {Subscription, Subject } from 'rxjs/Rx';
+import { Observable, Subscription, Subject } from 'rxjs/Rx';
 
 const d = require('debug')('trickline:model');
 
@@ -10,9 +10,9 @@ function getDescriptorForProperty(target, name, descriptor) {
     set: function(newVal) {
       if (val === newVal) return;
       
-      this.changing.next(name);
+      this.changing.next({sender: this, property: name});
       val = newVal;
-      this.changed.next(name);
+      this.changed.next({sender: this, property: name});
     }
   }, descriptor);
 }
@@ -42,9 +42,9 @@ export function asProperty(target, key, descriptor) {
         .filter((x) => latestValue !== x)
         .subscribe(
           (x) => {
-            this.changing.next(key);
+            this.changing.next({sender: this, property: key});
             latestValue = x;
-            this.changed.next(key);
+            this.changed.next({sender: this, property: key});
           }, (e) => { throw e; }, () => {
             d(`Observable for ${key} completed!`);
           }));
