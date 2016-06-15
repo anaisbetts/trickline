@@ -22,6 +22,7 @@
   "homepage": "https://github.com/paulcbetts/trickline#readme",
   "dependencies": {
     "debug": "^2.2.0",
+    "dexie-observable": "^0.1.8",
     "electron-compile": "^3.2.0",
     "electron-debug": "^1.0.0",
     "lru-cache": "^4.0.1",
