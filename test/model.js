@@ -234,4 +234,38 @@ describe('the when method', function() {
     barFixture.foo = 7;
     expect(result.length).to.equal(4);
   });
+  
+  it('when should work in the single item case', function() {
+    var fixture = new TestClass();
+    let result = fixture.when('foo').createCollection();
+    expect(result.length).to.equal(1);
+    
+    fixture.foo = 5;
+    expect(result.length).to.equal(2);
+    expect(result[1]).to.deep.equal({ sender: fixture, property: 'foo', value: 5});
+    
+    fixture.foo = 5;
+    expect(result.length).to.equal(2);
+    
+    fixture.foo = 7;
+    expect(result.length).to.equal(3);
+    
+    expect(result[2]).to.deep.equal({ sender: fixture, property: 'foo', value: 7});
+    expect(Object.keys(result[0]).length).to.equal(3);
+    expect(Object.keys(result[1]).length).to.equal(3);
+    expect(Object.keys(result[2]).length).to.equal(3);  
+  });
+  
+  it('when should combine values', function() {
+    var fixture = new TestClass();
+    fixture.someSubject.next(10);
+    let result = fixture.when('derived', 'subjectDerived', (x,y) => x.value + y.value).createCollection();
+    
+    expect(result.length).to.equal(1);
+    expect(result[0]).to.equal(10*10 + 42);
+    
+    fixture.someSubject.next(2);
+    expect(result.length).to.equal(2);
+    expect(result[1]).to.equal(2*10 + 42);
+  });
 });

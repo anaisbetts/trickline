@@ -87,7 +87,22 @@ export class Model {
     this.innerDisp.unsubscribe();
   }
   
-  when(...props) {
+  when(...propsAndSelector) {
+    if (propsAndSelector.length < 1) {
+      throw new Error("Must specify at least one property!");
+    }
+    
+    if (propsAndSelector.length === 1) {
+      return Model.observableForPropertyChain_(this, propsAndSelector[0]);
+    }
+    
+    let [selector] = propsAndSelector.splice(-1, 1);
+    if (!(selector instanceof Function)) {
+      throw new Error("In multi-item properties, the last function must be a selector");
+    }
+    
+    let propWatchers = propsAndSelector.map((p) => Model.observableForPropertyChain_(this, p));
+    return Observable.combineLatest(...propWatchers, selector).distinctUntilChanged();
   }
   
   static createGetterForPropertyChain_(chain) {
