@@ -92,6 +92,7 @@ export function asProperty(target, key, descriptor) {
   };
 }
 
+const identifier = /^[$A-Z_][0-9A-Z_$]*$/i;
 export class Model {
   constructor() {
     this.changing = new Subject();
@@ -148,14 +149,11 @@ export class Model {
       props = chain;
     } else {
       props = chain.split('.');
+      
+      if (props.find((x) => x.match(identifier) === null)) {
+        throw new Error("property name must be of the form 'foo.bar.baz'");
+      }
     }
-    
-    /*
-    const identifier = /^[$A-Z_][0-9A-Z_$]*$/i;
-    if (props.find((x) => x.match(identifier) === null)) {
-      throw new Error("property name must be of the form 'foo.bar.baz'");
-    }
-    */
     
     let firstProp = props[0];
     let start = Model.notificationForProperty_(target, firstProp, before);
