@@ -147,24 +147,16 @@ describe('the when method', function() {
   });
   
   it('should subscribe to a one-item expression chain', function() {
-    console.log("Startup");
-    
     var fixture = new TestClass();
     let result = Model.observableForPropertyChain_(fixture, 'foo').createCollection();
     expect(result.length).to.equal(1);
     
-    console.log("Set to 5");
-        
     fixture.foo = 5;
     expect(result.length).to.equal(2);
     expect(result[1]).to.deep.equal({ sender: fixture, property: 'foo', value: 5});
     
-    console.log("Set to 5 again");
-    
     fixture.foo = 5;
     expect(result.length).to.equal(2);
-    
-    console.log("Set to 7");
     
     fixture.foo = 7;
     expect(result.length).to.equal(3);
@@ -230,9 +222,7 @@ describe('the when method', function() {
     expect(result[2].property).to.equal('bar.foo');
     expect(result[2].value).to.equal(8);
     
-    console.log("START READING HERE");
     fixture.bar = new TestClass();
-    console.log(`New foo is ${fixture.bar.foo}`);
     expect(result.length).to.equal(4);
     expect(result[3].sender).to.equal(fixture);
     expect(result[3].property).to.equal('bar.foo');

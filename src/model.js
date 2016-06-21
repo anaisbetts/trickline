@@ -12,13 +12,10 @@ function getDescriptorsForProperty(target, name, descriptor) {
   let realProp = Object.assign({
     get: function() { return this[backingStoreName]; },
     set: function(newVal) {
-      console.log("Calling Setter! " + this);
       if (this[backingStoreName] === newVal) return;
       
-      console.log("Signaling changing! " + this[backingStoreName]);
       this.changing.next({sender: this, property: name, value: this[backingStoreName]});
       this[backingStoreName] = newVal;
-      console.log("Signaling changed! " + this[backingStoreName]);
       this.changed.next({sender: this, property: name, value: newVal});
     }
   }, descriptor);
@@ -42,7 +39,6 @@ export function notify(...properties) {
         target.prototype, prop, { configurable: true, enumerable: true });
         
       for (let k of Object.keys(descriptorList)) {
-        console.log("Defining " + k);
         Object.defineProperty(target.prototype, k, descriptorList[k]);
       }
     }
@@ -143,12 +139,10 @@ export class Model {
     
     return start    // target.foo
       .map((x) => {
-        console.log(`Upper change! ${x.property}`);
         return Model.observableForPropertyChain_(x.value, props.slice(1), before)
           .map((y) => {
             // This is for target.foo.bar.baz, its sender will be
             // target.foo, and its property will be bar.baz
-            console.log(`Inferior change! ${y.property}`);
             return { sender: target, property: `${firstProp}.${y.property}`, value: y.value };
           });
       })
@@ -157,18 +151,14 @@ export class Model {
   }
 
   static notificationForProperty_(target, prop, before=false) {
-    console.log('Creating notifier for ' + prop);
     if (!(target instanceof Model)) {
-      console.log("Returning never!");
       return Observable.never();
     }
     
     if (!(prop in target)) {
-      console.log("Not a real prop!");
       return Observable.never();
     }
     
-    console.log("Returning a real thing!");
     return target[before ? 'changing' : 'changed']
       .filter(({property}) => prop === property);
   }
