@@ -258,14 +258,21 @@ describe('the when method', function() {
   
   it('when should combine values', function() {
     var fixture = new TestClass();
-    fixture.someSubject.next(10);
-    let result = fixture.when('derived', 'subjectDerived', (x,y) => x.value + y.value).createCollection();
     
-    expect(result.length).to.equal(1);
-    expect(result[0]).to.equal(10*10 + 42);
+    let result = fixture.when(
+      'derived', 'subjectDerived', 
+      (x,y) => x.value + y.value).createCollection();
+      
+    fixture.someSubject.next(10);
+    
+    expect(fixture.derived).to.equal(42);
+    expect(fixture.subjectDerived).to.equal(10*10);
+    
+    expect(result.length).to.equal(2);
+    expect(result[1]).to.equal(10*10 + 42);
     
     fixture.someSubject.next(2);
-    expect(result.length).to.equal(2);
-    expect(result[1]).to.equal(2*10 + 42);
+    expect(result.length).to.equal(3);
+    expect(result[2]).to.equal(2*10 + 42);
   });
 });

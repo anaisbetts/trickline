@@ -46,29 +46,45 @@ export function notify(...properties) {
 }
 
 export function asProperty(target, key, descriptor) {
-  let observableGenerator = descriptor.value;
-  let hasSubscribed = false;
-  let latestValue = undefined;
-      
+  let hasSubscribedKey = `__hasSubscribed_${key}`;
+  let latestValueKey = `__latestValue_${key}`;
+  let generatorKey = `__generator_${key}`;
+  
+  [hasSubscribedKey, latestValueKey].forEach((x) => {
+    Object.defineProperty(target, x, {
+      configurable: false,
+      enumerable: false,
+      writable: true,
+      value: undefined
+    });
+  });
+  
+  Object.defineProperty(target, generatorKey, {
+    configurable: false,
+    enumerable: false,
+    value: descriptor.value
+  });
+  
   return {
     configurable: descriptor.configurable || true,
     enumerable: descriptor.enumerable || true,
     get: function() {
-      if (hasSubscribed) return latestValue;
+      let that = this;
+      if (that[hasSubscribedKey]) return that[latestValueKey];
       
-      this.innerDisp.add(observableGenerator.apply(this)
-        .filter((x) => latestValue !== x)
+      this.innerDisp.add(that[generatorKey]()
+        .filter((x) => that[latestValueKey] !== x)
         .subscribe(
-          (x) => {
-            this.changing.next({sender: this, property: key});
-            latestValue = x;
-            this.changed.next({sender: this, property: key});
+          function(x) {
+            that.changing.next({sender: that, property: key, value: that[latestValueKey]});
+            that[latestValueKey] = x;
+            that.changed.next({sender: that, property: key, value: x});
           }, (e) => { throw e; }, () => {
             d(`Observable for ${key} completed!`);
           }));
           
-      hasSubscribed = true;
-      return latestValue;
+      that[hasSubscribedKey] = true;
+      return that[latestValueKey];
     },
     set: function() {
       throw new Error(`Cannot assign Derived Property ${key}`);
