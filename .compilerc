@@ -3,14 +3,14 @@
     "development": {
       "application/javascript": {
         "presets": ["es2016-node5"],
-        "plugins": ["transform-class-properties", "transform-async-to-generator", "transform-runtime", "transform-function-bind"],
+        "plugins": ["transform-class-properties", "transform-async-to-generator", "transform-runtime", "transform-decorators-legacy"],
         "sourceMaps": "inline"
       }
     },
     "production": {
       "application/javascript": {
         "presets": ["es2016-node5"],
-        "plugins": ["transform-class-properties", "transform-async-to-generator", "transform-runtime", "transform-function-bind"],
+        "plugins": ["transform-class-properties", "transform-async-to-generator", "transform-runtime", "transform-decorators-legacy"],
         "sourceMaps": false
       }
     }
