@@ -1,43 +1,54 @@
 import { Observable, Subscription, Subject } from 'rxjs/Rx';
+import * as debug from 'debug';
 
-const d = require('debug')('trickline:model');
+const d = debug('trickline:model');
 
-function isObject(o) {
+function isObject(o : any) : Boolean {
   return o === Object(o);
 }
 
-function getDescriptorsForProperty(target, name, descriptor) {
+export interface ChangeNotification {
+  sender: Model,
+  property: string,
+  value?: any
+};
+
+function getDescriptorsForProperty(name : string, descriptor : PropertyDescriptor) {
   let backingStoreName = `__${name}__`;
-  
-  let realProp = Object.assign({
-    get: function() { return this[backingStoreName]; },
-    set: function(newVal) {
+
+  let newDescriptor : PropertyDescriptor = {
+    get: function(this: Model) { return this[backingStoreName]; },
+    set: function(this: Model, newVal: any) {
       if (this[backingStoreName] === newVal) return;
-      
+
       this.changing.next({sender: this, property: name, value: this[backingStoreName]});
       this[backingStoreName] = newVal;
       this.changed.next({sender: this, property: name, value: newVal});
     }
-  }, descriptor);
-  
+  };
+
+  let realProp = Object.assign(newDescriptor, descriptor);
+
   let backingStoreProp = {
     value: undefined,
     writable: true,
     enumerable: false,
     configurable: false,
   };
-  
-  let ret = {};
-  ret[name] = realProp; ret[backingStoreName] = backingStoreProp;
+
+  let ret : Object = {};
+  ret[name] = realProp;
+  ret[backingStoreName] = backingStoreProp;
+
   return ret;
 }
 
-export function notify(...properties) {
-  return (target) => {
+export function notify(...properties : Array<string>) {
+  return (target : Function) => {
     for (let prop of properties) {
       let descriptorList = getDescriptorsForProperty(
-        target.prototype, prop, { configurable: true, enumerable: true });
-        
+        prop, { configurable: true, enumerable: true });
+
       for (let k of Object.keys(descriptorList)) {
         Object.defineProperty(target.prototype, k, descriptorList[k]);
       }
@@ -45,11 +56,11 @@ export function notify(...properties) {
   };
 }
 
-export function asProperty(target, key, descriptor) {
+export function asProperty(target : Object, key : string, descriptor : PropertyDescriptor) {
   let hasSubscribedKey = `__hasSubscribed_${key}`;
   let latestValueKey = `__latestValue_${key}`;
   let generatorKey = `__generator_${key}`;
-  
+
   [hasSubscribedKey, latestValueKey].forEach((x) => {
     Object.defineProperty(target, x, {
       configurable: false,
@@ -58,21 +69,23 @@ export function asProperty(target, key, descriptor) {
       value: undefined
     });
   });
-  
+
   Object.defineProperty(target, generatorKey, {
     configurable: false,
     enumerable: false,
     value: descriptor.value
   });
-  
-  return {
+
+  let ret : PropertyDescriptor = {
     configurable: descriptor.configurable || true,
     enumerable: descriptor.enumerable || true,
-    get: function() {
+
+    get: function(this: any) {
       let that = this;
       if (that[hasSubscribedKey]) return that[latestValueKey];
-      
-      this.innerDisp.add(that[generatorKey]()
+      let observable : Observable<any> = that[generatorKey]();
+
+      this.innerDisp.add(observable
         .filter((x) => that[latestValueKey] !== x)
         .subscribe(
           function(x) {
@@ -82,7 +95,7 @@ export function asProperty(target, key, descriptor) {
           }, (e) => { throw e; }, () => {
             d(`Observable for ${key} completed!`);
           }));
-          
+
       that[hasSubscribedKey] = true;
       return that[latestValueKey];
     },
@@ -90,82 +103,96 @@ export function asProperty(target, key, descriptor) {
       throw new Error(`Cannot assign Derived Property ${key}`);
     }
   };
+
+  return ret;
 }
+
+export interface WhenSelector<TRet> { (...vals : Array<any>) : TRet };
 
 const identifier = /^[$A-Z_][0-9A-Z_$]*$/i;
 export class Model {
+  changing: Subject<ChangeNotification>;
+  changed: Subject<ChangeNotification>;
+  innerDisp: Subscription;
+
   constructor() {
     this.changing = new Subject();
     this.changed = new Subject();
     this.innerDisp = new Subscription();
   }
-  
+
   unsubscribe() {
     this.innerDisp.unsubscribe();
   }
-  
-  when(...propsAndSelector) {
+
+  when<TRet>(prop1: string, sel: WhenSelector<TRet>) : Observable<TRet>;
+  when<TRet>(prop1: string, prop2: string, sel: WhenSelector<TRet>) : Observable<TRet>;
+  when<TRet>(prop1: string, prop2: string, prop3: string, sel: WhenSelector<TRet>) : Observable<TRet>;
+  when<TRet>(prop1: string, prop2: string, prop3: string, prop4: string, sel: WhenSelector<TRet>) : Observable<TRet>;
+  when(...propsAndSelector : Array<string|Function>) : Observable<any> {
     if (propsAndSelector.length < 1) {
       throw new Error("Must specify at least one property!");
     }
-    
+
     if (propsAndSelector.length === 1) {
-      return Model.observableForPropertyChain_(this, propsAndSelector[0]);
+      return Model.observableForPropertyChain_(this, propsAndSelector[0] as string);
     }
-    
+
     let [selector] = propsAndSelector.splice(-1, 1);
     if (!(selector instanceof Function)) {
       throw new Error("In multi-item properties, the last function must be a selector");
     }
-    
-    let propWatchers = propsAndSelector.map((p) => Model.observableForPropertyChain_(this, p));
+
+    let propsOnly = propsAndSelector as Array<string>;
+    let propWatchers = propsOnly.map((p) => Model.observableForPropertyChain_(this, p));
     return Observable.combineLatest(...propWatchers, selector).distinctUntilChanged();
   }
-  
-  static createGetterForPropertyChain_(chain) {
-    let props = null;
+
+  static createGetterForPropertyChain_(chain : (Array<string> | string)) {
+    let props : Array<string>;
+
     if (Array.isArray(chain)) {
       props = chain;
     } else {
       props = chain.split('.');
     }
-  
-    return function(target) { 
+
+    return function(target : any) {
       let ret = target;
       for (let prop of props) {
         if (!isObject(ret) || !(prop in ret)) return {success: false};
 
         ret = ret[prop];
       }
-      
+
       return {success: true, value: ret};
     };
   }
-  
-  static observableForPropertyChain_(target, chain, before=false) {
-    let props = null;
-    
+
+  static observableForPropertyChain_(target : any, chain : (Array<string> | string), before=false) : Observable<ChangeNotification> {
+    let props : Array<string>;
+
     if (Array.isArray(chain)) {
       props = chain;
     } else {
       props = chain.split('.');
-      
+
       if (props.find((x) => x.match(identifier) === null)) {
         throw new Error("property name must be of the form 'foo.bar.baz'");
       }
     }
-    
+
     let firstProp = props[0];
     let start = Model.notificationForProperty_(target, firstProp, before);
-    
+
     if (isObject(target) && props[0] in target) {
       start = start.startWith({ sender: target, property: firstProp, value: target[firstProp] });
     }
-    
+
     if (props.length === 1) {
       return start.distinctUntilChanged((x,y) => x.value === y.value);
     }
-    
+
     return start    // target.foo
       .map((x) => {
         return Model.observableForPropertyChain_(x.value, props.slice(1), before)
@@ -179,16 +206,16 @@ export class Model {
       .distinctUntilChanged((x,y) => x.value === y.value);
   }
 
-  static notificationForProperty_(target, prop, before=false) {
+  static notificationForProperty_(target : any, prop : string, before=false) : Observable<ChangeNotification> {
     if (!(target instanceof Model)) {
       return Observable.never();
     }
-    
+
     if (!(prop in target)) {
       return Observable.never();
     }
-    
-    return target[before ? 'changing' : 'changed']
+
+    return (before ? target.changing : target.changed)
       .filter(({property}) => prop === property);
   }
 }
