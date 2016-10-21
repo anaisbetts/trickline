@@ -7,6 +7,7 @@
         "sourceMaps": "inline"
       },
       "text/typescript": {
+        "experimentalDecorators": true,
         "removeComments": false,
         "preserveConstEnums": true,
         "declaration": true,
@@ -31,6 +32,7 @@
         "sourceMaps": false
       },
       "text/typescript": {
+        "experimentalDecorators": true,
         "removeComments": false,
         "preserveConstEnums": true,
         "declaration": true,
