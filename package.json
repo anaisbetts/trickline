@@ -6,7 +6,7 @@
   "scripts": {
     "install": "bower install",
     "start": "cross-env DEBUG=logger:* electron . -r . --enable-logging",
-    "test-renderer": "electron-mocha --renderer --require ./test/support.js ./test",
+    "test-renderer": "electron-mocha --renderer --watch-extensions tsx,ts --require ./test/support.js ./test/**/*.{js,ts}",
     "test": "npm run test-renderer",
     "package": "electron-packager-compile ./ trickline --platform=win32 --arch=x64 --prune --asar --version 1.4.3"
   },
@@ -30,6 +30,8 @@
     "rxjs": "^5.0.0-rc.1"
   },
   "devDependencies": {
+    "@types/chai": "^3.4.34",
+    "@types/mocha": "^2.2.32",
     "babel-cli": "^6.16.0",
     "babel-eslint": "^7.0.0",
     "babel-plugin-transform-async-to-generator": "^6.16.0",
