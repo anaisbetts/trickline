@@ -1,5 +1,6 @@
 /// <reference path="../typings/globals/mocha/index.d.ts" />
-/// <reference path="../typings/globals/chai/index.d.ts" />
+
+import {expect} from './support';
 import {Observable, Subject} from 'rxjs/Rx';
 
 import {notify, asProperty, Model} from '../src/model';
@@ -8,6 +9,9 @@ import '../src/custom-operators';
 @notify('foo', 'bar')
 class TestClass extends Model {
   someSubject: Subject<Number>
+  foo: Number;
+  bar: Number;
+  baz: Number;
 
   @asProperty
   derived() {

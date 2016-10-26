@@ -6,7 +6,7 @@
   "scripts": {
     "install": "bower install",
     "start": "cross-env DEBUG=logger:* electron . -r . --enable-logging",
-    "test-renderer": "electron-mocha --renderer --watch-extensions tsx,ts --require ./test/support.js ./test/**/*.{js,ts}",
+    "test-renderer": "electron-mocha --renderer --watch-extensions tsx,ts ./test/**/*.{js,ts}",
     "test": "npm run test-renderer",
     "package": "electron-packager-compile ./ trickline --platform=win32 --arch=x64 --prune --asar --version 1.4.3"
   },
@@ -21,6 +21,7 @@
   },
   "homepage": "https://github.com/paulcbetts/trickline#readme",
   "dependencies": {
+    "@types/chai": "^3.4.34",
     "@types/debug": "0.0.29",
     "debug": "^2.2.0",
     "dexie-observable": "^0.1.9",

@@ -1,4 +1,6 @@
-import './support';
+/// <reference path="../typings/globals/mocha/index.d.ts" />
+
+import {expect} from './support';
 
 function delay(ms) {
   return new Promise((resolve) => {
