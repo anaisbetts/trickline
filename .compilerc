@@ -2,17 +2,81 @@
   "env": {
     "development": {
       "application/javascript": {
-        "presets": ["es2016-node5"],
-        "plugins": ["transform-class-properties", "transform-async-to-generator", "transform-runtime", "transform-decorators-legacy"],
+        "presets": [
+          "es2015",
+          "stage-2",
+          "react"
+        ],
+        "plugins": [
+          "transform-runtime",
+          "transform-decorators-legacy"
+        ],
         "sourceMaps": "inline"
+      },
+      "text/typescript": {
+        "experimentalDecorators": true,
+        "removeComments": false,
+        "preserveConstEnums": true,
+        "declaration": true,
+        "noImplicitAny": true,
+        "noImplicitReturns": true,
+        "suppressImplicitAnyIndexErrors": true,
+        "strictNullChecks": true,
+        "noUnusedLocals": true,
+        "noImplicitThis": true,
+        "noUnusedParameters": true,
+        "sourceMap": true,
+        "target": "es5",
+        "jsx": "react",
+        "types": [
+          "node"
+        ],
+        "doSemanticChecks": false
       }
     },
     "production": {
       "application/javascript": {
-        "presets": ["es2016-node5"],
-        "plugins": ["transform-class-properties", "transform-async-to-generator", "transform-runtime", "transform-decorators-legacy"],
+        "presets": [
+          "es2015",
+          "stage-2",
+          "react"
+        ],
+        "plugins": [
+          "transform-runtime"
+        ],
         "sourceMaps": false
+      },
+      "text/typescript": {
+        "experimentalDecorators": true,
+        "removeComments": false,
+        "preserveConstEnums": true,
+        "declaration": true,
+        "noImplicitAny": true,
+        "noImplicitReturns": true,
+        "suppressImplicitAnyIndexErrors": true,
+        "strictNullChecks": true,
+        "noUnusedLocals": true,
+        "noImplicitThis": true,
+        "noUnusedParameters": true,
+        "sourceMap": false,
+        "target": "es5",
+        "jsx": "react",
+        "types": [
+          "node"
+        ],
+        "doSemanticChecks": false
       }
     }
+  },
+  "application/javascript": {
+    "presets": [
+      "stage-0",
+      "es2015",
+      "react"
+    ],
+    "plugins": [
+      "transform-class-properties",
+      "transform-async-to-generator"
+    ]
   }
 }
