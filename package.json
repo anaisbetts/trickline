@@ -5,10 +5,10 @@
   "main": "src/main.js",
   "scripts": {
     "install": "bower install",
-    "start": "cross-env DEBUG=logger:* electron . -r . --enable-logging",
+    "start": "cross-env DEBUG=logger:* electron-forge start",
     "test-renderer": "electron-mocha --renderer --watch-extensions tsx,ts ./test/**/*.{js,ts}",
     "test": "npm run test-renderer",
-    "package": "electron-packager-compile ./ trickline --platform=win32 --arch=x64 --prune --asar --version 1.4.3"
+    "package": "electron-forge make"
   },
   "repository": {
     "type": "git",
@@ -49,7 +49,6 @@
     "electron-compilers": "^4.0.1",
     "electron-debug": "^1.0.1",
     "electron-mocha": "^3.1.1",
-    "electron-packager": "^8.1.0",
     "electron-prebuilt-compile": "1.4.3",
     "esdoc": "^0.4.8",
     "esdoc-es7-plugin": "0.0.3",
@@ -57,5 +56,33 @@
     "eslint": "~3.8.0",
     "eslint-plugin-react": "^6.4.1",
     "tslint": "^3.15.1"
+  },
+  "config": {
+    "forge": {
+      "make_targets": {
+        "win32": [
+          "squirrel"
+        ],
+        "darwin": [
+          "zip"
+        ],
+        "linux": [
+          "deb",
+          "rpm"
+        ]
+      },
+      "electronPackagerConfig": {},
+      "electronWinstallerConfig": {
+        "name": ""
+      },
+      "electronInstallerDebian": {},
+      "electronInstallerRedhat": {},
+      "github_repository": {
+        "owner": ""
+      },
+      "windowsStoreConfig": {
+        "packageName": ""
+      }
+    }
   }
 }

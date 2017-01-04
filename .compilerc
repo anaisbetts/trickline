@@ -2,8 +2,15 @@
   "env": {
     "development": {
       "application/javascript": {
-        "presets": ["es2015", "stage-2", "react"],
-        "plugins": ["transform-runtime", "transform-decorators-legacy"],
+        "presets": [
+          "es2015",
+          "stage-2",
+          "react"
+        ],
+        "plugins": [
+          "transform-runtime",
+          "transform-decorators-legacy"
+        ],
         "sourceMaps": "inline"
       },
       "text/typescript": {
@@ -21,14 +28,22 @@
         "sourceMap": true,
         "target": "es5",
         "jsx": "react",
-        "types" : [ "node" ],
+        "types": [
+          "node"
+        ],
         "doSemanticChecks": false
       }
     },
     "production": {
       "application/javascript": {
-        "presets": ["es2015", "stage-2", "react"],
-        "plugins": ["transform-runtime"],
+        "presets": [
+          "es2015",
+          "stage-2",
+          "react"
+        ],
+        "plugins": [
+          "transform-runtime"
+        ],
         "sourceMaps": false
       },
       "text/typescript": {
@@ -46,9 +61,22 @@
         "sourceMap": false,
         "target": "es5",
         "jsx": "react",
-        "types" : [ "node" ],
+        "types": [
+          "node"
+        ],
         "doSemanticChecks": false
       }
     }
+  },
+  "application/javascript": {
+    "presets": [
+      "stage-0",
+      "es2015",
+      "react"
+    ],
+    "plugins": [
+      "transform-class-properties",
+      "transform-async-to-generator"
+    ]
   }
 }
