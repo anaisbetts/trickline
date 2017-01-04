@@ -73,15 +73,15 @@
       },
       "electronPackagerConfig": {},
       "electronWinstallerConfig": {
-        "name": ""
+        "name": "trickline"
       },
       "electronInstallerDebian": {},
       "electronInstallerRedhat": {},
       "github_repository": {
-        "owner": ""
+        "owner": "paulcbetts"
       },
       "windowsStoreConfig": {
-        "packageName": ""
+        "packageName": "trickline"
       }
     }
   }
