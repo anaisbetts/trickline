@@ -8,44 +8,7 @@
   <title>Trickline</title>
 
   <meta name="theme-color" content="#fff">
-  
-  <script>
-    // setup Polymer options
-    window.Polymer = {lazyRegister: true, dom: 'shadow'};
-  </script>
-
-  <link rel="import" href="./app.html">
-
-  <style type="text/less">
-    @base: #f938ab;
-
-    .box-shadow(@style, @c) when (iscolor(@c)) {
-      -webkit-box-shadow: @style @c;
-      box-shadow:         @style @c;
-    }
-    .box-shadow(@style, @alpha: 50%) when (isnumber(@alpha)) {
-      .box-shadow(@style, rgba(0, 0, 0, @alpha));
-    }
-    .box {
-      color: saturate(@base, 5%);
-      border-color: lighten(@base, 30%);
-      div { .box-shadow(0 0 5px, 30%) }
-    }
-
-    body {
-      margin: 0;
-      font-family: 'Slack-Lato', 'Noto', sans-serif;
-      line-height: 1.5;
-      min-height: 100vh;
-      background-color: #eee;
-    }
-
-  </style>
-
-</head>
-
-<body>
-  <ts-app></ts-app>
-</body>
-
-</html>
+  <body>
+    <h2>greetings.</h2>
+  </body>
+ </html>
