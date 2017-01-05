@@ -1,5 +1,5 @@
 import {app, BrowserWindow } from 'electron';
-import electronDebug from 'electron-debug';
+import * as electronDebug from 'electron-debug';
 
 let mainWindow = null;
 electronDebug({enabled: true, showDevTools: true});
