@@ -181,7 +181,10 @@ describe('the when method', function() {
       { foo: 'bar', baz: 3 }
     ];
 
-    let result = Observable.of(...input).distinct((a,b) => a.baz === b.baz).createCollection();
+    let result = Observable.of(...input)
+      .distinctUntilChanged((a,b) => a.baz === b.baz)
+      .createCollection();
+
     expect(result.length).to.equal(3);
     expect(result[0].baz).to.equal(1);
     expect(result[1].baz).to.equal(2);
