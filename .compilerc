@@ -1,6 +1,48 @@
 {
-  "application/javascript": {
-    "presets": [["env", { "targets": { "electron": "1.4.13" } }]],
-    "plugins": ["transform-class-properties", "transform-async-to-generator"]
+  "env": {
+    "development": {
+      "text/typescript": {
+        "experimentalDecorators": true,
+        "removeComments": false,
+        "preserveConstEnums": true,
+        "declaration": true,
+        "noImplicitAny": true,
+        "noImplicitReturns": true,
+        "suppressImplicitAnyIndexErrors": true,
+        "strictNullChecks": true,
+        "noUnusedLocals": true,
+        "noImplicitThis": true,
+        "noUnusedParameters": true,
+        "sourceMap": true,
+        "target": "es5",
+        "jsx": "react",
+        "types": [
+          "node"
+        ],
+        "doSemanticChecks": false
+      }
+    },
+    "production": {
+      "text/typescript": {
+        "experimentalDecorators": true,
+        "removeComments": false,
+        "preserveConstEnums": true,
+        "declaration": true,
+        "noImplicitAny": true,
+        "noImplicitReturns": true,
+        "suppressImplicitAnyIndexErrors": true,
+        "strictNullChecks": true,
+        "noUnusedLocals": true,
+        "noImplicitThis": true,
+        "noUnusedParameters": true,
+        "sourceMap": false,
+        "target": "es5",
+        "jsx": "react",
+        "types": [
+          "node"
+        ],
+        "doSemanticChecks": false
+      }
+    }
   }
 }
