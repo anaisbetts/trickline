@@ -1,19 +1,27 @@
 import {app, BrowserWindow } from 'electron';
 import * as electronDebug from 'electron-debug';
+import installExtension from 'electron-devtools-installer';
+import { VUEJS_DEVTOOLS } from 'electron-devtools-installer';
 
 let mainWindow = null;
-electronDebug({enabled: true, showDevTools: true});
+electronDebug({enabled: true});
+
+const isDevMode = process.execPath.match(/[\\/]electron/);
 
 app.on('window-all-closed', () => {
   app.quit();
 });
 
-app.on('ready', () => {
+app.on('ready', async () => {
   mainWindow = new BrowserWindow({
-    width: 580,
-    height: 365
+    width: 800, height:600 
   });
 
   mainWindow.loadURL(`file://${__dirname}/index.html`);
-  setTimeout(() => mainWindow.openDevTools(), 5*1000);
+
+  // Open the DevTools.
+  if (isDevMode) {
+    await installExtension(VUEJS_DEVTOOLS);
+    mainWindow.webContents.openDevTools();
+  } 
 });
