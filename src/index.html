@@ -9,6 +9,19 @@
 
   <meta name="theme-color" content="#fff">
   <body>
-    <h2>greetings.</h2>
+    <div id="test"></div>
   </body>
+
+  <script type="text/typescript">
+  import * as Vue from 'vue';
+  import * as Test from './test';
+
+  const app = new Vue({
+    el: '#test',
+    data: { text: '' },
+    render: Test.render
+  });
+
+  app.text = "Vue.js!";
+  </script>
  </html>
