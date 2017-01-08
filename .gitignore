@@ -37,3 +37,4 @@ node_modules
 src/bower_components
 
 typings/
+out/

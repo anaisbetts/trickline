@@ -1,6 +1,14 @@
 {
   "env": {
     "development": {
+      "application/javascript": {
+        "presets": [
+          ["env", { "targets": { "electron": "1.4.0" } }],
+          "react"
+        ],
+        "plugins": ["transform-async-to-generator", "transform-object-rest-spread"],
+        "sourceMaps": "inline"
+      },
       "text/typescript": {
         "experimentalDecorators": true,
         "removeComments": false,
@@ -18,11 +26,18 @@
         "jsx": "react",
         "types": [
           "node"
-        ],
-        "doSemanticChecks": false
+        ]
       }
     },
     "production": {
+      "application/javascript": {
+        "presets": [
+          ["env", { "targets": { "electron": "1.4.0" } }],
+          "react"
+        ],
+        "plugins": ["transform-async-to-generator", "transform-object-rest-spread"],
+        "sourceMaps": "none"
+      },
       "text/typescript": {
         "experimentalDecorators": true,
         "removeComments": false,
@@ -40,8 +55,7 @@
         "jsx": "react",
         "types": [
           "node"
-        ],
-        "doSemanticChecks": false
+        ]
       }
     }
   }

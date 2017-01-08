@@ -1,0 +1,29 @@
+doctype html
+html(lang='en')
+  head
+    meta(charset='utf-8')
+    meta(name='viewport', content='width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes')
+    meta(name='theme-color', content='#fff')
+
+    title Trickline
+
+    link(rel='stylesheet', href='../node_modules/muse-ui/dist/muse-ui.css')
+    link(rel='stylesheet', href='./lato.less')
+
+  body
+    #test
+
+  script(type='text/typescript').
+    import * as Vue from 'vue';
+    import * as MuseUI from 'muse-ui'
+
+    import * as Test from './test';
+
+    Vue.use(MuseUI);
+    const app = new Vue({
+      el: '#test',
+      data: { text: '' },
+      render: Test.render
+    });
+
+    app.text = "Vue.js!";
