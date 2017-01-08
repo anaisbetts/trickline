@@ -11,19 +11,17 @@ html(lang='en')
     link(rel='stylesheet', href='./lato.less')
 
   body
-    #test
+    #app
 
   script(type='text/typescript').
     import * as Vue from 'vue';
     import * as MuseUI from 'muse-ui'
 
-    import * as Test from './test';
+    import * as SlackClient from './slack-client';
 
     Vue.use(MuseUI);
     const app = new Vue({
-      el: '#test',
-      data: { text: '' },
-      render: Test.render
+      el: '#app',
+      data: { },
+      render: SlackClient.render
     });
-
-    app.text = "Vue.js!";
