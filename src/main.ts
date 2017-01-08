@@ -17,7 +17,7 @@ app.on('ready', async () => {
     width: 800, height:600 
   });
 
-  mainWindow.loadURL(`file://${__dirname}/index.jade`);
+  mainWindow.loadURL(`file://${__dirname}/index.html`);
 
   // Open the DevTools.
   if (isDevMode) {

@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
+    <meta name="theme-color" content="#fff">
+    <title>Trickline</title>
+
+    <link rel="stylesheet" href="../node_modules/muse-ui/dist/muse-ui.css">
+    <link rel="stylesheet" href="./material-icons/MaterialIcons.css">
+    <link rel="stylesheet" href="./lato.less">
+    <style>
+      body { font-family: "Slack-Lato" }
+    </style>
+  </head>
+
+  <body>
+    <div id="app"></div>
+  </body>
+
+  <script type="text/typescript">
+    import * as Vue from 'vue';
+    import * as MuseUI from 'muse-ui'
+    
+    import * as SlackClient from './slack-client';
+    
+    Vue.use(MuseUI);
+    const app = new Vue({
+      el: '#app',
+      data: { },
+      render: SlackClient.render
+    });
+  </script>
+</html>
