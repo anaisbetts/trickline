@@ -2,33 +2,34 @@
 <html lang="en">
   <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
+    <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#fff">
     <title>Trickline</title>
 
-    <link rel="stylesheet" href="../node_modules/muse-ui/dist/muse-ui.css">
-    <link rel="stylesheet" href="./material-icons/MaterialIcons.css">
     <link rel="stylesheet" href="./lato.less">
     <style>
       body { font-family: "Slack-Lato" }
     </style>
   </head>
 
-  <body>
-    <div id="app"></div>
+  <body style="overflow: hidden; background-color: rgba(0,0,0,0); margin: 0">
+    <div id="app" style="position: absolute; width: 100vw; height: 100vh"></div>
   </body>
 
   <script type="text/typescript">
-    import * as Vue from 'vue';
-    import * as MuseUI from 'muse-ui'
-    
-    import * as Client from './client';
-    
-    Vue.use(MuseUI);
-    const app = new Vue({
-      el: '#app',
-      data: { },
-      render: Client.render
-    });
+  if (!process.execPath.match(/[\\/]electron-prebuilt/)) {
+    process.env.NODE_ENV = 'production';
+  }
+  </script>
+
+  <script type="text/tsx">
+  import * as React from 'react';
+  import * as ReactDOM from 'react-dom';
+  import App from './slack-app';
+
+  const injectTapEventPlugin = require('react-tap-event-plugin');
+
+  injectTapEventPlugin();
+  ReactDOM.render(<App />, document.getElementById('app'));
   </script>
 </html>
