@@ -22,13 +22,13 @@
     import * as Vue from 'vue';
     import * as MuseUI from 'muse-ui'
     
-    import * as SlackClient from './slack-client';
+    import * as Client from './client';
     
     Vue.use(MuseUI);
     const app = new Vue({
       el: '#app',
       data: { },
-      render: SlackClient.render
+      render: Client.render
     });
   </script>
 </html>
