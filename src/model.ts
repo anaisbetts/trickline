@@ -3,20 +3,20 @@ import * as debug from 'debug';
 
 const d = debug('trickline:model');
 
-function isObject(o : any) : Boolean {
+function isObject(o: any): Boolean {
   return o === Object(o);
 }
 
 export interface ChangeNotification {
-  sender: Model,
-  property: string,
-  value?: any
+  sender: Model;
+  property: string;
+  value?: any;
 };
 
-function getDescriptorsForProperty(name : string, descriptor : PropertyDescriptor) {
+function getDescriptorsForProperty(name: string, descriptor: PropertyDescriptor) {
   let backingStoreName = `__${name}__`;
 
-  let newDescriptor : PropertyDescriptor = {
+  let newDescriptor: PropertyDescriptor = {
     get: function(this: Model) { return this[backingStoreName]; },
     set: function(this: Model, newVal: any) {
       if (this[backingStoreName] === newVal) return;
@@ -36,15 +36,15 @@ function getDescriptorsForProperty(name : string, descriptor : PropertyDescripto
     configurable: false,
   };
 
-  let ret : Object = {};
+  let ret: Object = {};
   ret[name] = realProp;
   ret[backingStoreName] = backingStoreProp;
 
   return ret;
 }
 
-export function notify(...properties : Array<string>) {
-  return (target : Function) => {
+export function notify(...properties: Array<string>) {
+  return (target: Function) => {
     for (let prop of properties) {
       let descriptorList = getDescriptorsForProperty(
         prop, { configurable: true, enumerable: true });
@@ -56,7 +56,7 @@ export function notify(...properties : Array<string>) {
   };
 }
 
-export function asProperty(target : Object, key : string, descriptor : PropertyDescriptor) {
+export function asProperty(target: Object, key: string, descriptor: PropertyDescriptor) {
   let hasSubscribedKey = `__hasSubscribed_${key}`;
   let latestValueKey = `__latestValue_${key}`;
   let generatorKey = `__generator_${key}`;
@@ -76,14 +76,14 @@ export function asProperty(target : Object, key : string, descriptor : PropertyD
     value: descriptor.value
   });
 
-  let ret : PropertyDescriptor = {
+  let ret: PropertyDescriptor = {
     configurable: descriptor.configurable || true,
     enumerable: descriptor.enumerable || true,
 
     get: function(this: any) {
       let that = this;
       if (that[hasSubscribedKey]) return that[latestValueKey];
-      let observable : Observable<any> = that[generatorKey]();
+      let observable: Observable<any> = that[generatorKey]();
 
       this.innerDisp.add(observable
         .filter((x) => that[latestValueKey] !== x)
@@ -107,7 +107,7 @@ export function asProperty(target : Object, key : string, descriptor : PropertyD
   return ret;
 }
 
-export interface WhenSelector<TRet> { (...vals : Array<any>) : TRet };
+export interface WhenSelector<TRet> { (...vals: Array<any>) : TRet; };
 
 const identifier = /^[$A-Z_][0-9A-Z_$]*$/i;
 export class Model {
@@ -125,13 +125,13 @@ export class Model {
     this.innerDisp.unsubscribe();
   }
 
-  when<TRet>(prop1: string) : Observable<TRet>;
-  when<TRet>(prop1: string, prop2: string, sel: WhenSelector<TRet>) : Observable<TRet>;
-  when<TRet>(prop1: string, prop2: string, prop3: string, sel: WhenSelector<TRet>) : Observable<TRet>;
-  when<TRet>(prop1: string, prop2: string, prop3: string, prop4: string, sel: WhenSelector<TRet>) : Observable<TRet>;
-  when(...propsAndSelector : Array<string|Function>) : Observable<any> {
+  when<TRet>(prop1: string): Observable<TRet>;
+  when<TRet>(prop1: string, prop2: string, sel: WhenSelector<TRet>): Observable<TRet>;
+  when<TRet>(prop1: string, prop2: string, prop3: string, sel: WhenSelector<TRet>): Observable<TRet>;
+  when<TRet>(prop1: string, prop2: string, prop3: string, prop4: string, sel: WhenSelector<TRet>): Observable<TRet>;
+  when(...propsAndSelector: Array<string|Function>): Observable<any> {
     if (propsAndSelector.length < 1) {
-      throw new Error("Must specify at least one property!");
+      throw new Error('Must specify at least one property!');
     }
 
     if (propsAndSelector.length === 1) {
@@ -140,7 +140,7 @@ export class Model {
 
     let [selector] = propsAndSelector.splice(-1, 1);
     if (!(selector instanceof Function)) {
-      throw new Error("In multi-item properties, the last function must be a selector");
+      throw new Error('In multi-item properties, the last function must be a selector');
     }
 
     let propsOnly = propsAndSelector as Array<string>;
@@ -148,8 +148,8 @@ export class Model {
     return Observable.combineLatest(...propWatchers, selector).distinctUntilChanged();
   }
 
-  static createGetterForPropertyChain_(chain : (Array<string> | string)) {
-    let props : Array<string>;
+  static createGetterForPropertyChain_(chain: (Array<string> | string)) {
+    let props: Array<string>;
 
     if (Array.isArray(chain)) {
       props = chain;
@@ -157,7 +157,7 @@ export class Model {
       props = chain.split('.');
     }
 
-    return function(target : any) {
+    return function(target: any) {
       let ret = target;
       for (let prop of props) {
         if (!isObject(ret) || !(prop in ret)) return {success: false};
@@ -169,8 +169,8 @@ export class Model {
     };
   }
 
-  static observableForPropertyChain_(target : any, chain : (Array<string> | string), before=false) : Observable<ChangeNotification> {
-    let props : Array<string>;
+  static observableForPropertyChain_(target: any, chain: (Array<string> | string), before = false): Observable<ChangeNotification> {
+    let props: Array<string>;
 
     if (Array.isArray(chain)) {
       props = chain;
@@ -190,7 +190,7 @@ export class Model {
     }
 
     if (props.length === 1) {
-      return start.distinctUntilChanged((x,y) => x.value === y.value);
+      return start.distinctUntilChanged((x, y) => x.value === y.value);
     }
 
     return start    // target.foo
@@ -203,10 +203,10 @@ export class Model {
           });
       })
       .switch()
-      .distinctUntilChanged((x,y) => x.value === y.value);
+      .distinctUntilChanged((x, y) => x.value === y.value);
   }
 
-  static notificationForProperty_(target : any, prop : string, before=false) : Observable<ChangeNotification> {
+  static notificationForProperty_(target: any, prop: string, before = false): Observable<ChangeNotification> {
     if (!(target instanceof Model)) {
       return Observable.never();
     }

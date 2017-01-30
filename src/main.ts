@@ -14,7 +14,7 @@ app.on('window-all-closed', () => {
 
 app.on('ready', async () => {
   mainWindow = new BrowserWindow({
-    width: 800, height:600 
+    width: 800, height: 600,
   });
 
   mainWindow.loadURL(`file://${__dirname}/index.html`);
@@ -23,5 +23,5 @@ app.on('ready', async () => {
   if (isDevMode) {
     await installExtension(VUEJS_DEVTOOLS);
     mainWindow.webContents.openDevTools();
-  } 
+  }
 });
