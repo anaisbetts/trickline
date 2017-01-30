@@ -1,7 +1,11 @@
 import * as React from 'react';
+import { default as AppBar } from 'material-ui/AppBar';
+import { default as MuiThemeProvider } from 'material-ui/styles/MuiThemeProvider';
 
 export default class SlackApp extends React.Component<null, null> {
   render() {
-    return <h2>Hello world!</h2>;
+    return <MuiThemeProvider>
+      <AppBar title='Trickline' />
+    </MuiThemeProvider>;
   }
 }

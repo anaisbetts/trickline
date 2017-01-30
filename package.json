@@ -4,7 +4,7 @@
   "description": "A fast, offline Slack client",
   "main": "src/main.ts",
   "scripts": {
-    "start": "cross-env DEBUG=logger:* electron-forge start",
+    "start": "electron-forge start",
     "test-renderer": "electron-mocha --renderer --watch-extensions tsx,ts ./test/**/*.{js,ts}",
     "test": "npm run test-renderer",
     "package": "electron-forge make"
@@ -30,8 +30,10 @@
     "electron-devtools-installer": "^2.0.1",
     "keycode": "^2.1.8",
     "lru-cache": "^4.0.2",
+    "material-ui": "^0.16.7",
     "react": "^15.4.2",
     "react-dom": "^15.4.2",
+    "react-tap-event-plugin": "^2.0.1",
     "rxjs": "^5.0.2"
   },
   "devDependencies": {
