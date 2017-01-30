@@ -2,22 +2,31 @@
 <html lang="en">
   <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
+    <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#fff">
     <title>Trickline</title>
 
-    <link rel="stylesheet" href="../node_modules/muse-ui/dist/muse-ui.css">
-    <link rel="stylesheet" href="./material-icons/MaterialIcons.css">
     <link rel="stylesheet" href="./lato.less">
     <style>
       body { font-family: "Slack-Lato" }
     </style>
   </head>
 
-  <body>
+  <body style="overflow: hidden; background-color: rgba(0,0,0,0); margin: 0">
     <div id="app"></div>
   </body>
 
   <script type="text/typescript">
+  if (!process.execPath.match(/[\\/]electron-prebuilt/)) {
+    process.env.NODE_ENV = 'production';
+  }
+  </script>
+
+  <script type="text/tsx">
+  import * as React from 'react';
+  import * as ReactDOM from 'react-dom';
+  import App from './slack-app';
+
+  ReactDOM.render(<App />, document.getElementById('app'));
   </script>
 </html>
