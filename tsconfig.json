@@ -4,6 +4,7 @@
     "preserveConstEnums": true,
     "sourceMap": true,
     "declaration": true,
+    "experimentalDecorators": true,
     "noImplicitAny": true,
     "noImplicitReturns": true,
     "suppressImplicitAnyIndexErrors": true,
