@@ -35,9 +35,10 @@ export class SlackApp extends SimpleView<SimpleViewModel> {
 
   render() {
     const vm = this.viewModel;
+    const shouldShift = vm.isOpen && window.outerWidth > window.outerHeight;
 
     return <MuiThemeProvider>
-      <div style={{marginLeft: vm.isOpen ? '258px' : '0px', transition: 'margin-left: 450ms cubic-bezier(0.23, 1, 0.32, 1) 0ms'}}>
+      <div style={{marginLeft: shouldShift ? '258px' : '0px', transition: 'margin-left: 450ms cubic-bezier(0.23, 1, 0.32, 1) 0ms'}}>
         <AppBar title='Trickline' onLeftIconButtonTouchTap={vm.toggleDrawer.bind()} zDepth={2}/>
 
         <Drawer open={vm.isOpen} zDepth={1}>
