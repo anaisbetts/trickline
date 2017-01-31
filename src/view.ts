@@ -13,31 +13,31 @@ export abstract class Lifecycle<P, S> {
   didUpdate: Observable<{props: P, state: S}>;
   willUnmount: Observable<boolean>;
 
-  public static attach<P, S>(target: React.Component<P, S>): Lifecycle<P, S> {
+  static attach<P, S>(target: React.Component<P, S>): Lifecycle<P, S> {
     return new ReactLifecycle(target);
   }
 }
 
 class ReactLifecycle<P, S> extends Lifecycle<P, S> {
-  willMountSubj: AsyncSubject<boolean>;
-  didMountSubj: AsyncSubject<boolean>;
-  willReceivePropsSubj: Subject<P>;
-  willUpdateSubj: Subject<{props: P, state: S}>;
-  didUpdateSubj: Subject<{props: P, state: S}>;
-  willUnmountSubj: AsyncSubject<boolean>;
+  private readonly willMountSubj: AsyncSubject<boolean>;
+  private readonly didMountSubj: AsyncSubject<boolean>;
+  private readonly willReceivePropsSubj: Subject<P>;
+  private readonly willUpdateSubj: Subject<{props: P, state: S}>;
+  private readonly didUpdateSubj: Subject<{props: P, state: S}>;
+  private readonly willUnmountSubj: AsyncSubject<boolean>;
 
-  public get willMount() { return this.willMountSubj; }
-  public get didMount() { return this.didMountSubj; }
-  public get willReceiveProps() { return this.willReceivePropsSubj; }
-  public get willUpdate() { return this.willUpdateSubj; }
-  public get didUpdate() { return this.didUpdateSubj; }
-  public get willUnmount() { return this.willUnmountSubj; }
+  get willMount() { return this.willMountSubj; }
+  get didMount() { return this.didMountSubj; }
+  get willReceiveProps() { return this.willReceivePropsSubj; }
+  get willUpdate() { return this.willUpdateSubj; }
+  get didUpdate() { return this.didUpdateSubj; }
+  get willUnmount() { return this.willUnmountSubj; }
 
-  static reactMethodName(name: string): string {
+  private static reactMethodName(name: string): string {
     return 'component' + name.substr(0, 1).toUpperCase() + name.substr(1);
   }
 
-  public constructor(target: React.Component<P, S>) {
+  constructor(target: React.Component<P, S>) {
     super();
 
     for (const name of ['willMount', 'didMount', 'willUnmount']) {
@@ -52,5 +52,14 @@ class ReactLifecycle<P, S> extends Lifecycle<P, S> {
 
     const ps = this.willReceivePropsSubj = Subject.create();
     target['componentWillReceiveProps'] = (props: P) => ps.next(props);
+  }
+}
+
+export abstract class View<P> extends React.PureComponent<P, null> implements AttachedLifecycle<P, null> {
+  readonly lifecycle: Lifecycle<P, null>;
+
+  constructor(props?: any, context?: any) {
+    super(props, context);
+    this.lifecycle = Lifecycle.attach(this);
   }
 }
