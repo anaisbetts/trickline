@@ -34,11 +34,13 @@ export class SlackApp extends SimpleView<SimpleViewModel> {
   }
 
   render() {
-    return <MuiThemeProvider>
-      <div>
-        <AppBar title='Trickline' onLeftIconButtonTouchTap={this.viewModel.toggleDrawer.bind()} />
+    const vm = this.viewModel;
 
-        <Drawer open={this.viewModel.isOpen}>
+    return <MuiThemeProvider>
+      <div style={{marginLeft: vm.isOpen ? '258px' : '0px', transition: 'margin-left: 450ms cubic-bezier(0.23, 1, 0.32, 1) 0ms'}}>
+        <AppBar title='Trickline' onLeftIconButtonTouchTap={vm.toggleDrawer.bind()} zDepth={2}/>
+
+        <Drawer open={vm.isOpen} zDepth={1}>
           <h2>I'm in the drawer</h2>
         </Drawer>
 
