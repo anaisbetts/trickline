@@ -1,5 +1,3 @@
-/// <reference path="../typings/globals/mocha/index.d.ts" />
-
 import {expect} from './support';
 import {Observable, Subject} from 'rxjs/Rx';
 

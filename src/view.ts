@@ -1,6 +1,8 @@
 import { Observable, AsyncSubject, Subject } from 'rxjs/Rx';
 import * as React from 'react';
 
+import { Model } from './model';
+
 export interface AttachedLifecycle<P, S> {
   lifecycle: Lifecycle<P, S>;
 }
@@ -55,11 +57,28 @@ class ReactLifecycle<P, S> extends Lifecycle<P, S> {
   }
 }
 
-export abstract class View<P> extends React.PureComponent<P, null> implements AttachedLifecycle<P, null> {
-  readonly lifecycle: Lifecycle<P, null>;
+export interface HasViewModel<T extends Model> {
+  viewModel: T;
+}
 
-  constructor(props?: any, context?: any) {
+export abstract class View<T extends Model, P extends HasViewModel<T>>
+    extends React.PureComponent<P, null>
+    implements AttachedLifecycle<P, null> {
+  readonly lifecycle: Lifecycle<P, null>;
+  viewModel: T;
+
+  constructor(props?: P, context?: any) {
     super(props, context);
+    if (props) this.viewModel = props.viewModel;
+
     this.lifecycle = Lifecycle.attach(this);
+
+    this.lifecycle.didMount
+      .flatMap(() => this.viewModel.changed)
+      .takeUntil(this.lifecycle.willUnmount)
+      .subscribe(() => this.forceUpdate());
   }
+}
+
+export abstract class SimpleView<T extends Model> extends View<T, { viewModel: T }> {
 }

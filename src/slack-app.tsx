@@ -6,13 +6,14 @@ import { default as Drawer } from 'material-ui/Drawer';
 import { default as MuiThemeProvider } from 'material-ui/styles/MuiThemeProvider';
 
 import { Action } from './action';
-import { View } from './view';
+import { SimpleView } from './view';
+import { asProperty, Model } from './model';
 
 export interface SlackAppState {
   drawerOpen: boolean;
 }
 
-export class SlackApp extends View<null> {
+export class SimpleViewModel extends Model {
   toggleDrawer: Action<boolean>;
 
   constructor() {
@@ -20,18 +21,24 @@ export class SlackApp extends View<null> {
 
     let isOpen = false;
     this.toggleDrawer = Action.create(() => isOpen = !isOpen, false);
-    this.lifecycle.didMount
-      .flatMap(() => this.toggleDrawer.result)
-      .subscribe(() => this.forceUpdate());
-    //this.toggleDrawer.toState(this, 'drawerOpen');
+  }
+
+  @asProperty
+  isOpen() { return this.toggleDrawer.result; }
+}
+
+export class SlackApp extends SimpleView<SimpleViewModel> {
+  constructor() {
+    super();
+    this.viewModel = new SimpleViewModel();
   }
 
   render() {
     return <MuiThemeProvider>
       <div>
-        <AppBar title='Trickline' onLeftIconButtonTouchTap={this.toggleDrawer.bind()} />
+        <AppBar title='Trickline' onLeftIconButtonTouchTap={this.viewModel.toggleDrawer.bind()} />
 
-        <Drawer open={this.toggleDrawer.resultSubject.getValue()}>
+        <Drawer open={this.viewModel.isOpen}>
           <h2>I'm in the drawer</h2>
         </Drawer>
 

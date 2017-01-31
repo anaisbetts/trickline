@@ -26,12 +26,21 @@ export class Action<T> {
     return new this(func, initialValue);
   }
 
+  constructor(func: CreateAsyncSelector<T>, initialValue: T) {
+    this.executeFactory = func;
+    this.resultSubject = new BehaviorSubject(initialValue);
+    this.thrownErrorsSubject = new Subject();
+    this.inflightRequest = new SerialSubscription();
+    this.currentExecution = null;
+  }
+
   bind(): Function {
     return () => this.execute();
   }
 
   execute(): Observable<T> {
     if (this.currentExecution) return this.currentExecution;
+
     let result: ConnectableObservable<T>;
     d('Executing Action!');
 
@@ -42,24 +51,18 @@ export class Action<T> {
       return Observable.throw(e);
     }
 
-    result.subscribe(
-      this.resultSubject.next.bind(this.resultSubject),
-      this.thrownErrorsSubject.error.bind(this.thrownErrorsSubject));
+    result
+      .finally(() => this.currentExecution = null)
+      .subscribe(
+        this.resultSubject.next.bind(this.resultSubject),
+        this.thrownErrorsSubject.next.bind(this.thrownErrorsSubject));
 
-    result.subscribe(() => this.currentExecution = null);
-
+    this.currentExecution = result;
     this.inflightRequest.set(result.connect());
     return result;
   }
 
+  get isExecuting() { return this.currentExecution !== null; }
   get result(): Observable<T> { return this.resultSubject; }
   get thrownErrors(): Observable<Error> { return this.thrownErrorsSubject; }
-
-  constructor(func: CreateAsyncSelector<T>, initialValue: T) {
-    this.executeFactory = func;
-    this.resultSubject = new BehaviorSubject(initialValue);
-    this.thrownErrorsSubject = Subject.create();
-    this.inflightRequest = new SerialSubscription();
-    this.currentExecution = null;
-  }
 }
