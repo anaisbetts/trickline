@@ -17,8 +17,8 @@ Top Level:
 - Message
   - Attachments[]
   - Updatable<Text>     <--- Always in use, maybe also lazy?
-  - UpdatableLazy<User>       <--- Same
-  - UpdatableLazy<Subteam>    <--- not necessarily needed to even look up
+  - Lookup<User>       <--- Same
+  - Lookup<Subteam>    <--- not necessarily needed to even look up
 
 * Events can:
   - Mutate sparse models
