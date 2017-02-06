@@ -1,3 +1,5 @@
+import { EventType, EventSubType } from './event-type';
+
 export interface ChannelBase {
   id: string;
   created: number;
@@ -18,8 +20,8 @@ export interface DirectMessage extends ChannelBase {
 }
 
 export interface Channel extends ChannelBase {
-  name: String;
-  creator: String;
+  name: string;
+  creator: string;
   is_member: boolean;
   is_general: boolean;
   is_archived: boolean;
@@ -46,6 +48,76 @@ export interface Icon {
   image_default: boolean;
 };
 
+export interface Message {
+  // common for every message type
+  type: EventType;
+  subtype: EventSubType;
+  hidden: boolean;
+  ts: string;
+  channel: string;
+
+  /**
+   * Ts of message that this message has a reference to
+   *
+   * Currently not recognized by server and only set locally via factory method newEphemeralMessage;
+   * only used in NonMemberMentionPostHelper so that ephemeral invite message has a reference
+   * to the message that originally had non-member mentions if user decides
+   * to share archive link
+   */
+  associated_msg_ts?: string;
+
+  // bot messages
+  bot_id: string;
+  icons: Icon;
+  mrkdwn: boolean;
+
+  ephemeral_msg_type: number; // based on EphemeralMsgType.id
+
+  user?: string; // nullable userId
+  username: string;
+  topic: string;
+  purpose: string;
+  name: string;
+  old_name: string;
+
+  upload: boolean;
+  file: File;
+  comment: Comment;
+  is_starred: boolean;
+
+  edited: Message;
+
+  // deleted message
+  deleted_ts: string;
+  text: string;
+
+  //attachments?: Array<Attachment>; // nullable
+
+  inviter: string;
+
+  // replies
+  thread_ts: string;
+  parent_user_id: string;
+  reply_count: number;
+
+  //reactions: Array<Reaction>;
+
+  item_type: string;
+  //item: Item;
+
+  // shared channels
+  user_profile: SharedUserProfile;
+  source_team: string;
+
+  subscribed: boolean;
+
+  //replies: Array<Reply>;
+
+  last_read: string;
+
+  is_ephemeral: boolean;
+}
+
 export interface Profile {
   first_name: string;
   last_name: string;
@@ -65,6 +137,16 @@ export interface Profile {
   always_active: boolean;
   bot_id: string;
   fields: { [name: string]: UserProfileField };
+}
+
+export interface SharedUserProfile {
+  avatar_hash: string;
+  image_72: string;
+  first_name: string;
+  real_name: string;
+  name: string;
+  is_restricted: boolean;
+  is_ultra_restricted: boolean;
 }
 
 export interface TeamProfileField {
