@@ -47,24 +47,24 @@ export interface Icon {
 };
 
 export interface Profile {
-    first_name: string;
-    last_name: string;
-    full_name: string;
-    preferred_name: string;
-    current_status: string;
-    status_emoji: string;
-    status_text: string;
-    phone: string;
-    real_name: string;
-    real_name_normalized: string;
-    full_name_normalized: string;
-    preferred_name_normalized: string;
-    email: string;
-    title: string;
-    avatar_hash: string;
-    always_active: boolean;
-    bot_id: string;
-    fields: { [name: string]: UserProfileField };
+  first_name: string;
+  last_name: string;
+  full_name: string;
+  preferred_name: string;
+  current_status: string;
+  status_emoji: string;
+  status_text: string;
+  phone: string;
+  real_name: string;
+  real_name_normalized: string;
+  full_name_normalized: string;
+  preferred_name_normalized: string;
+  email: string;
+  title: string;
+  avatar_hash: string;
+  always_active: boolean;
+  bot_id: string;
+  fields: { [name: string]: UserProfileField };
 }
 
 export interface TeamProfileField {
