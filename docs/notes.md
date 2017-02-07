@@ -34,3 +34,8 @@ Top Level:
     - This means, Views drive everything (Views => ViewModels => Models => Data Streams)
 
 * ^^^^ THIS THIS THIS THIS THIS
+
+* The list of Joined Channels is itself a Syncable Thing, separate from Channels
+
+* What we really want to do is WhenAny through a SparseMap and get updates to that object
+  - So what we really need, is a ReactiveList which, without an Initial Value, will fetch
