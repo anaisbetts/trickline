@@ -3,7 +3,7 @@
     "development": {
       "application/javascript": {
         "presets": [
-          ["env", { "targets": { "electron": "1.4.0" } }],
+          ["env", { "targets": { "electron": "1.6.0" } }],
           "react"
         ],
         "plugins": ["transform-async-to-generator", "transform-object-rest-spread"],
@@ -20,8 +20,9 @@
         "strictNullChecks": true,
         "noUnusedLocals": true,
         "noImplicitThis": true,
+        "inlineSourceMap": true,
+        "inlineSources": true,
         "noUnusedParameters": true,
-        "sourceMap": true,
         "target": "es5",
         "jsx": "react",
         "types": [
