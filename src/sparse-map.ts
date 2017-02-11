@@ -69,7 +69,6 @@ export class Updatable<T> extends Subject<T> {
 
 export interface SparseMap<K, V> {
   subscribe(key: K): Updatable<V>;
-  subscribeMany(keys: Array<K>): Map<K, Updatable<V>>;
   subscribeAll(): Map<K, Updatable<V>>;
 
   setLazy(key: K, value: Observable<V>): Promise<void>;
@@ -77,6 +76,13 @@ export interface SparseMap<K, V> {
 };
 
 export class SparseMapMixins {
+  static subscribeMany<K, V>(this: SparseMap<K, V>, keys: Array<K>): Map<K, Updatable<V>> {
+    return keys.reduce((acc, x) => {
+      acc.set(x, this.subscribe(x));
+      return acc;
+    }, new Map<K, Updatable<V>>());
+  }
+
   static get<K, V>(this: SparseMap<K, V>, key: K): Promise<V> {
     return this.subscribe(key).take(1).toPromise();
   }
@@ -101,6 +107,50 @@ export class SparseMapMixins {
 }
 
 class InMemorySparseMap<K, V> implements SparseMap<K, V> {
+  private latest: Map<K, Updatable<V>>;
+  private factory: (key: K) => Observable<V> | undefined;
+
+  constructor(factory?: (key: K) => Observable<V> = undefined) {
+    this.latest = new Map();
+    this.factory = factory;
+  }
+
+  subscribe(key: K): Updatable<V> {
+    let ret = this.latest.get(key);
+    if (ret) return ret;
+
+    if (this.factory) {
+      ret = new Updatable<V>(() => this.factory(key));
+    } else {
+      ret = new Updatable<V>();
+    }
+
+    this.latest.set(key, ret);
+    return ret;
+  }
+
+  subscribeAll(): Map<K, Updatable<V>> {
+    let ret = new Map<K, Updatable<V>>();
+    for (let k of this.latest.keys()) {
+      ret.set(k, this.latest.get(k));
+    }
+
+    return ret;
+  }
+
+  setLazy(key: K, value: Observable<V>): Promise<void> {
+    this.subscribe(key).playOnto(value);
+    return Promise.resolve();
+  }
+
+  invalidate(key: K): Promise<void> {
+    let val = this.latest.get(key);
+    if (val) {
+      val.playOnto(Observable.empty());
+    }
+
+    return Promise.resolve();
+  }
 }
 
 InMemorySparseMap.prototype = Object.assign(InMemorySparseMap.prototype, SparseMapMixins);
