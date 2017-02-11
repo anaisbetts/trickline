@@ -59,6 +59,7 @@ export class Updatable<T> extends Subject<T> {
 
   invalidate() {
     this._hasPendingValue = false;
+    this._playOnto.set(Subscription.EMPTY);
   }
 
   playOnto(source: Observable<T>) {
@@ -97,7 +98,7 @@ export class SparseMapMixins {
       .toPromise();
   }
 
-  static set<K, V>(this: SparseMap<K, V>, key: K, value: V): Promise<void> {
+  static setValue<K, V>(this: SparseMap<K, V>, key: K, value: V): Promise<void> {
     return this.setLazy(key, Observable.of(value));
   }
 
@@ -138,6 +139,14 @@ class InMemorySparseMap<K, V> implements SparseMap<K, V> {
     return ret;
   }
 
+  setDirect(key: K, value: Updatable<V>): Promise<void> {
+    let prev = this.latest.get(key);
+    if (prev) prev.playOnto(Observable.empty());
+
+    this.latest.set(key, value);
+    return Promise.resolve();
+  }
+
   setLazy(key: K, value: Observable<V>): Promise<void> {
     this.subscribe(key).playOnto(value);
     return Promise.resolve();
@@ -147,6 +156,7 @@ class InMemorySparseMap<K, V> implements SparseMap<K, V> {
     let val = this.latest.get(key);
     if (val) {
       val.playOnto(Observable.empty());
+      this.latest.delete(key);
     }
 
     return Promise.resolve();
