@@ -12,7 +12,7 @@ import { createApi } from './models/api-call';
 import { Action } from './action';
 import { SimpleView } from './view';
 import { asProperty, Model } from './model';
-import { InMemorySparseMap, Updatable } from './sparse-map';
+import { InMemorySparseMap, SparseMap, Updatable } from './sparse-map';
 
 export interface SlackAppState {
   drawerOpen: boolean;
@@ -24,7 +24,7 @@ export class Store {
 
   constructor(token?: string) {
     this.api = createApi(token);
-    this.joinedChannels = new InMemorySparseMap();
+    this.joinedChannels = new InMemorySparseMap<string, ChannelBase>();
   }
 
   async update(): Promise<void> {

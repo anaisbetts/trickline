@@ -68,6 +68,7 @@ export interface SparseMap<K, V> {
   subscribe(key: K): Updatable<V>;
   subscribeAll(): Map<K, Updatable<V>>;
 
+  setDirect(key: K, value: Updatable<V>): Promise<void>;
   setLazy(key: K, value: Observable<V>): Promise<void>;
   invalidate(key: K): Promise<void>;
 };
