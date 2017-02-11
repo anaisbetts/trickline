@@ -7,7 +7,7 @@ import {expect} from './support';
 describe('The Updatable class', function() {
   it('mostly acts like a BehaviorSubject', function() {
     let fixture = new Updatable(() => Observable.of(42));
-    expect(fixture.getValue()).to.equal(42);
+    expect(fixture.value).to.equal(42);
 
     let result = -1;
     fixture.subscribe(x => result = x);

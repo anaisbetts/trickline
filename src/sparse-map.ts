@@ -22,7 +22,15 @@ export class Updatable<T> extends Subject<T> {
   }
 
   get value(): T {
-    return this.getValue();
+    if (!this._hasPendingValue) {
+      this.playOnto(this._factory());
+    }
+
+    if (this.hasError) {
+      throw this.thrownError;
+    } else {
+      return this._value;
+    }
   }
 
   protected _subscribe(subscriber: Subscriber<T>): Subscription {
@@ -39,18 +47,6 @@ export class Updatable<T> extends Subject<T> {
     }
 
     return subscription;
-  }
-
-  getValue(): T {
-    if (!this._hasPendingValue) {
-      this.playOnto(this._factory());
-    }
-
-    if (this.hasError) {
-      throw this.thrownError;
-    } else {
-      return this._value;
-    }
   }
 
   next(value: T): void {
