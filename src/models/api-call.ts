@@ -6,7 +6,7 @@ export interface ApiCall {
   error?: string;
 }
 
-export function create(token?: string): any {
+export function createApi(token?: string): any {
   const defaultParams = token ? {token} : {};
 
   return RecursiveProxyHandler.create('api', (names: Array<string>, params: Array<any>) => {

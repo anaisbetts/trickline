@@ -2,6 +2,7 @@ import { EventType, EventSubType } from './event-type';
 
 export interface ChannelBase {
   id: string;
+  name?: string;
   created: number;
   last_read: string;
   latest: string;
@@ -12,6 +13,16 @@ export interface ChannelBase {
   is_org_shared: boolean;
   shares?: Array<string>;
   shared_team_ids?: Array<string>;
+  unread_count?: number;
+  unread_count_display?: number;
+  mention_count?: number;
+  dm_count?: number;
+}
+
+export interface UsersCounts {
+  channels: Array<ChannelBase>;
+  groups: Array<ChannelBase>;
+  ims: Array<ChannelBase>;
 }
 
 export interface DirectMessage extends ChannelBase {
