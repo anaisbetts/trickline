@@ -21,7 +21,6 @@ export class Store {
     const joinedChannels: Array<Updatable<ChannelBase>> = [];
     let result: UsersCounts = await this.api.users.counts().toPromise();
 
-    console.log(result);
     result.channels.forEach(c => {
       let updater = new Updatable(() =>
         this.api.channels.info({channel: c.id}).map(x => x.channel) as Observable<ChannelBase>);
@@ -49,7 +48,6 @@ export class Store {
       this.channels.setDirect(c.id, updater);
     });
 
-    console.log(`Next'ing channels! ${joinedChannels.length}`);
     this.joinedChannels.next(joinedChannels);
   }
 }
