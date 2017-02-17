@@ -3,6 +3,7 @@ import * as React from 'react';
 
 import {Observable} from 'rxjs/Observable';
 
+import {List} from 'react-virtualized';
 import muiThemeable from 'material-ui/styles/muiThemeable';
 
 import { SimpleView, View } from './view';
@@ -73,11 +74,20 @@ class ChannelListItem extends View<ChannelViewModel, {viewModel: ChannelViewMode
 export const ChannelListItemThemed = muiThemeable()(ChannelListItem);
 
 export class ChannelListView extends SimpleView<ChannelListViewModel> {
-  render() {
-    let items = this.viewModel.joinedChannels.map(x =>
-      <ChannelListItemThemed key={x.value.id} viewModel={new ChannelViewModel(x)} />
-    );
+  rowRenderer(opts: any): JSX.Element {
+    let {index, key, style, isScrolling} = opts;
+    let item = this.viewModel.joinedChannels[index];
 
-    return <ul>{items}</ul>;
+    return <ChannelListItemThemed key={item.value.id} style={style} viewModel={new ChannelViewModel(item)} />;
+  }
+
+  render() {
+    return <List
+      width={300}
+      height={500}
+      rowRenderer={this.rowRenderer.bind(this)}
+      rowCount={this.viewModel.joinedChannels.length}
+      rowHeight={10}
+      />;
   }
 }
