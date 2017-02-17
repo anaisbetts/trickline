@@ -1,6 +1,7 @@
 import { Observable } from 'rxjs/Observable';
 import { Subscription } from 'rxjs/Subscription';
 import { Subject } from 'rxjs/Subject';
+import { Updatable } from './sparse-map';
 
 import * as debug from 'debug';
 
@@ -191,7 +192,13 @@ export class Model {
     let start = Model.notificationForProperty_(target, firstProp, before);
 
     if (isObject(target) && props[0] in target) {
-      start = start.startWith({ sender: target, property: firstProp, value: target[firstProp] });
+      let val = target[firstProp];
+
+      if (isObject(val) && (val instanceof Updatable)) {
+        val = val.value;
+      }
+
+      start = start.startWith({ sender: target, property: firstProp, value: val });
     }
 
     if (props.length === 1) {
@@ -218,6 +225,17 @@ export class Model {
 
     if (!(prop in target)) {
       return Observable.never();
+    }
+
+    if (target[prop] instanceof Updatable) {
+      return (before ? target.changing : target.changed)
+        .startWith({sender: target, property: prop, value: target[prop]})
+        .filter(({property}) => prop === property)
+        .switchMap(cn => {
+          let obs: Observable<any> = cn.value;
+          return obs.skip(1)
+            .map((value) => ({ sender: cn.sender, property: cn.property, value }));
+        });
     }
 
     return (before ? target.changing : target.changed)
