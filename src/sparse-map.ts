@@ -52,6 +52,7 @@ export class Updatable<T> extends Subject<T> {
   }
 
   next(value: T): void {
+    this._hasPendingValue = true;
     super.next(this._value = value);
   }
 
@@ -61,7 +62,6 @@ export class Updatable<T> extends Subject<T> {
   }
 
   playOnto(source: Observable<T>) {
-    this._hasPendingValue = true;
     this._playOnto.set(source.subscribe(this.next.bind(this), this.error.bind(this)));
   }
 }
