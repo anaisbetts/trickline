@@ -6,6 +6,7 @@
   "scripts": {
     "start": "electron-forge start",
     "test-renderer": "electron-mocha --renderer --watch-extensions tsx,ts ./test/**/*.{js,ts}",
+    "dtest": "electron-mocha --renderer --interactive --watch-extensions tsx,ts ./test/**/*.{js,ts}",
     "test": "npm run test-renderer",
     "package": "electron-forge make"
   },
@@ -28,13 +29,15 @@
     "electron-compile": "^5.1.2",
     "electron-debug": "^1.1.0",
     "electron-devtools-installer": "^2.0.1",
+    "electron-remote": "^1.1.2",
     "keycode": "^2.1.8",
     "lru-cache": "^4.0.2",
     "material-ui": "^0.16.7",
     "react": "^15.4.2",
     "react-dom": "^15.4.2",
     "react-tap-event-plugin": "^2.0.1",
-    "rxjs": "^5.0.2"
+    "rxjs": "^5.0.2",
+    "typescript": "^2.1.6"
   },
   "devDependencies": {
     "@types/chai": "^3.4.34",
@@ -53,7 +56,7 @@
     "electron-compilers": "^5.3.1",
     "electron-debug": "^1.1.0",
     "electron-mocha": "^3.3.0",
-    "electron-prebuilt-compile": "1.5.0-beta.1",
+    "electron-prebuilt-compile": "1.6.0",
     "esdoc": "^0.5.2",
     "esdoc-es7-plugin": "0.0.3",
     "esdoc-plugin-async-to-sync": "^0.5.0",
