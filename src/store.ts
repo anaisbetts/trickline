@@ -49,7 +49,7 @@ export class Store {
       this.channels.setDirect(c.id, updater);
     });
 
+    console.log(`Next'ing channels! ${joinedChannels.length}`);
     this.joinedChannels.next(joinedChannels);
   }
 }
-

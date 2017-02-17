@@ -21,10 +21,11 @@ export interface SlackAppState {
   drawerOpen: boolean;
 }
 
-export class SimpleViewModel extends Model {
+export class SlackAppModel extends Model {
   toggleDrawer: Action<boolean>;
   store: Store;
   channelList: ChannelListViewModel;
+  loadInitialState: Action<void>;
 
   constructor() {
     super();
@@ -37,28 +38,34 @@ export class SimpleViewModel extends Model {
     this.store = new Store(localStorage.getItem('token'));
     this.toggleDrawer = Action.create(() => isOpen = !isOpen, false);
     this.channelList = new ChannelListViewModel(this.store);
+
+    this.loadInitialState = new Action<void>(() => this.store.fetchInitialChannelList(), undefined);
   }
 
   @asProperty
   isOpen() { return this.toggleDrawer.result; }
 }
 
-export class SlackApp extends SimpleView<SimpleViewModel> {
+export class SlackApp extends SimpleView<SlackAppModel> {
   constructor() {
     super();
-    this.viewModel = new SimpleViewModel();
+    this.viewModel = new SlackAppModel();
+    this.viewModel.loadInitialState.execute();
   }
 
   render() {
     const vm = this.viewModel;
     const shouldShift = vm.isOpen && window.outerWidth > window.outerHeight;
+    const channelListView = vm.isOpen ?
+      <ChannelListView viewModel={vm.channelList} /> :
+      null;
 
     return <MuiThemeProvider>
       <div style={{marginLeft: shouldShift ? '258px' : '0px', transition: 'margin-left: 450ms cubic-bezier(0.23, 1, 0.32, 1) 0ms'}}>
         <AppBar title='Trickline' onLeftIconButtonTouchTap={vm.toggleDrawer.bind()} zDepth={2}/>
 
         <Drawer open={vm.isOpen} zDepth={1}>
-          <ChannelListView viewModel={vm.channelList} />
+          {channelListView}
         </Drawer>
 
         <p>I am the main content</p>
