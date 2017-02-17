@@ -25,7 +25,7 @@ export class ChannelListViewModel extends Model {
 export class ChannelListView extends SimpleView<ChannelListViewModel> {
   render() {
     let items = this.viewModel.joinedChannels.map(x =>
-      <li>{x.value.name}</li>
+      <li key={x.value.id}>{x.value.name}</li>
     );
 
     return <ul>{items}</ul>;
