@@ -5,7 +5,7 @@ import {Observable} from 'rxjs/Observable';
 
 import {List} from 'react-virtualized';
 
-import { SimpleView, View } from './view';
+import { SimpleView } from './view';
 import { asProperty, notify, Model } from './model';
 import { Store } from './store';
 import { Updatable } from './sparse-map';
@@ -36,13 +36,10 @@ export class ChannelViewModel extends Model {
 
   constructor(model: Updatable<ChannelBase>) {
     super();
-
     this.modelSource = model;
   }
 
-  @asProperty model() {
-    return this.modelSource;
-  }
+  @asProperty model() { return this.modelSource; }
 
   @asProperty mentions() {
     return this.when('model.dm_count', 'model.mention_count_display', (d, m) => (d.value || 0) + (m.value || 0));
