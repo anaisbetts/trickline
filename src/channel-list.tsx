@@ -45,11 +45,11 @@ export class ChannelViewModel extends Model {
   }
 
   @asProperty mentions() {
-    return this.when('model.dm_count', 'model.mention_count', (d, m) => (d.value || 0) + (m.value || 0));
+    return this.when('model.dm_count', 'model.mention_count_display', (d, m) => (d.value || 0) + (m.value || 0));
   }
 
   @asProperty highlighted() {
-    return this.when('mentions', 'model.unread_count', (m, u) =>  m.value > 0 || ((u.value || 0) > 0));
+    return this.when('mentions', 'model.unread_count_display', (m, u) =>  m.value > 0 || ((u.value || 0) > 0));
   }
 }
 
