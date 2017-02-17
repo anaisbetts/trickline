@@ -27,25 +27,28 @@ export class Store {
     this.joinedChannels = new InMemorySparseMap<string, ChannelBase>();
   }
 
-  async update(): Promise<void> {
+  async fetchInitialChannelList(): Promise<void> {
     let result: UsersCounts = await this.api.users.counts().toPromise();
 
     result.channels.forEach(c => {
-      let updater = new Updatable(() => this.api.channels.info({channel: c.id}).map(x => x.channel as ChannelBase));
+      let updater = new Updatable(() =>
+        this.api.channels.info({channel: c.id}).map(x => x.channel) as Observable<ChannelBase>);
       updater.playOnto(Observable.of(c));
 
       this.joinedChannels.setDirect(c.id, updater);
     });
 
     result.groups.forEach(c => {
-      let updater = new Updatable(() => this.api.groups.info({channel: c.id}).map(x => x.group as ChannelBase));
+      let updater = new Updatable(() =>
+        this.api.groups.info({channel: c.id}).map(x => x.group)) as Observable<ChannelBase>;
       updater.playOnto(Observable.of(c));
 
       this.joinedChannels.setDirect(c.id, updater);
     });
 
     result.ims.forEach(c => {
-      let updater = new Updatable(() => this.api.im.info({channel: c.id}).map(x => x.im as ChannelBase));
+      let updater = new Updatable(() => 
+        this.api.im.info({channel: c.id}).map(x => x.im)) as Observable<ChannelBase>;
       updater.playOnto(Observable.of(c));
 
       this.joinedChannels.setDirect(c.id, updater);
