@@ -1,10 +1,12 @@
 import {app, BrowserWindow } from 'electron';
+import {enableLiveReload} from 'electron-compile';
 import * as electronDebug from 'electron-debug';
 import installExtension from 'electron-devtools-installer';
 import { VUEJS_DEVTOOLS } from 'electron-devtools-installer';
 
 let mainWindow = null;
 electronDebug({enabled: true});
+enableLiveReload();
 
 const isDevMode = process.execPath.match(/[\\/]electron/);
 

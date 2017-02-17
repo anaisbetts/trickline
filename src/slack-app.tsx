@@ -1,71 +1,40 @@
 // tslint:disable-next-line:no-unused-variable
 import * as React from 'react';
 
+// tslint:disable-next-line:no-unused-variable
+import { Observable } from 'rxjs/Observable';
+
 import { default as AppBar } from 'material-ui/AppBar';
 import { default as Drawer } from 'material-ui/Drawer';
 import { default as MuiThemeProvider } from 'material-ui/styles/MuiThemeProvider';
 
-import { Observable } from 'rxjs/Observable';
-import { ChannelBase, UsersCounts } from './models/api-shapes';
-import { createApi } from './models/api-call';
-
 import { Action } from './action';
 import { SimpleView } from './view';
 import { asProperty, Model } from './model';
-import { InMemorySparseMap, SparseMap, Updatable } from './sparse-map';
+import { Store } from './store';
+
+import {ChannelListViewModel, ChannelListView} from './channel-list';
 
 export interface SlackAppState {
   drawerOpen: boolean;
 }
 
-export class Store {
-  joinedChannels: SparseMap<string, ChannelBase>;
-  api: any;
-
-  constructor(token?: string) {
-    this.api = createApi(token);
-    this.joinedChannels = new InMemorySparseMap<string, ChannelBase>();
-  }
-
-  async fetchInitialChannelList(): Promise<void> {
-    let result: UsersCounts = await this.api.users.counts().toPromise();
-
-    result.channels.forEach(c => {
-      let updater = new Updatable(() =>
-        this.api.channels.info({channel: c.id}).map(x => x.channel) as Observable<ChannelBase>);
-      updater.playOnto(Observable.of(c));
-
-      this.joinedChannels.setDirect(c.id, updater);
-    });
-
-    result.groups.forEach(c => {
-      let updater = new Updatable(() =>
-        this.api.groups.info({channel: c.id}).map(x => x.group)) as Observable<ChannelBase>;
-      updater.playOnto(Observable.of(c));
-
-      this.joinedChannels.setDirect(c.id, updater);
-    });
-
-    result.ims.forEach(c => {
-      let updater = new Updatable(() => 
-        this.api.im.info({channel: c.id}).map(x => x.im)) as Observable<ChannelBase>;
-      updater.playOnto(Observable.of(c));
-
-      this.joinedChannels.setDirect(c.id, updater);
-    });
-  }
-}
-
 export class SimpleViewModel extends Model {
   toggleDrawer: Action<boolean>;
   store: Store;
+  channelList: ChannelListViewModel;
 
   constructor() {
     super();
 
+    // NB: Solely for debugging purposes
+    global.slackApp = this;
+
     let isOpen = false;
+
     this.store = new Store(localStorage.getItem('token'));
     this.toggleDrawer = Action.create(() => isOpen = !isOpen, false);
+    this.channelList = new ChannelListViewModel(this.store);
   }
 
   @asProperty
@@ -87,7 +56,7 @@ export class SlackApp extends SimpleView<SimpleViewModel> {
         <AppBar title='Trickline' onLeftIconButtonTouchTap={vm.toggleDrawer.bind()} zDepth={2}/>
 
         <Drawer open={vm.isOpen} zDepth={1}>
-          <h2>I'm in the drawer</h2>
+          <ChannelListView viewModel={vm.channelList} />
         </Drawer>
 
         <p>I am the main content</p>
