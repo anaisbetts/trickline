@@ -1,6 +1,9 @@
 import { RecursiveProxyHandler } from 'electron-remote';
 import { Observable } from 'rxjs/Observable';
 
+import '../standard-operators';
+import 'rxjs/add/observable/dom/ajax';
+
 export interface ApiCall {
   ok: boolean;
   error?: string;

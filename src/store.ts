@@ -4,6 +4,8 @@ import { InMemorySparseMap, SparseMap, Updatable } from './sparse-map';
 import { createApi } from './models/api-call';
 import { ChannelBase, UsersCounts } from './models/api-shapes';
 
+import './standard-operators';
+
 export class Store {
   channels: SparseMap<string, ChannelBase>;
   joinedChannels: Updatable<Array<Updatable<ChannelBase>>>;

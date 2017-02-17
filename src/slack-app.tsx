@@ -15,6 +15,8 @@ import { Store } from './store';
 
 import {ChannelListViewModel, ChannelListView} from './channel-list';
 
+import './standard-operators';
+
 export interface SlackAppState {
   drawerOpen: boolean;
 }

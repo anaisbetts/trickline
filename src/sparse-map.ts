@@ -5,6 +5,8 @@ import {SerialSubscription} from './serial-subscription';
 
 import {Subject} from 'rxjs/Subject';
 
+import './standard-operators';
+
 export type Pair<K, V> = { Key: K, Value: V };
 
 export class Updatable<T> extends Subject<T> {

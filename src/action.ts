@@ -1,7 +1,11 @@
 import * as debug from 'debug';
-import { ConnectableObservable, Observable, BehaviorSubject, Subject } from 'rxjs';
+import { BehaviorSubject } from 'rxjs/BehaviorSubject';
+import { Subject } from 'rxjs/Subject';
+import { Observable } from 'rxjs/Observable';
 
 import { SerialSubscription } from './serial-subscription';
+
+import './standard-operators';
 
 export interface CreateSelector<TRet> { (): TRet; };
 export interface CreateAsyncSelector<TRet> { (): Observable<TRet>|Promise<TRet>; };
