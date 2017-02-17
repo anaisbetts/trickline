@@ -5,6 +5,8 @@ import {SerialSubscription} from './serial-subscription';
 
 import {Subject} from 'rxjs/Subject';
 
+import './standard-operators';
+
 export type Pair<K, V> = { Key: K, Value: V };
 
 export class Updatable<T> extends Subject<T> {
@@ -50,6 +52,7 @@ export class Updatable<T> extends Subject<T> {
   }
 
   next(value: T): void {
+    this._hasPendingValue = true;
     super.next(this._value = value);
   }
 
@@ -59,14 +62,13 @@ export class Updatable<T> extends Subject<T> {
   }
 
   playOnto(source: Observable<T>) {
-    this._hasPendingValue = true;
     this._playOnto.set(source.subscribe(this.next.bind(this), this.error.bind(this)));
   }
 }
 
 export interface SparseMap<K, V> {
-  subscribe(key: K): Updatable<V>;
-  subscribeAll(): Map<K, Updatable<V>>;
+  listen(key: K): Updatable<V>;
+  listenAll(): Map<K, Updatable<V>>;
 
   setDirect(key: K, value: Updatable<V>): Promise<void>;
   setLazy(key: K, value: Observable<V>): Promise<void>;
@@ -76,18 +78,18 @@ export interface SparseMap<K, V> {
 export class SparseMapMixins {
   static subscribeMany<K, V>(this: SparseMap<K, V>, keys: Array<K>): Map<K, Updatable<V>> {
     return keys.reduce((acc, x) => {
-      acc.set(x, this.subscribe(x));
+      acc.set(x, this.listen(x));
       return acc;
     }, new Map<K, Updatable<V>>());
   }
 
   static get<K, V>(this: SparseMap<K, V>, key: K): Promise<V> {
-    return this.subscribe(key).take(1).toPromise();
+    return this.listen(key).take(1).toPromise();
   }
 
   static getMany<K, V>(this: SparseMap<K, V>, keys: Array<K>): Promise<Map<K, V>> {
     return Observable.of(...keys)
-      .flatMap(k => this.subscribe(k).take(1).map(v => ({Key: k, Value: v})))
+      .flatMap(k => this.listen(k).take(1).map(v => ({Key: k, Value: v})))
       .reduce((acc, x) => {
         acc.set(x.Key, x.Value);
         return acc;
@@ -105,55 +107,56 @@ export class SparseMapMixins {
 }
 
 class InMemorySparseMap<K, V> implements SparseMap<K, V> {
-  private latest: Map<K, Updatable<V>>;
-  private factory: (key: K) => Observable<V> | undefined;
+  private _latest: Map<K, Updatable<V>>;
+  private _factory: ((key: K) => Observable<V>) | undefined;
 
-  constructor(factory?: (key: K) => Observable<V> = undefined) {
-    this.latest = new Map();
-    this.factory = factory;
+  constructor(factory: ((key: K) => Observable<V>) | undefined = undefined) {
+    this._latest = new Map();
+    this._factory = factory;
   }
 
-  subscribe(key: K): Updatable<V> {
-    let ret = this.latest.get(key);
+  listen(key: K): Updatable<V> {
+    let ret = this._latest.get(key);
     if (ret) return ret;
 
-    if (this.factory) {
-      ret = new Updatable<V>(() => this.factory(key));
+    if (this._factory) {
+      let fact = this._factory.bind(this);
+      ret = new Updatable<V>(() => fact(key));
     } else {
       ret = new Updatable<V>();
     }
 
-    this.latest.set(key, ret);
+    this._latest.set(key, ret);
     return ret;
   }
 
-  subscribeAll(): Map<K, Updatable<V>> {
+  listenAll(): Map<K, Updatable<V>> {
     let ret = new Map<K, Updatable<V>>();
-    for (let k of this.latest.keys()) {
-      ret.set(k, this.latest.get(k));
+    for (let k of this._latest.keys()) {
+      ret.set(k, this._latest.get(k));
     }
 
     return ret;
   }
 
   setDirect(key: K, value: Updatable<V>): Promise<void> {
-    let prev = this.latest.get(key);
+    let prev = this._latest.get(key);
     if (prev) prev.playOnto(Observable.empty());
 
-    this.latest.set(key, value);
+    this._latest.set(key, value);
     return Promise.resolve();
   }
 
   setLazy(key: K, value: Observable<V>): Promise<void> {
-    this.subscribe(key).playOnto(value);
+    this.listen(key).playOnto(value);
     return Promise.resolve();
   }
 
   invalidate(key: K): Promise<void> {
-    let val = this.latest.get(key);
+    let val = this._latest.get(key);
     if (val) {
       val.playOnto(Observable.empty());
-      this.latest.delete(key);
+      this._latest.delete(key);
     }
 
     return Promise.resolve();

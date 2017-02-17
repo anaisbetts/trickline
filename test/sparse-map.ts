@@ -96,4 +96,13 @@ describe('The Updatable class', function() {
     input2.next(2);
     expect(latest).to.equal(2);
   });
+
+  it("doesn't reset once next is called", function() {
+    let fixture = new Updatable<number>(() => Observable.of(-1));
+    fixture.next(42);
+
+    let latest = 0;
+    fixture.subscribe(x => latest = x);
+    expect(latest).to.equal(42);
+  });
 });

@@ -1,10 +1,12 @@
 import {app, BrowserWindow } from 'electron';
+import {enableLiveReload} from 'electron-compile';
 import * as electronDebug from 'electron-debug';
 import installExtension from 'electron-devtools-installer';
-import { VUEJS_DEVTOOLS } from 'electron-devtools-installer';
+import { REACT_DEVELOPER_TOOLS } from 'electron-devtools-installer';
 
 let mainWindow = null;
 electronDebug({enabled: true});
+enableLiveReload();
 
 const isDevMode = process.execPath.match(/[\\/]electron/);
 
@@ -21,7 +23,9 @@ app.on('ready', async () => {
 
   // Open the DevTools.
   if (isDevMode) {
-    await installExtension(VUEJS_DEVTOOLS);
+    await installExtension(REACT_DEVELOPER_TOOLS);
+    mainWindow.webContents.openDevTools();
+  } else {
     mainWindow.webContents.openDevTools();
   }
 });

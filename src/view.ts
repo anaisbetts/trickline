@@ -1,7 +1,12 @@
-import { Observable, AsyncSubject, Subject } from 'rxjs/Rx';
+import { Observable } from 'rxjs/Observable';
+import { AsyncSubject } from 'rxjs/AsyncSubject';
+import { Subject } from 'rxjs/Subject';
+
 import * as React from 'react';
 
 import { Model } from './model';
+
+import './standard-operators';
 
 export interface AttachedLifecycle<P, S> {
   lifecycle: Lifecycle<P, S>;
