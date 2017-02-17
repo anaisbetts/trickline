@@ -82,6 +82,8 @@ export abstract class View<T extends Model, P extends HasViewModel<T>>
       .flatMap(() => this.viewModel.changed)
       .takeUntil(this.lifecycle.willUnmount)
       .subscribe(() => this.forceUpdate());
+
+    this.lifecycle.willUnmount.subscribe(() => { if (this.viewModel) this.viewModel.unsubscribe(); });
   }
 }
 

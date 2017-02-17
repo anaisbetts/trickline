@@ -4,7 +4,6 @@ import * as React from 'react';
 import {Observable} from 'rxjs/Observable';
 
 import {List} from 'react-virtualized';
-import muiThemeable from 'material-ui/styles/muiThemeable';
 
 import { SimpleView, View } from './view';
 import { asProperty, notify, Model } from './model';
@@ -54,13 +53,11 @@ export class ChannelViewModel extends Model {
   }
 }
 
-class ChannelListItem extends View<ChannelViewModel, {viewModel: ChannelViewModel, muiTheme: any}> {
+class ChannelListItem extends SimpleView<ChannelViewModel> {
   render() {
     const vm = this.props.viewModel;
-    const accent = this.props.muiTheme.palette.accent1Color;
-
     const mention = vm.mentions > 0 ?
-      <span style={{backgroundColor: accent, color: 'white', padding: '2px', borderRadius: '6px', marginRight: '4px'}}>
+      <span style={{backgroundColor: 'red', color: 'white', padding: '2px', borderRadius: '6px', marginRight: '4px'}}>
         {vm.mentions}
       </span> :
       null;
@@ -71,14 +68,12 @@ class ChannelListItem extends View<ChannelViewModel, {viewModel: ChannelViewMode
   }
 }
 
-export const ChannelListItemThemed = muiThemeable()(ChannelListItem);
-
 export class ChannelListView extends SimpleView<ChannelListViewModel> {
   rowRenderer(opts: any): JSX.Element {
-    let {index, key, style, isScrolling} = opts;
+    let {index} = opts;
     let item = this.viewModel.joinedChannels[index];
 
-    return <ChannelListItemThemed key={item.value.id} style={style} viewModel={new ChannelViewModel(item)} />;
+    return <ChannelListItem key={item.value.id} viewModel={new ChannelViewModel(item)} />;
   }
 
   render() {

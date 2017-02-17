@@ -57,7 +57,7 @@ export class SlackApp extends SimpleView<SlackAppModel> {
     const vm = this.viewModel;
     const shouldShift = vm.isOpen && window.outerWidth > window.outerHeight;
     const channelListView = vm.isOpen ?
-      <ChannelListView viewModel={vm.channelList} /> :
+      <ChannelListView viewModel={new ChannelListViewModel(vm.store)} /> :
       null;
 
     return <MuiThemeProvider>
