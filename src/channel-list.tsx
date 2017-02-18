@@ -80,7 +80,7 @@ export class ChannelListView extends SimpleView<ChannelListViewModel> {
     let {index, style} = opts;
     let item = this.viewModel.joinedChannels[index];
 
-    return <div style={style}><ChannelListItem key={item.value.id} viewModel={new ChannelViewModel(item)} /></div>;
+    return <div key={item.value.id} style={style}><ChannelListItem viewModel={new ChannelViewModel(item)} /></div>;
   }
 
   listRenderer(opts: any): JSX.Element {
