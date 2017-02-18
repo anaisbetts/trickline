@@ -3,7 +3,7 @@ import * as React from 'react';
 
 import {Observable} from 'rxjs/Observable';
 
-import {List} from 'react-virtualized';
+import { AutoSizer, CellMeasurer, CellMeasurerCache, List } from 'react-virtualized';
 
 import { SimpleView } from './view';
 import { asProperty, notify, Model } from './model';
@@ -33,6 +33,7 @@ export class ChannelViewModel extends Model {
   isSelected: boolean;
   mentions: number;
   highlighted: boolean;
+  truncatedName: string;
 
   constructor(model: Updatable<ChannelBase>) {
     super();
@@ -48,7 +49,16 @@ export class ChannelViewModel extends Model {
   @asProperty highlighted() {
     return this.when('mentions', 'model.unread_count_display', (m, u) =>  m.value > 0 || ((u.value || 0) > 0));
   }
+
+  @asProperty truncatedName() {
+    return this.when('model.name').map(n => {
+      return n.value.length < 25 ?
+        n.value :
+        `${n.value.substr(0,25)}...`;
+    });
+  }
 }
+
 
 class ChannelListItem extends SimpleView<ChannelViewModel> {
   render() {
@@ -59,27 +69,33 @@ class ChannelListItem extends SimpleView<ChannelViewModel> {
       </span> :
       null;
 
-    const content = <span style={{fontWeight: vm.highlighted ? 'bold' : 'normal'}}>{vm.model.name}</span>;
+    const content = <span style={{fontWeight: vm.highlighted ? 'bold' : 'normal'}}>{vm.truncatedName}</span>;
 
-    return <li>{mention}{content}</li>;
+    return <div>{mention}{content}</div>;
   }
 }
 
 export class ChannelListView extends SimpleView<ChannelListViewModel> {
   rowRenderer(opts: any): JSX.Element {
-    let {index} = opts;
+    let {index, style} = opts;
     let item = this.viewModel.joinedChannels[index];
 
-    return <ChannelListItem key={item.value.id} viewModel={new ChannelViewModel(item)} />;
+    return <div style={style}><ChannelListItem key={item.value.id} viewModel={new ChannelViewModel(item)} /></div>;
+  }
+
+  listRenderer(opts: any): JSX.Element {
+    let {width, height} = opts;
+
+    return <List
+        width={width}
+        height={height}
+        rowRenderer={this.rowRenderer.bind(this)}
+        rowCount={this.viewModel.joinedChannels.length}
+        rowHeight={18}
+      />;
   }
 
   render() {
-    return <List
-      width={300}
-      height={500}
-      rowRenderer={this.rowRenderer.bind(this)}
-      rowCount={this.viewModel.joinedChannels.length}
-      rowHeight={10}
-      />;
+    return <AutoSizer>{this.listRenderer.bind(this)}</AutoSizer>;
   }
 }
