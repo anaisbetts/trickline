@@ -59,7 +59,6 @@ export class ChannelViewModel extends Model {
   }
 }
 
-
 class ChannelListItem extends SimpleView<ChannelViewModel> {
   render() {
     const vm = this.props.viewModel;

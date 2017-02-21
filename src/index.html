@@ -19,17 +19,25 @@
   <script type="text/typescript">
   if (!process.execPath.match(/[\\/]electron-prebuilt/)) {
     process.env.NODE_ENV = 'production';
-  }
+  }   
   </script>
 
   <script type="text/tsx">
   import * as React from 'react';
   import * as ReactDOM from 'react-dom';
-  import { SlackApp } from './slack-app';
+  import { AppContainer } from 'react-hot-loader';
 
   const injectTapEventPlugin = require('react-tap-event-plugin');
 
   injectTapEventPlugin();
-  ReactDOM.render(<SlackApp />, document.getElementById('app'));
+  let render = () => {
+    const SlackApp = require('./slack-app').SlackApp;
+    ReactDOM.render(<AppContainer><SlackApp /></AppContainer>, document.getElementById('app'));
+  }
+
+  render();
+  if (module.hot) {
+    module.hot.accept(render);
+  }
   </script>
 </html>
