@@ -10,7 +10,7 @@ import { default as MuiThemeProvider } from 'material-ui/styles/MuiThemeProvider
 
 import { Action } from './action';
 import { SimpleView } from './view';
-import { asProperty, Model } from './model';
+import { fromObservable, Model } from './model';
 import { Store } from './store';
 
 import {ChannelListViewModel, ChannelListView} from './channel-list';
@@ -26,6 +26,7 @@ export class SlackAppModel extends Model {
   store: Store;
   channelList: ChannelListViewModel;
   loadInitialState: Action<void>;
+  @fromObservable isOpen: boolean;
 
   constructor() {
     super();
@@ -40,10 +41,8 @@ export class SlackAppModel extends Model {
     this.channelList = new ChannelListViewModel(this.store);
 
     this.loadInitialState = new Action<void>(() => this.store.fetchInitialChannelList(), undefined);
+    this.toggleDrawer.result.toProperty(this, 'isOpen');
   }
-
-  @asProperty
-  isOpen() { return this.toggleDrawer.result; }
 }
 
 export class SlackApp extends SimpleView<SlackAppModel> {
@@ -57,7 +56,7 @@ export class SlackApp extends SimpleView<SlackAppModel> {
     const vm = this.viewModel;
     const shouldShift = vm.isOpen && window.outerWidth > window.outerHeight;
     const channelListView = vm.isOpen ?
-      <ChannelListView viewModel={vm.channelList} /> :
+      <ChannelListView viewModel={new ChannelListViewModel(vm.store)} /> :
       null;
 
     return <MuiThemeProvider>

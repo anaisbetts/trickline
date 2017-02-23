@@ -1,37 +1,37 @@
 import {expect} from './support';
 import {Observable, Subject} from 'rxjs/Rx';
 
-import {notify, asProperty, Model} from '../src/model';
+import {fromObservable, notify, Model} from '../src/model';
+import {Updatable} from '../src/sparse-map';
+
 import '../src/custom-operators';
 
 @notify('foo', 'bar')
 class TestClass extends Model {
-  someSubject: Subject<Number>
+  someSubject: Subject<number>;
   foo: Number;
   bar: Number;
   baz: Number;
-
-  @asProperty
-  derived() {
-    return Observable.of(42);
-  }
-
-  @asProperty
-  subjectDerived() {
-    return this.someSubject
-      .map((x) => x * 10)
-      .startWith(0);
-  }
+  updatableFoo: Updatable<number>;
+  @fromObservable derived: number;
+  @fromObservable subjectDerived: number;
 
   constructor() {
     super();
+    this.updatableFoo = new Updatable(() => Observable.of(6));
     this.someSubject = new Subject();
+
+    Observable.of(42).toProperty(this, 'derived');
+    this.someSubject
+      .map((x) => x * 10)
+      .startWith(0)
+      .toProperty(this, 'subjectDerived');
   }
 }
 
 describe('the notify attribute', function() {
   it('should notify me!', function() {
-    var fixture = new TestClass();
+    let fixture = new TestClass();
 
     let result = Observable.merge(
       fixture.changing.map((x) => ({ changing: true, name: x.property })),
@@ -61,15 +61,15 @@ describe('the notify attribute', function() {
   });
 });
 
-describe('the asProperty attribute', function() {
+describe('the toProperty method', function() {
   it('should return a canned value', function() {
-    var fixture = new TestClass();
+    let fixture = new TestClass();
 
     expect(fixture.derived).to.equal(42);
   });
 
   it('should notify on changes', function() {
-    var fixture = new TestClass();
+    let fixture = new TestClass();
     expect(fixture.subjectDerived).to.equal(0);
 
     let changes = Observable.merge(
@@ -141,7 +141,7 @@ describe('the when method', function() {
   });
 
   it('should return nothing for expressions it cant actually fetch', function() {
-    var fixture = new TestClass();
+    let fixture = new TestClass();
     let result = Model.observableForPropertyChain_(fixture, '__nothere').createCollection();
     expect(result.length).to.equal(0);
 
@@ -150,7 +150,7 @@ describe('the when method', function() {
   });
 
   it('should subscribe to a one-item expression chain', function() {
-    var fixture = new TestClass();
+    let fixture = new TestClass();
     let result = Model.observableForPropertyChain_(fixture, 'foo').createCollection();
     expect(result.length).to.equal(1);
 
@@ -190,8 +190,8 @@ describe('the when method', function() {
   });
 
   it('switch should do what I expect', function() {
-    var input = new Subject();
-    var result = input
+    let input = new Subject();
+    let result = input
       .map((x) => x.subj)
       .switch()
       .createCollection();
@@ -205,9 +205,9 @@ describe('the when method', function() {
   });
 
   it('should subscribe to a multi-item expression chain', function() {
-    var fixture = new TestClass();
+    let fixture = new TestClass();
     fixture.bar = new TestClass();
-    var barFixture = fixture.bar;
+    let barFixture = fixture.bar;
 
     let result = Model.observableForPropertyChain_(fixture, 'bar.foo').createCollection();
     expect(result.length).to.equal(1);
@@ -242,7 +242,7 @@ describe('the when method', function() {
   });
 
   it('when should work in the single item case', function() {
-    var fixture = new TestClass();
+    let fixture = new TestClass();
     let result = fixture.when('foo').createCollection();
     expect(result.length).to.equal(1);
 
@@ -263,11 +263,11 @@ describe('the when method', function() {
   });
 
   it('when should combine values', function() {
-    var fixture = new TestClass();
+    let fixture = new TestClass();
 
     let result = fixture.when(
       'derived', 'subjectDerived',
-      (x,y) => x.value + y.value).createCollection();
+      (x, y) => x.value + y.value).createCollection();
 
     fixture.someSubject.next(10);
 
@@ -280,5 +280,17 @@ describe('the when method', function() {
     fixture.someSubject.next(2);
     expect(result.length).to.equal(3);
     expect(result[2]).to.equal(2*10 + 42);
+  });
+
+  it('when should reach through Updatables', function() {
+    let fixture = new TestClass();
+    let result = fixture.when('updatableFoo').createCollection();
+
+    expect(result.length).to.equal(1);
+    expect(result[0].value).to.equal(6);
+
+    fixture.updatableFoo.next(12);
+    expect(result.length).to.equal(2);
+    expect(result[1].value).to.equal(12);
   });
 });

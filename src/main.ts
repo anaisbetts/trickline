@@ -6,7 +6,7 @@ import { REACT_DEVELOPER_TOOLS } from 'electron-devtools-installer';
 
 let mainWindow = null;
 electronDebug({enabled: true});
-enableLiveReload();
+enableLiveReload({strategy: 'react-hmr'});
 
 const isDevMode = process.execPath.match(/[\\/]electron/);
 
