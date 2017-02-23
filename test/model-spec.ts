@@ -1,35 +1,31 @@
 import {expect} from './support';
 import {Observable, Subject} from 'rxjs/Rx';
 
-import {notify, asProperty, Model} from '../src/model';
+import {fromObservable, notify, Model} from '../src/model';
 import {Updatable} from '../src/sparse-map';
 
 import '../src/custom-operators';
 
 @notify('foo', 'bar')
 class TestClass extends Model {
-  someSubject: Subject<Number>;
+  someSubject: Subject<number>;
   foo: Number;
   bar: Number;
   baz: Number;
   updatableFoo: Updatable<number>;
-
-  @asProperty
-  derived() {
-    return Observable.of(42);
-  }
-
-  @asProperty
-  subjectDerived() {
-    return this.someSubject
-      .map((x) => x * 10)
-      .startWith(0);
-  }
+  @fromObservable derived: number;
+  @fromObservable subjectDerived: number;
 
   constructor() {
     super();
     this.updatableFoo = new Updatable(() => Observable.of(6));
     this.someSubject = new Subject();
+
+    Observable.of(42).toProperty(this, 'derived');
+    this.someSubject
+      .map((x) => x * 10)
+      .startWith(0)
+      .toProperty(this, 'subjectDerived');
   }
 }
 
@@ -85,6 +81,7 @@ describe('the asProperty attribute', function() {
 
     fixture.someSubject.next(10);
     expect(fixture.subjectDerived).to.equal(100);
+
     expect(changes[0]).to.deep.equal({ changing: true, name: 'subjectDerived' });
     expect(changes[1]).to.deep.equal({ changing: false, name: 'subjectDerived' });
   });
@@ -271,7 +268,7 @@ describe('the when method', function() {
 
     let result = fixture.when(
       'derived', 'subjectDerived',
-      (x,y) => x.value + y.value).createCollection();
+      (x, y) => x.value + y.value).createCollection();
 
     fixture.someSubject.next(10);
 
