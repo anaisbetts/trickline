@@ -286,7 +286,7 @@ describe('the when method', function() {
     expect(result[2]).to.equal(2*10 + 42);
   });
 
-  it.only('when should reach through Updatables', function() {
+  it('when should reach through Updatables', function() {
     let fixture = new TestClass();
     let result = fixture.when('updatableFoo').createCollection();
 
