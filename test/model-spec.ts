@@ -61,7 +61,7 @@ describe('the notify attribute', function() {
   });
 });
 
-describe('the asProperty attribute', function() {
+describe('the toProperty method', function() {
   it('should return a canned value', function() {
     let fixture = new TestClass();
 
@@ -81,7 +81,6 @@ describe('the asProperty attribute', function() {
 
     fixture.someSubject.next(10);
     expect(fixture.subjectDerived).to.equal(100);
-
     expect(changes[0]).to.deep.equal({ changing: true, name: 'subjectDerived' });
     expect(changes[1]).to.deep.equal({ changing: false, name: 'subjectDerived' });
   });

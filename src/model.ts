@@ -62,55 +62,56 @@ export function notify(...properties: Array<string>) {
   };
 }
 
-export function asProperty(target: Object, key: string, descriptor: PropertyDescriptor) {
-  let hasSubscribedKey = `__hasSubscribed_${key}`;
-  let latestValueKey = `__latestValue_${key}`;
-  let generatorKey = `__generator_${key}`;
+export function fromObservable(target: Model, propertyKey: string): void {
+  if (propertyKey in target) delete target[propertyKey];
 
-  [hasSubscribedKey, latestValueKey].forEach((x) => {
-    Object.defineProperty(target, x, {
-      configurable: false,
-      enumerable: false,
-      writable: true,
-      value: undefined
-    });
-  });
+  const obsPropertyKey: string = `___${propertyKey}_Observable`;
+  const valPropertyKey: string = `___${propertyKey}_Latest`;
+  const subPropertyKey: string = `___${propertyKey}_Subscription`;
 
-  Object.defineProperty(target, generatorKey, {
-    configurable: false,
-    enumerable: false,
-    value: descriptor.value
-  });
+  target[obsPropertyKey] = null;
 
-  let ret: PropertyDescriptor = {
-    configurable: descriptor.configurable || true,
-    enumerable: descriptor.enumerable || true,
+  Object.defineProperty(target, propertyKey, {
+    get: function(this: Model): any {
+      if (!this[subPropertyKey]) {
+        this[subPropertyKey] = new Subscription();
 
-    get: function(this: any) {
-      let that = this;
-      if (that[hasSubscribedKey]) return that[latestValueKey];
-      let observable: Observable<any> = that[generatorKey]();
-
-      this.innerDisp.add(observable
-        .filter((x) => that[latestValueKey] !== x)
-        .subscribe(
-          function(x) {
-            that.changing.next({sender: that, property: key, value: that[latestValueKey]});
-            that[latestValueKey] = x;
-            that.changed.next({sender: that, property: key, value: x});
+        this[subPropertyKey].add((this[obsPropertyKey] as Observable<any>).subscribe(
+          (x) => {
+            this.changing.next({sender: target, property: propertyKey, value: this[valPropertyKey]});
+            this[valPropertyKey] = x;
+            this.changed.next({sender: target, property: propertyKey, value: this[valPropertyKey]});
           }, (e) => { throw e; }, () => {
-            d(`Observable for ${key} completed!`);
+            d(`Observable for ${propertyKey} completed!`);
           }));
 
-      that[hasSubscribedKey] = true;
-      return that[latestValueKey];
-    },
-    set: function() {
-      throw new Error(`Cannot assign Derived Property ${key}`);
-    }
-  };
+        this[subPropertyKey].add(() => this[obsPropertyKey] = null);
+        this.innerDisp.add(this[subPropertyKey]);
+      }
 
-  return ret;
+      return this[valPropertyKey];
+    },
+    set: () => {
+      throw new Error('Observable properties are read-only');
+    }
+  });
+}
+
+export function toProperty<T>(this: Observable<T>, target: Model, propertyKey: string) {
+  const obsPropertyKey: string = `___${propertyKey}_Observable`;
+  if (!obsPropertyKey in target) {
+    throw new Error(`Make sure to mark ${propertyKey} with the @fromObservable decorator`);
+  }
+
+  target[obsPropertyKey] = this;
+  let _dontcare = target[propertyKey];
+}
+
+Observable.prototype['toProperty'] = toProperty;
+declare module 'rxjs/Observable' {
+  interface Observable<T> {
+    toProperty: typeof toProperty;
+  }
 }
 
 export interface WhenSelector<TRet> { (...vals: Array<any>) : TRet; };

@@ -2,11 +2,12 @@
 import * as React from 'react';
 
 import {Observable} from 'rxjs/Observable';
+import {Subscription} from 'rxjs/Subscription';
 
-import { AutoSizer, CellMeasurer, CellMeasurerCache, List } from 'react-virtualized';
+import { AutoSizer, List } from 'react-virtualized';
 
 import { SimpleView } from './view';
-import { asProperty, notify, Model } from './model';
+import { fromObservable, notify, Model } from './model';
 import { Store } from './store';
 import { Updatable } from './sparse-map';
 
@@ -15,47 +16,40 @@ import { ChannelBase } from './models/api-shapes';
 export class ChannelListViewModel extends Model {
   store: Store;
   selectedChannel: ChannelBase;
-  joinedChannels: Array<Updatable<ChannelBase>>;
+  @fromObservable joinedChannels: Array<Updatable<ChannelBase>>;
 
   constructor(store: Store) {
     super();
     this.store = store;
+    store.joinedChannels.toProperty(this, 'joinedChannels');
   }
-
-  @asProperty
-  joinedChannels() { return this.store.joinedChannels; }
 }
 
 @notify('isSelected')
 export class ChannelViewModel extends Model {
-  model: ChannelBase;
-  modelSource: Updatable<ChannelBase>;
   isSelected: boolean;
-  mentions: number;
-  highlighted: boolean;
-  truncatedName: string;
+
+  @fromObservable model: ChannelBase;
+  @fromObservable mentions: number;
+  @fromObservable highlighted: boolean;
+  @fromObservable truncatedName: string;
 
   constructor(model: Updatable<ChannelBase>) {
     super();
-    this.modelSource = model;
-  }
 
-  @asProperty model() { return this.modelSource; }
+    model.toProperty(this, 'model');
 
-  @asProperty mentions() {
-    return this.when('model.dm_count', 'model.mention_count_display', (d, m) => (d.value || 0) + (m.value || 0));
-  }
+    this.when('model.dm_count', 'model.mention_count_display', (d, m) => (d.value || 0) + (m.value || 0))
+      .toProperty(this, 'mentions');
 
-  @asProperty highlighted() {
-    return this.when('mentions', 'model.unread_count_display', (m, u) =>  m.value > 0 || ((u.value || 0) > 0));
-  }
+    this.when('mentions', 'model.unread_count_display', (m, u) =>  m.value > 0 || ((u.value || 0) > 0))
+      .toProperty(this, 'highlighted');
 
-  @asProperty truncatedName() {
-    return this.when('model.name').map(n => {
+    this.when('model.name').map(n => {
       return n.value.length < 25 ?
         n.value :
-        `${n.value.substr(0,25)}...`;
-    });
+        `${n.value.substr(0, 25)}...`;
+    }).toProperty(this, 'truncatedName');
   }
 }
 
