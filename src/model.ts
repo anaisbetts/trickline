@@ -191,7 +191,7 @@ export class Model {
     let firstProp = props[0];
     let start = Model.notificationForProperty_(target, firstProp, before);
 
-    if (isObject(target)) {
+    if (isObject(target) && firstProp in target) {
       let val = target[firstProp];
 
       if (isObject(val) && (val instanceof Updatable)) {
