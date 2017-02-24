@@ -13,7 +13,7 @@ import { SimpleView } from './lib/view';
 import { fromObservable, Model } from './lib/model';
 import { Store } from './lib/store';
 
-import {ChannelListViewModel, ChannelListView} from './channel-list';
+import { ChannelListViewModel, ChannelListView } from './channel-list';
 
 import './lib/standard-operators';
 
@@ -36,7 +36,7 @@ export class SlackAppModel extends Model {
 
     let isOpen = false;
 
-    this.store = new Store(localStorage.getItem('token'));
+    this.store = new Store(process.env.SLACK_API_TOKEN);
     this.toggleDrawer = Action.create(() => isOpen = !isOpen, false);
     this.channelList = new ChannelListViewModel(this.store);
 

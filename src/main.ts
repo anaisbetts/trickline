@@ -1,8 +1,11 @@
-import {app, BrowserWindow } from 'electron';
-import {enableLiveReload} from 'electron-compile';
+import { app, BrowserWindow } from 'electron';
+import { enableLiveReload } from 'electron-compile';
 import * as electronDebug from 'electron-debug';
 import installExtension from 'electron-devtools-installer';
 import { REACT_DEVELOPER_TOOLS } from 'electron-devtools-installer';
+import { config } from 'dotenv';
+
+config();
 
 let mainWindow = null;
 electronDebug({enabled: true});
