@@ -8,14 +8,14 @@ import { default as AppBar } from 'material-ui/AppBar';
 import { default as Drawer } from 'material-ui/Drawer';
 import { default as MuiThemeProvider } from 'material-ui/styles/MuiThemeProvider';
 
-import { Action } from './action';
-import { SimpleView } from './view';
-import { fromObservable, Model } from './model';
-import { Store } from './store';
+import { Action } from './lib/action';
+import { SimpleView } from './lib/view';
+import { fromObservable, Model } from './lib/model';
+import { Store } from './lib/store';
 
 import {ChannelListViewModel, ChannelListView} from './channel-list';
 
-import './standard-operators';
+import './lib/standard-operators';
 
 export interface SlackAppState {
   drawerOpen: boolean;

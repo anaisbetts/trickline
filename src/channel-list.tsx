@@ -6,12 +6,12 @@ import {Subscription} from 'rxjs/Subscription';
 
 import { AutoSizer, List } from 'react-virtualized';
 
-import { SimpleView } from './view';
-import { fromObservable, notify, Model } from './model';
-import { Store } from './store';
-import { Updatable } from './sparse-map';
+import { SimpleView } from './lib/view';
+import { fromObservable, notify, Model } from './lib/model';
+import { Store } from './lib/store';
+import { Updatable } from './lib/sparse-map';
 
-import { ChannelBase } from './models/api-shapes';
+import { ChannelBase } from './lib/models/api-shapes';
 
 export class ChannelListViewModel extends Model {
   store: Store;

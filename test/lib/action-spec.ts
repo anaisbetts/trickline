@@ -1,8 +1,8 @@
 import { Observable, Subject } from 'rxjs';
-import { expect } from './support';
+import { expect } from '../support';
 
-import { Action } from '../src/action';
-import '../src/custom-operators';
+import { Action } from '../../src/lib/action';
+import '../../src/lib/custom-operators';
 
 describe('the Action class', function() {
   it('should call the factory function', function() {

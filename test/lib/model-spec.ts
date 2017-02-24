@@ -1,10 +1,10 @@
-import {expect} from './support';
+import {expect} from '../support';
 import {Observable, Subject} from 'rxjs/Rx';
 
-import {fromObservable, notify, Model} from '../src/model';
-import {Updatable} from '../src/sparse-map';
+import {fromObservable, notify, Model} from '../../src/lib/model';
+import {Updatable} from '../../src/lib/sparse-map';
 
-import '../src/custom-operators';
+import '../../src/lib/custom-operators';
 
 @notify('foo', 'bar')
 class TestClass extends Model {
