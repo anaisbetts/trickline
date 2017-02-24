@@ -36,5 +36,8 @@ node_modules
 # Bower
 src/bower_components
 
+# DotEnv Configuration
+.env
+
 typings/
 out/
