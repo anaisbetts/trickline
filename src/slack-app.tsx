@@ -14,6 +14,7 @@ import { fromObservable, Model } from './lib/model';
 import { Store } from './lib/store';
 
 import { ChannelListViewModel, ChannelListView } from './channel-list';
+import { MemoryPopover } from './memory-popover';
 
 import './lib/standard-operators';
 
@@ -55,20 +56,27 @@ export class SlackApp extends SimpleView<SlackAppModel> {
   render() {
     const vm = this.viewModel;
     const shouldShift = vm.isOpen && window.outerWidth > window.outerHeight;
+    const containerStyle = {
+      marginLeft: shouldShift ? '258px' : '0px',
+      transition: 'margin-left: 450ms cubic-bezier(0.23, 1, 0.32, 1) 0ms'
+    };
+
     const channelListView = vm.isOpen ?
       <ChannelListView viewModel={new ChannelListViewModel(vm.store)} /> :
       null;
 
-    return <MuiThemeProvider>
-      <div style={{marginLeft: shouldShift ? '258px' : '0px', transition: 'margin-left: 450ms cubic-bezier(0.23, 1, 0.32, 1) 0ms'}}>
-        <AppBar title='Trickline' onLeftIconButtonTouchTap={vm.toggleDrawer.bind()} zDepth={2}/>
+    return (
+      <MuiThemeProvider>
+        <div style={containerStyle}>
+          <AppBar title='Trickline' onLeftIconButtonTouchTap={vm.toggleDrawer.bind()} zDepth={2}/>
 
-        <Drawer open={vm.isOpen} zDepth={1}>
-          {channelListView}
-        </Drawer>
+          <Drawer open={vm.isOpen} zDepth={1}>
+            {channelListView}
+          </Drawer>
 
-        <p>I am the main content</p>
-      </div>
-    </MuiThemeProvider>;
+          <MemoryPopover />
+        </div>
+      </MuiThemeProvider>
+    );
   }
 }
