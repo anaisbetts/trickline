@@ -18,7 +18,9 @@ export class ChannelListViewModel extends Model {
   constructor(store: Store) {
     super();
     this.store = store;
-    store.joinedChannels.toProperty(this, 'joinedChannels');
+    store.channels.toProperty(this, 'joinedChannels');
+    store.groups.toProperty(this, 'joinedGroups');
+    store.ims.toProperty(this, 'joinedIms');
   }
 }
 
