@@ -23,7 +23,7 @@ export class Store {
 
     result.channels.forEach(c => {
       let updater = new Updatable(() =>
-        this.api.channels.info({channel: c.id}).map(x => x.channel) as Observable<ChannelBase>);
+        this.api.channels.info({channel: c.id}).map((x: any) => x.channel) as Observable<ChannelBase>);
       updater.playOnto(Observable.of(c));
 
       joinedChannels.push(updater);
@@ -32,7 +32,7 @@ export class Store {
 
     result.groups.forEach(c => {
       let updater = new Updatable(() =>
-        this.api.groups.info({channel: c.id}).map(x => x.group) as Observable<ChannelBase>);
+        this.api.groups.info({channel: c.id}).map((x: any) => x.group) as Observable<ChannelBase>);
       updater.playOnto(Observable.of(c));
 
       joinedChannels.push(updater);
@@ -40,8 +40,8 @@ export class Store {
     });
 
     result.ims.forEach(c => {
-      let updater = new Updatable(() => 
-        this.api.im.info({channel: c.id}).map(x => x.im) as Observable<ChannelBase>);
+      let updater = new Updatable(() =>
+        this.api.im.info({channel: c.id}).map((x: any) => x.im) as Observable<ChannelBase>);
       updater.playOnto(Observable.of(c));
 
       joinedChannels.push(updater);
