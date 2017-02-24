@@ -20,9 +20,9 @@ export interface ChannelBase {
 }
 
 export interface UsersCounts {
-  channels: Array<ChannelBase>;
+  channels: Array<Channel>;
   groups: Array<ChannelBase>;
-  ims: Array<ChannelBase>;
+  ims: Array<DirectMessage>;
 }
 
 export interface DirectMessage extends ChannelBase {
