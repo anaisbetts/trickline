@@ -25,9 +25,10 @@ addons:
     packages:
       - gcc-4.9
       - libstdc++6
+      - xvfb
 
 install:
-  - npm install -g surf-build@latest
+  - npm install -g surf-build@latest electron-forge@latest
 
 script:
   - surf-build -n "surf-travis-$TRAVIS_OS_NAME"

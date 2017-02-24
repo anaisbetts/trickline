@@ -7,7 +7,7 @@
     "start": "electron-forge start",
     "test-renderer": "electron-mocha --renderer --watch-extensions tsx,ts './test/**/*.{js,ts}'",
     "dtest": "electron-mocha --renderer --interactive --watch-extensions tsx,ts './test/**/*.{js,ts}'",
-    "test": "npm run test-renderer",
+    "test": "xvfb-maybe npm run test-renderer",
     "package": "electron-forge make"
   },
   "repository": {
@@ -66,7 +66,8 @@
     "eslint-plugin-react": "^6.8.0",
     "react-hot-loader": "^3.0.0-beta.6",
     "tslint": "^4.2.0",
-    "typescript": "~2.1.4"
+    "typescript": "~2.1.4",
+    "xvfb-maybe": "^0.1.3"
   },
   "config": {
     "forge": {
