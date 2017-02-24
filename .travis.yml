@@ -1,0 +1,27 @@
+language: node_js
+dist: trusty
+node_js:
+  - "6.3.0"
+compiler:
+  - clang
+
+os:
+  - linux
+  - osx
+
+env:
+  - DEBUG="*,-babel"
+
+addons:
+  apt:
+    sources:
+      - ubuntu-toolchain-r-test
+    packages:
+      - gcc-4.9
+      - libstdc++6
+
+install:
+  - npm install -g surf-build@latest
+
+script:
+  - surf-build -n "surf-travis-$TRAVIS_OS_NAME"
