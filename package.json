@@ -5,9 +5,9 @@
   "main": "src/main.ts",
   "scripts": {
     "start": "electron-forge start",
-    "test-renderer": "electron-mocha --renderer --watch-extensions tsx,ts './test/**/*.{js,ts}'",
+    "test-renderer": "xvfb-maybe electron-mocha --renderer --watch-extensions tsx,ts './test/**/*.{js,ts}'",
     "dtest": "electron-mocha --renderer --interactive --watch-extensions tsx,ts './test/**/*.{js,ts}'",
-    "test": "xvfb-maybe npm run test-renderer",
+    "test": "npm run test-renderer",
     "package": "electron-forge make"
   },
   "repository": {
