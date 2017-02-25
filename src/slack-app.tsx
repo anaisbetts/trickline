@@ -18,6 +18,8 @@ import { MemoryPopover } from './memory-popover';
 
 import './lib/standard-operators';
 
+export const DrawerWidth = 300;
+
 export interface SlackAppState {
   drawerOpen: boolean;
 }
@@ -57,7 +59,7 @@ export class SlackApp extends SimpleView<SlackAppModel> {
     const vm = this.viewModel;
     const shouldShift = vm.isOpen && window.outerWidth > window.outerHeight;
     const containerStyle = {
-      marginLeft: shouldShift ? '258px' : '0px',
+      marginLeft: shouldShift ? `${DrawerWidth}px` : '0px',
       transition: 'margin-left: 450ms cubic-bezier(0.23, 1, 0.32, 1) 0ms'
     };
 
@@ -70,7 +72,7 @@ export class SlackApp extends SimpleView<SlackAppModel> {
         <div style={containerStyle}>
           <AppBar title='Trickline' onLeftIconButtonTouchTap={vm.toggleDrawer.bind()} zDepth={2}/>
 
-          <Drawer open={vm.isOpen} zDepth={1}>
+          <Drawer open={vm.isOpen} zDepth={1} width={DrawerWidth}>
             {channelListView}
           </Drawer>
 

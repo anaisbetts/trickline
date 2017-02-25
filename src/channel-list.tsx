@@ -1,7 +1,6 @@
 // tslint:disable-next-line:no-unused-variable
 import * as React from 'react';
 import { AutoSizer, List } from 'react-virtualized';
-import Divider from 'material-ui/Divider';
 
 import { SimpleView } from './lib/view';
 import { fromObservable, Model } from './lib/model';
@@ -41,10 +40,10 @@ export class ChannelListView extends SimpleView<ChannelListViewModel> {
     );
   }
 
-  listRenderer({ width, height }: { height: number }): JSX.Element {
+  listRenderer({ height }: { height: number }): JSX.Element {
     return (
       <List
-        width={width}
+        width={300}
         height={height}
         rowRenderer={this.rowRenderer.bind(this)}
         rowCount={this.viewModel.channels.length}
@@ -55,7 +54,7 @@ export class ChannelListView extends SimpleView<ChannelListViewModel> {
 
   render() {
     return (
-      <AutoSizer>
+      <AutoSizer disableWidth>
         {this.listRenderer.bind(this)}
       </AutoSizer>
     );
