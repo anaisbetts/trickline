@@ -21,13 +21,18 @@ export interface ChannelBase {
 
 export interface UsersCounts {
   channels: Array<Channel>;
-  groups: Array<ChannelBase>;
+  groups: Array<Group>;
   ims: Array<DirectMessage>;
 }
 
 export interface DirectMessage extends ChannelBase {
   user: string;
   is_open: boolean;
+  is_im: boolean;
+}
+
+export interface Group extends ChannelBase {
+  is_group: boolean;
 }
 
 export interface Channel extends ChannelBase {

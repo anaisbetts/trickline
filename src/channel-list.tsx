@@ -1,11 +1,11 @@
 // tslint:disable-next-line:no-unused-variable
 import * as React from 'react';
 import { AutoSizer, List } from 'react-virtualized';
+import Divider from 'material-ui/Divider';
 
 import { SimpleView } from './lib/view';
 import { fromObservable, Model } from './lib/model';
-import { Store } from './lib/store';
-import { Updatable } from './lib/sparse-map';
+import { Store, ChannelList, GroupList, DirectMessageList } from './lib/store';
 
 import { ChannelBase } from './lib/models/api-shapes';
 import { ChannelViewModel, ChannelListItem } from './channel-list-item';
@@ -13,21 +13,23 @@ import { ChannelViewModel, ChannelListItem } from './channel-list-item';
 export class ChannelListViewModel extends Model {
   store: Store;
   selectedChannel: ChannelBase;
-  @fromObservable joinedChannels: Array<Updatable<ChannelBase>>;
+  @fromObservable channels: ChannelList;
+  @fromObservable groups: GroupList;
+  @fromObservable ims: DirectMessageList;
 
   constructor(store: Store) {
     super();
     this.store = store;
-    store.channels.toProperty(this, 'joinedChannels');
-    store.groups.toProperty(this, 'joinedGroups');
-    store.ims.toProperty(this, 'joinedIms');
+    store.channels.toProperty(this, 'channels');
+    store.groups.toProperty(this, 'groups');
+    store.ims.toProperty(this, 'ims');
   }
 }
 
 export class ChannelListView extends SimpleView<ChannelListViewModel> {
   rowRenderer(opts: any): JSX.Element {
     const { index, style } = opts;
-    const item = this.viewModel.joinedChannels[index];
+    const item = this.viewModel.channels[index];
 
     return (
       <div
@@ -39,16 +41,14 @@ export class ChannelListView extends SimpleView<ChannelListViewModel> {
     );
   }
 
-  listRenderer(opts: any): JSX.Element {
-    let { width, height } = opts;
-
+  listRenderer({ width, height }: { height: number }): JSX.Element {
     return (
       <List
         width={width}
         height={height}
         rowRenderer={this.rowRenderer.bind(this)}
-        rowCount={this.viewModel.joinedChannels.length}
-        rowHeight={28}
+        rowCount={this.viewModel.channels.length}
+        rowHeight={48}
       />
     );
   }

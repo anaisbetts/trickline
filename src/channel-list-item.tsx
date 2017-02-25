@@ -1,7 +1,9 @@
 // tslint:disable-next-line:no-unused-variable
 import * as React from 'react';
+import Avatar from 'material-ui/Avatar';
 import { ListItem } from 'material-ui/List';
 import Star from 'material-ui/svg-icons/toggle/star';
+import { pinkA200 } from 'material-ui/styles/colors';
 
 import { SimpleView } from './lib/view';
 import { fromObservable, notify, Model } from './lib/model';
@@ -32,8 +34,8 @@ export class ChannelViewModel extends Model {
       .map((starred: any) => starred.value)
       .toProperty(this, 'starred');
 
-    this.when('model.dm_count', 'model.mention_count_display',
-      (dmCount, mentions) => (dmCount.value || 0) + (mentions.value || 0))
+    this.when('model.mention_count')
+      .map((c: any) => c.value)
       .toProperty(this, 'mentions');
 
     this.when('mentions', 'model.unread_count_display',
@@ -49,36 +51,24 @@ export class ChannelViewModel extends Model {
 export class ChannelListItem extends SimpleView<ChannelViewModel> {
   render() {
     const viewModel = this.props.viewModel;
-    let mention = null;
-
-    if (viewModel.mentions > 0) {
-      const mentionStyle = {
-        backgroundColor: 'red',
-        color: 'white',
-        padding: '2px',
-        borderRadius: '6px',
-        marginRight: '4px'
-      };
-
-      mention = (
-        <span style={mentionStyle}>
-          {viewModel.mentions}
-        </span>
-      );
-    }
-
     const fontWeight = viewModel.highlighted ? 'bold' : 'normal';
     const starIcon = viewModel.starred ?
-      <Star style={{ height: '16px', marginTop: '6px' }}/> :
+      <Star style={{ top: '0px' }} /> :
       null;
+
+    const badge = viewModel.mentions > 0 ? (
+      <Avatar backgroundColor={pinkA200} size={24} style={{ top: '11px' }}>
+        {viewModel.mentions}
+      </Avatar>
+    ) : null;
 
     return (
       <ListItem
         primaryText={viewModel.displayName}
-        style={{ height: '28px', fontWeight }}
-        innerDivStyle={{ height: '24x', padding: '6px' }}
-        secondaryText={mention}
-        rightIcon={starIcon}
+        leftIcon={starIcon}
+        rightAvatar={badge}
+        style={{ fontWeight }}
+        innerDivStyle={{ padding: '16px 16px 16px 72px' }}
       />
     );
   }
