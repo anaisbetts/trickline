@@ -28,7 +28,7 @@ export class Store {
     const groups: GroupList = [];
     const ims: DirectMessageList = [];
 
-    const result: UsersCounts = await this.api.users.counts().toPromise();
+    const result: UsersCounts = await this.api.users.counts({ simple_unreads: true }).toPromise();
 
     result.channels
       .filter((c) => !c.is_archived)

@@ -38,8 +38,8 @@ export class ChannelViewModel extends Model {
       .map((c: any) => c.value)
       .toProperty(this, 'mentions');
 
-    this.when('mentions', 'model.unread_count_display',
-      (mentions, unreadCount) =>  mentions.value > 0 || ((unreadCount.value || 0) > 0))
+    this.when('mentions', 'model.has_unreads',
+      (mentions, hasUnreads) => mentions.value > 0 || hasUnreads.value)
       .toProperty(this, 'highlighted');
   }
 
