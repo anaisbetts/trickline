@@ -53,11 +53,11 @@ export class ChannelListItem extends SimpleView<ChannelViewModel> {
     const viewModel = this.props.viewModel;
     const fontWeight = viewModel.highlighted ? 'bold' : 'normal';
     const starIcon = viewModel.starred ?
-      <Star style={{ top: '0px' }} /> :
+      <Star style={{ top: '-8px' }} /> :
       null;
 
     const badge = viewModel.mentions > 0 ? (
-      <Avatar backgroundColor={pinkA200} size={24} style={{ top: '11px' }}>
+      <Avatar backgroundColor={pinkA200} size={24} style={{ top: '4px' }}>
         {viewModel.mentions}
       </Avatar>
     ) : null;
@@ -68,7 +68,7 @@ export class ChannelListItem extends SimpleView<ChannelViewModel> {
         leftIcon={starIcon}
         rightAvatar={badge}
         style={{ fontWeight }}
-        innerDivStyle={{ padding: '16px 16px 16px 72px' }}
+        innerDivStyle={{ padding: '8px 8px 8px 60px' }}
       />
     );
   }

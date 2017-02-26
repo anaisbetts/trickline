@@ -2,7 +2,7 @@ import { EventType, EventSubType } from './event-type';
 
 export interface ChannelBase {
   id: string;
-  name?: string;
+  name: string;
   created: number;
   last_read: string;
   latest: string;
@@ -36,7 +36,6 @@ export interface Group extends ChannelBase {
 }
 
 export interface Channel extends ChannelBase {
-  name: string;
   creator: string;
   is_member: boolean;
   is_general: boolean;

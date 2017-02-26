@@ -7,6 +7,7 @@ import { Observable } from 'rxjs/Observable';
 import { default as AppBar } from 'material-ui/AppBar';
 import { default as Drawer } from 'material-ui/Drawer';
 import { default as MuiThemeProvider } from 'material-ui/styles/MuiThemeProvider';
+import getMuiTheme from 'material-ui/styles/getMuiTheme';
 
 import { Action } from './lib/action';
 import { SimpleView } from './lib/view';
@@ -23,6 +24,20 @@ export const DrawerWidth = 300;
 export interface SlackAppState {
   drawerOpen: boolean;
 }
+
+const slackTheme = getMuiTheme({
+  fontFamily: 'Slack-Lato',
+
+  // Customize our color palette with:
+  palette: {
+    // textColor: cyan500,
+  },
+
+  // Customize individual components like:
+  appBar: {
+    height: 50,
+  }
+});
 
 export class SlackAppModel extends Model {
   toggleDrawer: Action<boolean>;
@@ -68,7 +83,7 @@ export class SlackApp extends SimpleView<SlackAppModel> {
       null;
 
     return (
-      <MuiThemeProvider>
+      <MuiThemeProvider muiTheme={slackTheme}>
         <div style={containerStyle}>
           <AppBar title='Trickline' onLeftIconButtonTouchTap={vm.toggleDrawer.bind()} zDepth={2}/>
 
