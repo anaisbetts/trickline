@@ -2,5 +2,10 @@
 
 set -ex
 npm install
-npm test
+
+if [ "$(uname)" = "Darwin" ];
+then
+  npm test
+fi
+
 electron-forge make
