@@ -29,6 +29,6 @@ app.on('ready', async () => {
     await installExtension(REACT_DEVELOPER_TOOLS);
     mainWindow.webContents.openDevTools();
   } else {
-    mainWindow.webContents.openDevTools();
+    if (!process.env['TRICKLINE_HEAPSHOT_AND_BAIL']) mainWindow.webContents.openDevTools();
   }
 });
