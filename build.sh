@@ -2,10 +2,10 @@
 
 set -ex
 npm install
-
-#if [ "$(uname)" = "Darwin" ];
-#then
-  npm test
-#fi
+npm test
 
 electron-forge make
+
+if [ -z "$SURF_ARTIFACT_DIR" ]; then
+	mv ./out/make/* "$SURF_ARTIFACT_DIR"
+fi
