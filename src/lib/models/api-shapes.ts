@@ -2,7 +2,7 @@ import { EventType, EventSubType } from './event-type';
 
 export interface ChannelBase {
   id: string;
-  name?: string;
+  name: string;
   created: number;
   last_read: string;
   latest: string;
@@ -20,18 +20,22 @@ export interface ChannelBase {
 }
 
 export interface UsersCounts {
-  channels: Array<ChannelBase>;
-  groups: Array<ChannelBase>;
-  ims: Array<ChannelBase>;
+  channels: Array<Channel>;
+  groups: Array<Group>;
+  ims: Array<DirectMessage>;
 }
 
 export interface DirectMessage extends ChannelBase {
   user: string;
   is_open: boolean;
+  is_im: boolean;
+}
+
+export interface Group extends ChannelBase {
+  is_group: boolean;
 }
 
 export interface Channel extends ChannelBase {
-  name: string;
   creator: string;
   is_member: boolean;
   is_general: boolean;

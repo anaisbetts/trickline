@@ -1,53 +1,54 @@
 import { Observable } from 'rxjs/Observable';
-import { InMemorySparseMap, SparseMap, Updatable } from './sparse-map';
 
+import { Updatable } from './sparse-map';
 import { createApi } from './models/api-call';
-import { ChannelBase, UsersCounts } from './models/api-shapes';
+import { Channel, ChannelBase, Group, DirectMessage, UsersCounts } from './models/api-shapes';
 
 import './standard-operators';
 
+export type ChannelList = Array<Updatable<ChannelBase>>;
+
 export class Store {
-  channels: SparseMap<string, ChannelBase>;
-  joinedChannels: Updatable<Array<Updatable<ChannelBase>>>;
   api: any;
+  channels: Updatable<ChannelList>;
 
   constructor(token?: string) {
-    this.channels = new InMemorySparseMap<string, ChannelBase>();
-    this.joinedChannels = new Updatable<Array<Updatable<ChannelBase>>>(() => Observable.of([]));
     this.api = createApi(token);
+    this.channels = new Updatable<ChannelList>(() => Observable.of([]));
   }
 
   async fetchInitialChannelList(): Promise<void> {
-    const joinedChannels: Array<Updatable<ChannelBase>> = [];
-    let result: UsersCounts = await this.api.users.counts().toPromise();
+    const channels: ChannelList = [];
 
-    result.channels.forEach(c => {
-      let updater = new Updatable(() =>
-        this.api.channels.info({channel: c.id}).map((x: any) => x.channel) as Observable<ChannelBase>);
+    const result: UsersCounts = await this.api.users.counts({ simple_unreads: true }).toPromise();
+
+    result.channels.forEach((c) => {
+      const updater = new Updatable(() =>
+        this.api.channels.info({ channel: c.id })
+          .map((x: any) => x.channel) as Observable<Channel>);
+
       updater.playOnto(Observable.of(c));
-
-      joinedChannels.push(updater);
-      this.channels.setDirect(c.id, updater);
+      channels.push(updater);
     });
 
-    result.groups.forEach(c => {
-      let updater = new Updatable(() =>
-        this.api.groups.info({channel: c.id}).map((x: any) => x.group) as Observable<ChannelBase>);
-      updater.playOnto(Observable.of(c));
+    result.groups.forEach((g) => {
+      const updater = new Updatable(() =>
+        this.api.groups.info({ channel: g.id })
+          .map((x: any) => x.group) as Observable<Group>);
 
-      joinedChannels.push(updater);
-      this.channels.setDirect(c.id, updater);
+      updater.playOnto(Observable.of(g));
+      channels.push(updater);
     });
 
-    result.ims.forEach(c => {
-      let updater = new Updatable(() =>
-        this.api.im.info({channel: c.id}).map((x: any) => x.im) as Observable<ChannelBase>);
-      updater.playOnto(Observable.of(c));
+    result.ims.forEach((dm) => {
+      const updater = new Updatable(() =>
+        this.api.im.info({ channel: dm.id })
+          .map((x: any) => x.im) as Observable<DirectMessage>);
 
-      joinedChannels.push(updater);
-      this.channels.setDirect(c.id, updater);
+      updater.playOnto(Observable.of(dm));
+      channels.push(updater);
     });
 
-    this.joinedChannels.next(joinedChannels);
+    this.channels.next(channels);
   }
 }

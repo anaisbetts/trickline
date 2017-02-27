@@ -45,6 +45,7 @@ export class MemoryPopover extends React.Component<MemoryPopoverProps, MemoryPop
 
     const memoryUsageInMB = open ?
       `${Math.round(process.getProcessMemoryInfo().privateBytes / 1024)} MB` : null;
+    const nodeCount = open ? `DOM Nodes: ${document.querySelectorAll('*').length}` : 0;
 
     const popoverStyle = {
       position: 'absolute',
@@ -67,7 +68,8 @@ export class MemoryPopover extends React.Component<MemoryPopoverProps, MemoryPop
           onRequestClose={this.handleRequestClose}
         >
           <Menu>
-            <MenuItem primaryText={memoryUsageInMB} disabled/>
+            <MenuItem primaryText={memoryUsageInMB} disabled />
+            <MenuItem primaryText={nodeCount} disabled />
           </Menu>
         </Popover>
       </div>
