@@ -1,33 +1,8 @@
-import {expect} from '../support';
+import {expect, TestClass} from '../support';
 import {Observable, Subject} from 'rxjs/Rx';
-
-import {fromObservable, notify, Model} from '../../src/lib/model';
-import {Updatable} from '../../src/lib/sparse-map';
+import {Model} from '../../src/lib/model';
 
 import '../../src/lib/custom-operators';
-
-@notify('foo', 'bar')
-class TestClass extends Model {
-  someSubject: Subject<number>;
-  foo: Number;
-  bar: Number;
-  baz: Number;
-  updatableFoo: Updatable<number>;
-  @fromObservable derived: number;
-  @fromObservable subjectDerived: number;
-
-  constructor() {
-    super();
-    this.updatableFoo = new Updatable(() => Observable.of(6));
-    this.someSubject = new Subject();
-
-    Observable.of(42).toProperty(this, 'derived');
-    this.someSubject
-      .map((x) => x * 10)
-      .startWith(0)
-      .toProperty(this, 'subjectDerived');
-  }
-}
 
 describe('the notify attribute', function() {
   it('should notify me!', function() {
