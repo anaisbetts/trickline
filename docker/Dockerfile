@@ -5,6 +5,7 @@ ENV BUILD_NAME=surf
 
 RUN npm install -g surf-build@1.0.2 electron-forge@2.8.1
 
+ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get upgrade -y && apt-get install -y \
     build-essential \
     ca-certificates \
@@ -28,10 +29,11 @@ RUN apt-get update && apt-get upgrade -y && apt-get install -y \
     libXtst-dev \
     libcurl4-openssl-dev \
     libxkbfile-dev \
-    rpm \
+    xauth xorg openbox lightdm \
     curl \
     wget \
     xvfb \
+    rpm \
     --no-install-recommends
 
 ## NB: npm post-install hates running as root :-/
