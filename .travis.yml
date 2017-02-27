@@ -4,13 +4,11 @@ node_js:
   - "6.3.0"
 compiler:
   - clang
+sudo: required
 
 os:
   - linux
   - osx
-
-env:
-  - DEBUG="*,-babel"
 
 cache:
   directories:
