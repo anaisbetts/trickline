@@ -57,7 +57,6 @@
     "cross-env": "^3.1.4",
     "csslint": "^1.0.5",
     "electron-compilers": "^5.5.1",
-    "electron-debug": "^1.1.0",
     "electron-mocha": "^3.3.0",
     "electron-prebuilt-compile": "1.6.0",
     "esdoc": "^0.5.2",
