@@ -42,4 +42,5 @@ RUN useradd -ms /bin/bash surf
 ENV HOME=/home/surf
 USER surf
 
+ENV SURF_REPO=https://github.com/paulcbetts/trickline
 CMD surf-run -n 'surf-docker' -r 'https://github.com/paulcbetts/trickline'
