@@ -3,9 +3,9 @@
 set -ex
 npm install
 
-if [ "$(uname)" = "Darwin" ];
-then
+#if [ "$(uname)" = "Darwin" ];
+#then
   npm test
-fi
+#fi
 
 electron-forge make
