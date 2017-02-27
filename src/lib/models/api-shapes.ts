@@ -28,7 +28,6 @@ export interface UsersCounts {
 export interface DirectMessage extends ChannelBase {
   user: string;
   is_open: boolean;
-  is_im: boolean;
 }
 
 export interface Group extends ChannelBase {
@@ -152,6 +151,12 @@ export interface Profile {
   always_active: boolean;
   bot_id: string;
   fields: { [name: string]: UserProfileField };
+
+  image_24: string;
+  image_32: string;
+  image_48: string;
+  image_72: string;
+  image_192: string;
 }
 
 export interface SharedUserProfile {

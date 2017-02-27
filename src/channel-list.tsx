@@ -5,7 +5,7 @@ import { AutoSizer, List } from 'react-virtualized';
 import { SimpleView } from './lib/view';
 import { fromObservable, Model } from './lib/model';
 import { Store, ChannelList } from './lib/store';
-import { channelSort } from './utils';
+import { channelSort } from './channel-utils';
 
 import { ChannelBase } from './lib/models/api-shapes';
 import { ChannelViewModel, ChannelListItem } from './channel-list-item';
@@ -42,7 +42,7 @@ export class ChannelListView extends SimpleView<ChannelListViewModel> {
         key={item.value.id}
         style={style}
       >
-        <ChannelListItem viewModel={new ChannelViewModel(item)} />
+        <ChannelListItem viewModel={new ChannelViewModel(this.viewModel.store, item)} />
       </div>
     );
   }

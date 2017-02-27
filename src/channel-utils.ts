@@ -13,6 +13,6 @@ export function channelSort(
   return a.name.localeCompare(b.name);
 }
 
-export function isDM(channel: ChannelBase) {
-  return channel.id[0] === 'D';
+export function isDM(channel: ChannelBase): boolean {
+  return !!channel.id && channel.id[0] === 'D';
 }
