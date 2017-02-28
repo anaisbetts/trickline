@@ -1,5 +1,5 @@
 import { fromObservable, Model, notify } from '../src/lib/model';
-import { Updatable } from '../src/lib/sparse-map';
+import { Updatable } from '../src/lib/updatable';
 import { Observable } from 'rxjs/Observable';
 import { Subject } from 'rxjs/Subject';
 

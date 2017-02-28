@@ -1,5 +1,5 @@
 import * as LRU from 'lru-cache';
-import {Updatable} from './sparse-map';
+import {Updatable} from './updatable';
 
 const proxyCache = LRU(64);
 

@@ -8,7 +8,7 @@ import { grey700, pinkA200, transparent } from 'material-ui/styles/colors';
 import { SimpleView } from './lib/view';
 import { fromObservable, notify, Model } from './lib/model';
 import { Store } from './lib/store';
-import { Updatable } from './lib/sparse-map';
+import { Updatable } from './lib/updatable';
 import { isDM } from './channel-utils';
 
 import { ChannelBase } from './lib/models/api-shapes';
