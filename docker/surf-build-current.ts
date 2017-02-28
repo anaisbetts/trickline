@@ -28,6 +28,7 @@ export async function main() {
   await spawnNoisyPromise('docker', [
     'run',
     '-e', `GITHUB_TOKEN=${process.env.GITHUB_TOKEN}`,
+    '-e', `SLACK_API_TOKEN=${process.env.SLACK_API_TOKEN}`,
     'surf-trickline',
     'surf-build',
     '-s', ourSha,
