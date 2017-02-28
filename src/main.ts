@@ -37,7 +37,7 @@ app.on('ready', async () => {
   if (traceMode) await startTracing();
 
   mainWindow = new BrowserWindow({
-    width: 800, height: 600,
+    width: 1024, height: 768,
   });
 
   mainWindow.loadURL(`file://${__dirname}/index.html`);

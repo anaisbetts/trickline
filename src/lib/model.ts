@@ -1,5 +1,5 @@
 import { Observable } from 'rxjs/Observable';
-import { Subscription } from 'rxjs/Subscription';
+import { ISubscription, Subscription } from 'rxjs/Subscription';
 import { Subject } from 'rxjs/Subject';
 import { Updatable } from './sparse-map';
 
@@ -130,6 +130,10 @@ export class Model {
 
   unsubscribe() {
     this.innerDisp.unsubscribe();
+  }
+
+  addTeardown(teardown: ISubscription | Function | void) {
+    this.innerDisp.add(teardown);
   }
 
   when<TRet>(prop1: string): Observable<TRet>;

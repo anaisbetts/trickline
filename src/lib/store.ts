@@ -1,7 +1,7 @@
 import { Observable } from 'rxjs/Observable';
 
-import { Updatable } from './sparse-map';
-import { createApi } from './models/api-call';
+import { InMemorySparseMap, SparseMap, Updatable } from './sparse-map';
+import { createApi, UserResponse } from './models/api-call';
 import { Channel, ChannelBase, Group, DirectMessage, UsersCounts } from './models/api-shapes';
 
 import './standard-operators';
@@ -11,10 +11,14 @@ export type ChannelList = Array<Updatable<ChannelBase>>;
 export class Store {
   api: any;
   channels: Updatable<ChannelList>;
+  users: SparseMap<string, UserResponse>;
 
   constructor(token?: string) {
     this.api = createApi(token);
     this.channels = new Updatable<ChannelList>(() => Observable.of([]));
+    this.users = new InMemorySparseMap<string, UserResponse>((user) => {
+      return this.api.users.info({ user });
+    });
   }
 
   async fetchInitialChannelList(): Promise<void> {
