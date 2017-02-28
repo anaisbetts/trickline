@@ -2,7 +2,7 @@ import {expect} from '../support';
 import {Observable, Subject} from 'rxjs/Rx';
 
 import {fromObservable, notify, Model} from '../../src/lib/model';
-import {Updatable} from '../../src/lib/sparse-map';
+import {Updatable} from '../../src/lib/updatable';
 
 import '../../src/lib/custom-operators';
 

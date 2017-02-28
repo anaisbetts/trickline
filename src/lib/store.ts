@@ -1,6 +1,7 @@
 import { Observable } from 'rxjs/Observable';
 
-import { InMemorySparseMap, SparseMap, Updatable } from './sparse-map';
+import { InMemorySparseMap, SparseMap } from './sparse-map';
+import { Updatable } from './updatable';
 import { createApi, UserResponse } from './models/api-call';
 import { Channel, ChannelBase, Group, DirectMessage, UsersCounts } from './models/api-shapes';
 
