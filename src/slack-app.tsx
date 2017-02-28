@@ -99,7 +99,7 @@ export class SlackApp extends SimpleView<SlackAppModel> {
     };
 
     const channelListView = vm.isOpen ?
-      <ChannelListView viewModel={new ChannelListViewModel(vm.store)} /> :
+      <ChannelListView viewModel={vm.channelList} /> :
       null;
 
     return (
