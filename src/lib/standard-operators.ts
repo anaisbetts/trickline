@@ -8,6 +8,7 @@ import 'rxjs/add/observable/throw';
 import 'rxjs/add/operator/distinctUntilChanged';
 import 'rxjs/add/operator/finally';
 import 'rxjs/add/operator/mergeMap';
+import 'rxjs/add/operator/observeOn';
 import 'rxjs/add/operator/publish';
 import 'rxjs/add/operator/startWith';
 import 'rxjs/add/operator/switch';
