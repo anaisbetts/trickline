@@ -51,6 +51,7 @@ export class SlackAppModel extends Model {
   channelList: ChannelListViewModel;
   loadInitialState: Action<void>;
   @fromObservable isOpen: boolean;
+  @fromObservable selectedChannel: any;
 
   constructor() {
     super();
@@ -63,6 +64,10 @@ export class SlackAppModel extends Model {
     this.store = new Store(process.env.SLACK_API_TOKEN || window.localStorage.getItem('token'));
     this.toggleDrawer = Action.create(() => isOpen = !isOpen, false);
     this.channelList = new ChannelListViewModel(this.store);
+
+    this.when('channelList.selectedChannel')
+      .map((c: any) => c.value)
+      .toProperty(this, 'selectedChannel');
 
     this.loadInitialState = new Action<void>(() => this.store.fetchInitialChannelList(), undefined);
     this.toggleDrawer.result.toProperty(this, 'isOpen');
@@ -117,6 +122,8 @@ export class SlackApp extends SimpleView<SlackAppModel> {
           <Drawer open={vm.isOpen} zDepth={1} width={DrawerWidth}>
             {channelListView}
           </Drawer>
+
+          <span>{vm.selectedChannel ? vm.selectedChannel.name : ''}</span>
 
           <MemoryPopover />
         </div>
