@@ -65,4 +65,3 @@ export class Updatable<T> extends Subject<T> {
     this._playOnto.set(source.subscribe(this.next.bind(this), this.error.bind(this)));
   }
 }
-

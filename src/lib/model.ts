@@ -99,12 +99,11 @@ export function fromObservable(target: Model, propertyKey: string): void {
 
 export function toProperty<T>(this: Observable<T>, target: Model, propertyKey: string) {
   const obsPropertyKey: string = `___${propertyKey}_Observable`;
-  if (!obsPropertyKey in target) {
+  if (!(obsPropertyKey in target)) {
     throw new Error(`Make sure to mark ${propertyKey} with the @fromObservable decorator`);
   }
 
   target[obsPropertyKey] = this;
-  let _dontcare = target[propertyKey];
 }
 
 Observable.prototype['toProperty'] = toProperty;
