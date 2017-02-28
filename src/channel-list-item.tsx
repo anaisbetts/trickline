@@ -12,7 +12,7 @@ import { fromObservable, Model } from './lib/model';
 import { isDM } from './channel-utils';
 import { SimpleView } from './lib/view';
 import { Store } from './lib/store';
-import { Updatable } from './lib/sparse-map';
+import { Updatable } from './lib/updatable';
 
 export class ChannelViewModel extends Model {
   store: Store;
