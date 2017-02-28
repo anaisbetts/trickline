@@ -1,7 +1,7 @@
 import * as LRU from 'lru-cache';
 import {Updatable} from './sparse-map';
 
-const proxyCache = new LRU({length: 64});
+const proxyCache = LRU(64);
 
 function isObject(o: any): Boolean {
   return o === Object(o);
@@ -15,7 +15,7 @@ export class SelfDescribingProxyHandler {
     this.name = name;
   }
 
-  get(target: any, name: string) {
+  get(_target: any, name: string) {
     return SelfDescribingProxyHandler.create(`${this.name}.${name}`);
   }
 
