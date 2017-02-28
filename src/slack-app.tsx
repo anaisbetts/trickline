@@ -83,7 +83,13 @@ export class SlackApp extends SimpleView<SlackAppModel> {
 
   async takeHeapshot() {
     await this.viewModel.toggleDrawer.execute().toPromise();
-    await this.viewModel.store.channels.filter(x => x && x.length > 0).take(1).toPromise();
+    await this.viewModel.store.channels
+      .filter(x => x && x.length > 0)
+      .take(1)
+      .timeout(10 * 1000)
+      .catch(() => Observable.of(true))
+      .toPromise();
+
     await Observable.timer(250).toPromise();
     //await takeHeapSnapshot();
   }
