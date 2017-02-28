@@ -92,7 +92,7 @@ export function fromObservable(target: Model, propertyKey: string): void {
       return this[valPropertyKey];
     },
     set: () => {
-      throw new Error('Observable properties are read-only');
+      throw new Error(`Cannot set '${propertyKey}' on ${target.constructor.name}: Observable properties are read-only`);
     }
   });
 }
