@@ -1,5 +1,5 @@
-import * as path from 'path';
-import * as fs from 'fs';
+//import * as path from 'path';
+//import * as fs from 'fs';
 
 // tslint:disable-next-line:no-unused-variable
 import * as React from 'react';
@@ -19,8 +19,9 @@ import { Store } from './lib/store';
 
 import { ChannelListViewModel, ChannelListView } from './channel-list';
 import { MemoryPopover } from './memory-popover';
-import { takeHeapSnapshot } from './profiler';
-import { remote } from 'electron';
+//import { takeHeapSnapshot } from './profiler';
+
+import { createProxyForRemote } from 'electron-remote';
 
 import './lib/standard-operators';
 
@@ -68,26 +69,29 @@ export class SlackAppModel extends Model {
   }
 }
 
-const isDevMode = process.execPath.match(/[\\/]electron/);
-
 export class SlackApp extends SimpleView<SlackAppModel> {
   constructor() {
     super();
     this.viewModel = new SlackAppModel();
     this.viewModel.loadInitialState.execute();
 
-    if (process.env['TRICKLINE_HEAPSHOT_AND_BAIL'] && !isDevMode) {
-      this.takeHeapshot().then(() => remote.app.quit());
+    if (process.env['TRICKLINE_HEAPSHOT_AND_BAIL']) {
+      let mainProcess = createProxyForRemote(null);
+      this.takeHeapshot().then(() => mainProcess.tracingControl.stopTracing(true));
     }
   }
 
   async takeHeapshot() {
     await this.viewModel.toggleDrawer.execute().toPromise();
-    await this.viewModel.store.channels.filter(x => x && x.length > 0).take(1).toPromise();
-    await Observable.timer(5 * 1000).toPromise();
+    await this.viewModel.store.channels
+      .filter(x => x && x.length > 0)
+      .take(1)
+      .timeout(10 * 1000)
+      .catch(() => Observable.of(true))
+      .toPromise();
 
-    let heapshotFile = await takeHeapSnapshot();
-    fs.renameSync(heapshotFile, path.join(process.cwd(), path.basename(heapshotFile)));
+    await Observable.timer(250).toPromise();
+    //await takeHeapSnapshot();
   }
 
   render() {
