@@ -3,12 +3,13 @@ import * as React from 'react';
 
 import { ChannelBase } from './lib/models/api-shapes';
 import { CollectionView } from './lib/collection-view';
-import { fromObservable, Model } from './lib/model';
+import { fromObservable, notify, Model } from './lib/model';
 import { Store, ChannelList } from './lib/store';
 
 import { ChannelViewModel, ChannelListItem } from './channel-list-item';
 import { channelSort } from './channel-utils';
 
+@notify('selectedChannel')
 export class ChannelListViewModel extends Model {
   store: Store;
   selectedChannel: ChannelBase;
@@ -34,7 +35,7 @@ export class ChannelListViewModel extends Model {
 export class ChannelListView extends CollectionView<ChannelListViewModel, ChannelViewModel> {
   viewModelFactory(index: number) {
     const channel = this.viewModel.orderedChannels[index];
-    return new ChannelViewModel(this.viewModel.store, channel);
+    return new ChannelViewModel(this.viewModel, channel);
   }
 
   renderItem(viewModel: ChannelViewModel) {
