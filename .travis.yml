@@ -51,6 +51,7 @@ addons:
       - openbox 
       - lightdm
       - curl
+      - rpm
       - wget
 
 install:
