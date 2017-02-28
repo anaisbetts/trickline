@@ -33,16 +33,34 @@ export class ChannelListViewModel extends Model {
 }
 
 export class ChannelListView extends SimpleView<ChannelListViewModel> {
+  private readonly viewModelCache: { [key: number]: ChannelViewModel } = {};
+
+  getOrCreateViewModel(index: number) {
+    if (!this.viewModelCache[index]) {
+      const channel = this.viewModel.orderedChannels[index];
+      const onUnsubscribe = () => {
+        delete this.viewModelCache[index];
+      };
+
+      this.viewModelCache[index] = new ChannelViewModel({
+        store: this.viewModel.store,
+        model: channel,
+        onUnsubscribe
+      });
+    }
+    return this.viewModelCache[index];
+  }
+
   rowRenderer(opts: any): JSX.Element {
     const { index, style } = opts;
-    const item = this.viewModel.orderedChannels[index];
+    const itemViewModel = this.getOrCreateViewModel(index);
 
     return (
       <div
-        key={item.value.id}
+        key={itemViewModel.id}
         style={style}
       >
-        <ChannelListItem viewModel={new ChannelViewModel(this.viewModel.store, item)} />
+        <ChannelListItem viewModel={itemViewModel} />
       </div>
     );
   }
