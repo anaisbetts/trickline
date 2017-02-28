@@ -61,4 +61,5 @@ install:
   - npm install -g surf-build@latest electron-forge@latest
 
 script:
-  - surf-build -n "surf-travis-$TRAVIS_OS_NAME"
+  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then surf-build -n surf-travis-linux; fi 
+  - if [ "$TRAVIS_OS_NAME" == "osx" ]; then surf-build -n surf-travis-macos; fi 
