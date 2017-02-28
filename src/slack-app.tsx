@@ -98,9 +98,12 @@ export class SlackApp extends SimpleView<SlackAppModel> {
       transition: 'margin-left: 450ms cubic-bezier(0.23, 1, 0.32, 1) 0ms'
     };
 
-    const channelListView = vm.isOpen ?
-      <ChannelListView viewModel={vm.channelList} /> :
-      null;
+    const channelListView = vm.isOpen ? (
+      <ChannelListView
+        viewModel={vm.channelList}
+        rowHeight={32}
+        width={300} />
+      ) : null;
 
     return (
       <MuiThemeProvider muiTheme={slackTheme}>

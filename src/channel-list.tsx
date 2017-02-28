@@ -1,14 +1,13 @@
 // tslint:disable-next-line:no-unused-variable
 import * as React from 'react';
-import { AutoSizer, List } from 'react-virtualized';
-
-import { SimpleView } from './lib/view';
-import { fromObservable, Model } from './lib/model';
-import { Store, ChannelList } from './lib/store';
-import { channelSort } from './channel-utils';
 
 import { ChannelBase } from './lib/models/api-shapes';
+import { CollectionView } from './lib/collection-view';
+import { fromObservable, Model } from './lib/model';
+import { Store, ChannelList } from './lib/store';
+
 import { ChannelViewModel, ChannelListItem } from './channel-list-item';
+import { channelSort } from './channel-utils';
 
 export class ChannelListViewModel extends Model {
   store: Store;
@@ -32,56 +31,17 @@ export class ChannelListViewModel extends Model {
   }
 }
 
-export class ChannelListView extends SimpleView<ChannelListViewModel> {
-  private readonly viewModelCache: { [key: number]: ChannelViewModel } = {};
-
-  getOrCreateViewModel(index: number) {
-    if (!this.viewModelCache[index]) {
-      const channel = this.viewModel.orderedChannels[index];
-      const onUnsubscribe = () => {
-        delete this.viewModelCache[index];
-      };
-
-      this.viewModelCache[index] = new ChannelViewModel({
-        store: this.viewModel.store,
-        model: channel,
-        onUnsubscribe
-      });
-    }
-    return this.viewModelCache[index];
+export class ChannelListView extends CollectionView<ChannelListViewModel, ChannelViewModel> {
+  viewModelFactory(index: number) {
+    const channel = this.viewModel.orderedChannels[index];
+    return new ChannelViewModel(this.viewModel.store, channel);
   }
 
-  rowRenderer(opts: any): JSX.Element {
-    const { index, style } = opts;
-    const itemViewModel = this.getOrCreateViewModel(index);
-
-    return (
-      <div
-        key={itemViewModel.id}
-        style={style}
-      >
-        <ChannelListItem viewModel={itemViewModel} />
-      </div>
-    );
+  renderItem(viewModel: ChannelViewModel) {
+    return <ChannelListItem viewModel={viewModel} />;
   }
 
-  listRenderer({ height }: { height: number }): JSX.Element {
-    return (
-      <List
-        width={300}
-        height={height}
-        rowRenderer={this.rowRenderer.bind(this)}
-        rowCount={this.viewModel.orderedChannels.length}
-        rowHeight={32}
-      />
-    );
-  }
-
-  render() {
-    return (
-      <AutoSizer disableWidth>
-        {this.listRenderer.bind(this)}
-      </AutoSizer>
-    );
+  rowCount() {
+    return this.viewModel.orderedChannels.length;
   }
 }

@@ -132,6 +132,10 @@ export class Model {
     this.innerDisp.unsubscribe();
   }
 
+  addTeardown(teardown: void | Function) {
+    this.innerDisp.add(teardown);
+  }
+
   when<TRet>(prop1: string): Observable<TRet>;
   when<TRet>(prop1: string, prop2: string, sel: WhenSelector<TRet>): Observable<TRet>;
   when<TRet>(prop1: string, prop2: string, prop3: string, sel: WhenSelector<TRet>): Observable<TRet>;

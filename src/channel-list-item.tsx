@@ -13,16 +13,8 @@ import { isDM } from './channel-utils';
 
 import { ChannelBase } from './lib/models/api-shapes';
 
-export interface ChannelViewModelArgs {
-  store: Store;
-  model: Updatable<ChannelBase>;
-  onUnsubscribe: Function;
-}
-
 @notify('isSelected')
 export class ChannelViewModel extends Model {
-  store: Store;
-  onUnsubscribe: Function;
   isSelected: boolean;
 
   @fromObservable model: ChannelBase;
@@ -33,10 +25,9 @@ export class ChannelViewModel extends Model {
   @fromObservable highlighted: boolean;
   @fromObservable starred: boolean;
 
-  constructor({ store, model, onUnsubscribe }: ChannelViewModelArgs) {
+  constructor(public readonly store: Store, model: Updatable<ChannelBase>) {
     super();
     this.store = store;
-    this.onUnsubscribe = onUnsubscribe;
 
     model.toProperty(this, 'model');
 
@@ -65,11 +56,6 @@ export class ChannelViewModel extends Model {
     this.when('mentions', 'model.has_unreads',
       (mentions, hasUnreads) => mentions.value > 0 || hasUnreads.value)
       .toProperty(this, 'highlighted');
-  }
-
-  unsubscribe() {
-    this.onUnsubscribe();
-    super.unsubscribe();
   }
 
   private getDisplayName(name: string) {
