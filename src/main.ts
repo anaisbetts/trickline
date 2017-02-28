@@ -1,9 +1,15 @@
-import { app, BrowserWindow } from 'electron';
+import * as path from 'path';
+import * as os from 'os';
+import * as fs from 'fs';
+
+import { app, BrowserWindow, contentTracing } from 'electron';
 import { enableLiveReload } from 'electron-compile';
 import * as electronDebug from 'electron-debug';
 import installExtension from 'electron-devtools-installer';
 import { REACT_DEVELOPER_TOOLS } from 'electron-devtools-installer';
 import { config } from 'dotenv';
+import { initializeEvalHandler } from 'electron-remote';
+import { startTracing, stopTracing } from './profiler';
 
 config();
 
@@ -12,23 +18,37 @@ electronDebug({enabled: true});
 enableLiveReload({strategy: 'react-hmr'});
 
 const isDevMode = process.execPath.match(/[\\/]electron/);
+const traceMode = process.env['TRICKLINE_HEAPSHOT_AND_BAIL'];
+
+global.tracingControl = {
+  startTracing,
+  stopTracing: async (shouldExit = false) => {
+    await stopTracing();
+    if (shouldExit) app.quit();
+  }
+};
 
 app.on('window-all-closed', () => {
   app.quit();
 });
 
 app.on('ready', async () => {
+  initializeEvalHandler();
+  if (traceMode) await startTracing();
+
   mainWindow = new BrowserWindow({
     width: 800, height: 600,
   });
 
   mainWindow.loadURL(`file://${__dirname}/index.html`);
 
+  if (traceMode) return;
+
   // Open the DevTools.
   if (isDevMode) {
     await installExtension(REACT_DEVELOPER_TOOLS);
     mainWindow.webContents.openDevTools();
   } else {
-    if (!process.env['TRICKLINE_HEAPSHOT_AND_BAIL']) mainWindow.webContents.openDevTools();
+    mainWindow.webContents.openDevTools();
   }
 });

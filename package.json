@@ -32,7 +32,7 @@
     "electron-compile": "^6.1.2",
     "electron-debug": "^1.1.0",
     "electron-devtools-installer": "^2.0.1",
-    "electron-remote": "^1.1.2",
+    "electron-remote": "1.1.2",
     "keycode": "^2.1.8",
     "lru-cache": "^4.0.2",
     "material-ui": "^0.16.7",
