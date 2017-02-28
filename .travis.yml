@@ -4,13 +4,14 @@ node_js:
   - "6.3.0"
 compiler:
   - clang
+sudo: required
 
 os:
   - linux
   - osx
 
 env:
-  - DEBUG="*,-babel"
+  - DEBUG='surf-build:*, surf:*'
 
 cache:
   directories:
@@ -26,9 +27,39 @@ addons:
       - gcc-4.9
       - libstdc++6
       - xvfb
+      - build-essential
+      - ca-certificates
+      - curl
+      - git
+      - fakeroot
+      - clang
+      - cmake
+      - libgnome-keyring-dev
+      - libnss3
+      - libgtk2.0-dev
+      - libnotify-dev
+      - libdbus-1-dev
+      - libxrandr-dev
+      - libxext-dev
+      - libxss-dev
+      - libgconf2-dev
+      - libasound2-dev
+      - libcap-dev
+      - libcups2-dev
+      - libXtst-dev
+      - libcurl4-openssl-dev 
+      - libxkbfile-dev
+      - xauth 
+      - xorg 
+      - openbox 
+      - lightdm
+      - curl
+      - rpm
+      - wget
 
 install:
   - npm install -g surf-build@latest electron-forge@latest
 
 script:
-  - surf-build -n "surf-travis-$TRAVIS_OS_NAME"
+  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then surf-build -n surf-travis-linux -s "$TRAVIS_COMMIT"; fi 
+  - if [ "$TRAVIS_OS_NAME" == "osx" ]; then surf-build -n surf-travis-macos -s "$TRAVIS_COMMIT"; fi 
