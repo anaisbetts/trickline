@@ -2,6 +2,7 @@ import {expect, TestClass} from '../support';
 import {Observable, Subject} from 'rxjs/Rx';
 
 import '../../src/lib/custom-operators';
+import {observableForPropertyChain, notificationForProperty} from '../../src/lib/when';
 
 describe('the notify attribute', function() {
   it('should notify me!', function() {
@@ -61,27 +62,11 @@ describe('the toProperty method', function() {
 });
 
 describe('the when method', function() {
-  it('should let me get props', function() {
-    let f = { bamf: 10, foo: { bar: { baz: 5 } } };
-
-    let result = Model.createGetterForPropertyChain_('bamf');
-    expect(result(f)).to.deep.equal({success: true, value: 10});
-
-    let result2 = Model.createGetterForPropertyChain_('foo.bar.baz');
-    expect(result2(f)).to.deep.equal({success: true, value: 5});
-
-    let result3 = Model.createGetterForPropertyChain_('foo.bar.nothere');
-    expect(result3(f)).to.deep.equal({success: false});
-
-    let result4 = Model.createGetterForPropertyChain_('nothere.bar.baz');
-    expect(result4(f)).to.deep.equal({success: false});
-  });
-
   it('should notify me about props', function() {
     let fixture = { foo: new TestClass() };
     let inner = fixture.foo;
 
-    let changes = Model.notificationForProperty_(inner, 'bar').createCollection();
+    let changes = notificationForProperty(inner, 'bar').createCollection();
     expect(changes.length).to.equal(0);
 
     inner.bar = 5;
@@ -89,7 +74,7 @@ describe('the when method', function() {
     expect(changes[0]).to.deep.equal({sender: inner, property: 'bar', value: 5});
     expect(Object.keys(changes[0]).length).to.equal(3);
 
-    let changes2 = Model.notificationForProperty_(fixture, 'foo').createCollection();
+    let changes2 = notificationForProperty(fixture, 'foo').createCollection();
     expect(changes2.length).to.equal(0);
 
     changes2.foo = new TestClass();
@@ -97,14 +82,14 @@ describe('the when method', function() {
   });
 
   it('should return nothing for non-models', function() {
-    let changes = Model.notificationForProperty_(5)
+    let changes = notificationForProperty(5)
       .materialize()
       .createCollection();
 
     expect(changes.length).to.equal(0);
 
     let input = {foo: 'bar'};
-    changes = Model.notificationForProperty_(input)
+    changes = notificationForProperty(input)
       .materialize()
       .createCollection();
 
@@ -116,7 +101,7 @@ describe('the when method', function() {
 
   it('should return nothing for expressions it cant actually fetch', function() {
     let fixture = new TestClass();
-    let result = Model.observableForPropertyChain_(fixture, '__nothere').createCollection();
+    let result = observableForPropertyChain(fixture, '__nothere').createCollection();
     expect(result.length).to.equal(0);
 
     fixture.__nothere = 0;
@@ -125,7 +110,7 @@ describe('the when method', function() {
 
   it('should subscribe to a one-item expression chain', function() {
     let fixture = new TestClass();
-    let result = Model.observableForPropertyChain_(fixture, 'foo').createCollection();
+    let result = observableForPropertyChain(fixture, 'foo').createCollection();
     expect(result.length).to.equal(1);
 
     fixture.foo = 5;
@@ -183,7 +168,7 @@ describe('the when method', function() {
     fixture.bar = new TestClass();
     let barFixture = fixture.bar;
 
-    let result = Model.observableForPropertyChain_(fixture, 'bar.foo').createCollection();
+    let result = observableForPropertyChain(fixture, 'bar.foo').createCollection();
     expect(result.length).to.equal(1);
     expect(result[0].sender).to.equal(fixture);
     expect(result[0].property).to.equal('bar.foo');

@@ -13,6 +13,8 @@ import { isDM } from './channel-utils';
 
 import { ChannelBase } from './lib/models/api-shapes';
 
+import './lib/when';
+
 @notify('isSelected')
 export class ChannelViewModel extends Model {
   isSelected: boolean;
