@@ -35,7 +35,7 @@ export class ChannelViewModel extends Model {
 
     this.when('model')
       .filter((c: any) => isDM(c.value))
-      .flatMap((c: any) => this.store.users.listen(c.value.user_id))
+      .switchMap((c: any) => this.store.users.listen(c.value.user_id))
       .map((res) => res.user.profile.image_48)
       .toProperty(this, 'profileImage');
 
