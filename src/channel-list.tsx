@@ -2,12 +2,11 @@
 import * as React from 'react';
 
 import { ChannelBase } from './lib/models/api-shapes';
+import { ChannelViewModel, ChannelListItem } from './channel-list-item';
+import { channelSort, isDM } from './channel-utils';
 import { CollectionView } from './lib/collection-view';
 import { fromObservable, notify, Model } from './lib/model';
 import { Store, ChannelList } from './lib/store';
-
-import { ChannelViewModel, ChannelListItem } from './channel-list-item';
-import { channelSort } from './channel-utils';
 
 @notify('selectedChannel')
 export class ChannelListViewModel extends Model {
@@ -25,7 +24,7 @@ export class ChannelListViewModel extends Model {
     this.when('channels')
       .map((list: any) => {
         return list.value
-          .filter((c: any) => !c.value.is_archived)
+          .filter((c: any) => !c.value.is_archived || (isDM(c) && c.value.is_open))
           .sort(channelSort);
       })
       .toProperty(this, 'orderedChannels');
