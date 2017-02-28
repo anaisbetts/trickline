@@ -99,7 +99,6 @@ export type EventType =
   'user_added_to_team' | // the logged in user is added to another team in the same enterprise
   'user_removed_from_team' | // the logged in user is removed from a team in the current enterprise
 
-
   // enterprise
   'teams_joined_shared_channel' | // a team in an enterprise is added to a shared channel
   'enterprise_domain_change' | // the enterprise domain is changed
@@ -148,5 +147,4 @@ export type EventSubType =
   'reply_broadcast' |
   'reminder_add' |
   'reminder_delete' |
-  'NO_SUBTYPE'
-
+  'NO_SUBTYPE';

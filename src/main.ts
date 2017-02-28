@@ -1,8 +1,4 @@
-import * as path from 'path';
-import * as os from 'os';
-import * as fs from 'fs';
-
-import { app, BrowserWindow, contentTracing } from 'electron';
+import { app, BrowserWindow } from 'electron';
 import { enableLiveReload } from 'electron-compile';
 import * as electronDebug from 'electron-debug';
 import installExtension from 'electron-devtools-installer';
