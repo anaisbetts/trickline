@@ -19,7 +19,7 @@ app.on('window-all-closed', () => {
 
 app.on('ready', async () => {
   mainWindow = new BrowserWindow({
-    width: 800, height: 600,
+    width: 1024, height: 768,
   });
 
   mainWindow.loadURL(`file://${__dirname}/index.html`);
