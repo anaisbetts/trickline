@@ -1,7 +1,7 @@
 import { Observable } from 'rxjs/Observable';
 import { ISubscription, Subscription } from 'rxjs/Subscription';
 import { Subject } from 'rxjs/Subject';
-import { Updatable } from './sparse-map';
+import { Updatable } from './updatable';
 
 import * as debug from 'debug';
 

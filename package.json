@@ -6,8 +6,8 @@
   "scripts": {
     "start": "electron-forge start",
     "clean-build": "ts-node -D ./docker/surf-build-current",
-    "test-renderer": "xvfb-maybe electron-mocha --renderer --watch-extensions tsx,ts './test/**/*.{js,ts}'",
-    "dtest": "electron-mocha --renderer --interactive --watch-extensions tsx,ts './test/**/*.{js,ts}'",
+    "test-renderer": "xvfb-maybe electron-mocha --renderer --watch-extensions tsx,ts \"./test/**/*.{js,ts}\"",
+    "dtest": "electron-mocha --renderer --interactive --watch-extensions tsx,ts \"./test/**/*.{js,ts}\"",
     "test": "npm run test-renderer",
     "package": "electron-forge make"
   },
