@@ -1,13 +1,10 @@
-//import * as path from 'path';
-//import * as fs from 'fs';
-
 // tslint:disable-next-line:no-unused-variable
 import * as React from 'react';
 
 // tslint:disable-next-line:no-unused-variable
 import { Observable } from 'rxjs/Observable';
+import { createProxyForRemote } from 'electron-remote';
 
-import { default as AppBar } from 'material-ui/AppBar';
 import { default as Drawer } from 'material-ui/Drawer';
 import { default as MuiThemeProvider } from 'material-ui/styles/MuiThemeProvider';
 import getMuiTheme from 'material-ui/styles/getMuiTheme';
@@ -17,11 +14,10 @@ import { SimpleView } from './lib/view';
 import { fromObservable, Model } from './lib/model';
 import { Store } from './lib/store';
 
+import { ChannelHeaderViewModel, ChannelHeaderView } from './channel-header';
 import { ChannelListViewModel, ChannelListView } from './channel-list';
 import { MemoryPopover } from './memory-popover';
 //import { takeHeapSnapshot } from './profiler';
-
-import { createProxyForRemote } from 'electron-remote';
 
 import './lib/standard-operators';
 
@@ -46,11 +42,11 @@ const slackTheme = getMuiTheme({
 });
 
 export class SlackAppModel extends Model {
-  toggleDrawer: Action<boolean>;
   store: Store;
   channelList: ChannelListViewModel;
+  channelHeader: ChannelHeaderViewModel;
   loadInitialState: Action<void>;
-  @fromObservable isOpen: boolean;
+  @fromObservable isDrawerOpen: boolean;
 
   constructor() {
     super();
@@ -58,14 +54,19 @@ export class SlackAppModel extends Model {
     // NB: Solely for debugging purposes
     global.slackApp = this;
 
-    let isOpen = false;
-
     this.store = new Store(process.env.SLACK_API_TOKEN || window.localStorage.getItem('token'));
-    this.toggleDrawer = Action.create(() => isOpen = !isOpen, false);
     this.channelList = new ChannelListViewModel(this.store);
+    this.channelHeader = new ChannelHeaderViewModel(this.store);
+
+    this.when('channelList.selectedChannel')
+      .map((c: any) => c.value)
+      .toProperty(this.channelHeader, 'selectedChannel');
+
+    this.when('channelHeader.isDrawerOpen')
+      .map((o: any) => o.value)
+      .toProperty(this, 'isDrawerOpen');
 
     this.loadInitialState = new Action<void>(() => this.store.fetchInitialChannelList(), undefined);
-    this.toggleDrawer.result.toProperty(this, 'isOpen');
   }
 }
 
@@ -82,9 +83,9 @@ export class SlackApp extends SimpleView<SlackAppModel> {
   }
 
   async takeHeapshot() {
-    await this.viewModel.toggleDrawer.execute().toPromise();
+    await this.viewModel.channelHeader.toggleDrawer.execute().toPromise();
     await this.viewModel.store.channels
-      .filter(x => x && x.length > 0)
+      .filter((x: any) => x && x.length > 0)
       .take(1)
       .timeout(10 * 1000)
       .catch(() => Observable.of(true))
@@ -96,13 +97,13 @@ export class SlackApp extends SimpleView<SlackAppModel> {
 
   render() {
     const vm = this.viewModel;
-    const shouldShift = vm.isOpen && window.outerWidth > window.outerHeight;
+    const shouldShift = vm.isDrawerOpen && window.outerWidth > window.outerHeight;
     const containerStyle = {
       marginLeft: shouldShift ? `${DrawerWidth}px` : '0px',
       transition: 'margin-left: 450ms cubic-bezier(0.23, 1, 0.32, 1) 0ms'
     };
 
-    const channelListView = vm.isOpen ? (
+    const channelListView = vm.isDrawerOpen ? (
       <ChannelListView
         viewModel={vm.channelList}
         rowHeight={32}
@@ -112,9 +113,9 @@ export class SlackApp extends SimpleView<SlackAppModel> {
     return (
       <MuiThemeProvider muiTheme={slackTheme}>
         <div style={containerStyle}>
-          <AppBar title='Trickline' onLeftIconButtonTouchTap={vm.toggleDrawer.bind()} zDepth={2}/>
+          <ChannelHeaderView viewModel={vm.channelHeader} />
 
-          <Drawer open={vm.isOpen} zDepth={1} width={DrawerWidth}>
+          <Drawer open={vm.isDrawerOpen} zDepth={1} width={DrawerWidth}>
             {channelListView}
           </Drawer>
 

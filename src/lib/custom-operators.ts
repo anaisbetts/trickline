@@ -1,5 +1,4 @@
-import {Observable} from 'rxjs/Observable';
-import {Model} from './model';
+import { Observable } from 'rxjs/Observable';
 
 export function createCollection<T>(this: Observable<T>): Array<T> {
   let ret: Array<T> = [];

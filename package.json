@@ -8,7 +8,8 @@
     "clean-build": "ts-node -D ./docker/surf-build-current",
     "test-renderer": "xvfb-maybe electron-mocha --renderer --watch-extensions tsx,ts \"./test/**/*.{js,ts}\"",
     "dtest": "electron-mocha --renderer --interactive --watch-extensions tsx,ts \"./test/**/*.{js,ts}\"",
-    "test": "npm run test-renderer",
+    "test": "npm run lint && npm run test-renderer",
+    "lint": "tslint -c ./tslint.json -p ./tsconfig.json \"src/**/*.ts\"",
     "package": "electron-forge make"
   },
   "repository": {
@@ -70,7 +71,9 @@
     "eslint-plugin-react": "^6.8.0",
     "react-hot-loader": "^3.0.0-beta.6",
     "ts-node": "2.1.0",
-    "tslint": "^4.2.0",
+    "tslint": "^4.5.0",
+    "tslint-microsoft-contrib": "^4.0.0",
+    "tslint-react": "^2.4.0",
     "typescript": "~2.1.4",
     "xvfb-maybe": "^0.1.3"
   },

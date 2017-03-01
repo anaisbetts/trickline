@@ -94,19 +94,20 @@ export function fromObservable(target: Model, propertyKey: string): void {
       return this[valPropertyKey];
     },
     set: () => {
-      throw new Error('Observable properties are read-only');
+      throw new Error(`Cannot set '${propertyKey}' on ${target.constructor.name}: Observable properties are read-only`);
     }
   });
 }
 
 export function toProperty<T>(this: Observable<T>, target: Model, propertyKey: string) {
   const obsPropertyKey: string = `___${propertyKey}_Observable`;
-  if (!obsPropertyKey in target) {
+  if (!(obsPropertyKey in target)) {
     throw new Error(`Make sure to mark ${propertyKey} with the @fromObservable decorator`);
   }
 
   target[obsPropertyKey] = this;
-  let _dontcare = target[propertyKey];
+  // tslint:disable-next-line:no-unused-variable
+  const _dontcare = target[propertyKey];
 }
 
 Observable.prototype['toProperty'] = toProperty;

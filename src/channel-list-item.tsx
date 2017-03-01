@@ -5,19 +5,21 @@ import { ListItem } from 'material-ui/List';
 import Star from 'material-ui/svg-icons/toggle/star';
 import { grey700, pinkA200, transparent } from 'material-ui/styles/colors';
 
+import { Action } from './lib/action';
+import { ChannelBase } from './lib/models/api-shapes';
+import { ChannelListViewModel } from './channel-list';
+import { fromObservable, Model } from './lib/model';
+import { isDM } from './channel-utils';
 import { SimpleView } from './lib/view';
-import { fromObservable, notify, Model } from './lib/model';
 import { Store } from './lib/store';
 import { Updatable } from './lib/updatable';
-import { isDM } from './channel-utils';
-
-import { ChannelBase } from './lib/models/api-shapes';
 
 import {when} from './lib/when';
 
 @notify('isSelected')
 export class ChannelViewModel extends Model {
-  isSelected: boolean;
+  store: Store;
+  selectChannel: Action<void>;
 
   @fromObservable model: ChannelBase;
   @fromObservable id: string;
@@ -27,9 +29,9 @@ export class ChannelViewModel extends Model {
   @fromObservable highlighted: boolean;
   @fromObservable starred: boolean;
 
-  constructor(public readonly store: Store, model: Updatable<ChannelBase>) {
+  constructor(public readonly parent: ChannelListViewModel, model: Updatable<ChannelBase>) {
     super();
-    this.store = store;
+    this.store = parent.store;
 
     model.toProperty(this, 'model');
 
@@ -50,6 +52,10 @@ export class ChannelViewModel extends Model {
     when(this, x => x.mentions, x => x.model.has_unreads,
       (mentions, hasUnreads) => mentions > 0 || hasUnreads)
       .toProperty(this, 'highlighted');
+
+    this.selectChannel = Action.create(() => {
+      this.parent.selectedChannel = this.model;
+    }, undefined);
   }
 
   private getDisplayName(name: string) {
@@ -98,6 +104,7 @@ export class ChannelListItem extends SimpleView<ChannelViewModel> {
 
     return (
       <ListItem
+        onTouchTap={viewModel.selectChannel.bind()}
         primaryText={viewModel.displayName}
         leftAvatar={leftAvatar}
         rightAvatar={mentionsBadge}
