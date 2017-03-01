@@ -1,7 +1,7 @@
 import { Observable } from 'rxjs/Observable';
 import { Subject } from 'rxjs/Subject';
 import { Updatable } from '../../src/lib/updatable';
-import { getValue } from '../../src/lib/when';
+import { getValue, whenProperty } from '../../src/lib/when';
 
 import {observableForPropertyChain, notificationForProperty} from '../../src/lib/when';
 
@@ -73,9 +73,7 @@ describe('the getValue method', function() {
   });
 });
 
-/* OLD TEST CASES THAT SHOULD PROBABLY BE FIXED */
-
-describe('the when method', function() {
+describe('the notificationForProperty method', function() {
   it('should notify me about props', function() {
     let fixture = { foo: new TestClass() };
     let inner = fixture.foo;
@@ -112,7 +110,9 @@ describe('the when method', function() {
     input.foo = 'barrr';
     expect(changes.length).to.equal(0);
   });
+});
 
+describe('the observableForPropertyChain method', function() {
   it('should return nothing for expressions it cant actually fetch', function() {
     let fixture = new TestClass();
     let result = observableForPropertyChain(fixture, '__nothere').createCollection();
@@ -213,10 +213,12 @@ describe('the when method', function() {
     barFixture.foo = 7;
     expect(result.length).to.equal(4);
   });
+});
 
-  it('when should work in the single item case', function() {
+describe('the whenProperty method', function() {
+  it('should work in the single item case', function() {
     let fixture = new TestClass();
-    let result = fixture.when('foo').createCollection();
+    let result = whenProperty(fixture, 'foo').createCollection();
     expect(result.length).to.equal(1);
 
     fixture.foo = 5;
@@ -235,10 +237,10 @@ describe('the when method', function() {
     expect(Object.keys(result[2]).length).to.equal(3);
   });
 
-  it('when should combine values', function() {
+  it('should combine values', function() {
     let fixture = new TestClass();
 
-    let result = fixture.when(
+    let result = whenProperty(fixture,
       'derived', 'subjectDerived',
       (x, y) => x.value + y.value).createCollection();
 
@@ -255,9 +257,9 @@ describe('the when method', function() {
     expect(result[2]).to.equal(2*10 + 42);
   });
 
-  it('when should reach through Updatables', function() {
+  it('should reach through Updatables', function() {
     let fixture = new TestClass();
-    let result = fixture.when('updatableFoo').createCollection();
+    let result = whenProperty(fixture, 'updatableFoo').createCollection();
 
     expect(result.length).to.equal(1);
     expect(result[0].value).to.equal(6);
@@ -267,3 +269,59 @@ describe('the when method', function() {
     expect(result[1].value).to.equal(12);
   });
 });
+
+describe('the typed whenProperty method', function() {
+  it('should work in the single item case', function() {
+    let fixture = new TestClass();
+    let result = whenProperty(fixture, x => x.foo).createCollection();
+    expect(result.length).to.equal(1);
+
+    fixture.foo = 5;
+    expect(result.length).to.equal(2);
+    expect(result[1]).to.deep.equal({ sender: fixture, property: 'foo', value: 5});
+
+    fixture.foo = 5;
+    expect(result.length).to.equal(2);
+
+    fixture.foo = 7;
+    expect(result.length).to.equal(3);
+
+    expect(result[2]).to.deep.equal({ sender: fixture, property: 'foo', value: 7});
+    expect(Object.keys(result[0]).length).to.equal(3);
+    expect(Object.keys(result[1]).length).to.equal(3);
+    expect(Object.keys(result[2]).length).to.equal(3);
+  });
+
+  it('should combine values', function() {
+    let fixture = new TestClass();
+
+    let result = whenProperty(fixture,
+      x => x.derived, x => x.subjectDerived,
+      (x, y) => x.value + y.value).createCollection();
+
+    fixture.someSubject.next(10);
+
+    expect(fixture.derived).to.equal(42);
+    expect(fixture.subjectDerived).to.equal(10*10);
+
+    expect(result.length).to.equal(2);
+    expect(result[1]).to.equal(10*10 + 42);
+
+    fixture.someSubject.next(2);
+    expect(result.length).to.equal(3);
+    expect(result[2]).to.equal(2*10 + 42);
+  });
+
+  it('should reach through Updatables', function() {
+    let fixture = new TestClass();
+    let result = whenProperty(fixture, x => x.updatableFoo).createCollection();
+
+    expect(result.length).to.equal(1);
+    expect(result[0].value).to.equal(6);
+
+    fixture.updatableFoo.next(12);
+    expect(result.length).to.equal(2);
+    expect(result[1].value).to.equal(12);
+  });
+});
+
