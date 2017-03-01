@@ -21,13 +21,12 @@ export class Store {
     this.api = tokenList.map(x => createApi(x));
 
     this.channels = new InMemorySparseMap<string, ChannelBase>();
-    this.users = new InMemorySparseMap<string, User>();
-
-/*
-    this.users = new InMemorySparseMap<Pair<string, any>, User>((user) => {
-      return this.api.users.info({ user }).map(x => x.user);
+    this.users = new InMemorySparseMap<string, User>((user, api: Api) => {
+      return api.users.info({ user }).map(({user}) => {
+        user.api = api;
+        return user;
+      });
     });
-*/
 
     this.joinedChannels = new Updatable<ChannelList>(() => Observable.of([]));
   }
