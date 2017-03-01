@@ -68,12 +68,15 @@ export class ChannelViewModel extends Model {
     // NB: This Feels Bad. We should be encouraging people to *create*
     // Updatables.
 
+    let ret = Observable.of(c.name);
+
     if (isDM(c)) {
-      return this.store.users.listen(c.user_id, c.api)
-        .map(x => x ? (x.real_name || x.name) : c.name);
+      ret = this.store.users.listen(c.user_id, c.api)
+        .map(x => x ? (x.real_name || x.name) : c.name)
+        .startWith(c.name);
     }
 
-    return Observable.of(c.name.length < 25 ? c.name : `${c.name.substr(0, 25)}...`);
+    return ret.map(x => x.length < 25 ? x : `${x.substr(0, 25)}...`);
   }
 }
 
