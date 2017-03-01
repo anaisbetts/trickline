@@ -15,10 +15,14 @@ export interface UserResponse extends ApiCall {
   user: User;
 }
 
-export function createApi(token?: string): any {
-  const defaultParams = token ? {token} : {};
+export type Api = any;
+
+export function createApi(token?: string): Api {
+  const defaultParams: {token?: string} = token ? {token} : {};
 
   return RecursiveProxyHandler.create('api', (names: Array<string>, params: Array<any>) => {
+    if (names.length === 1 && names[0] === 'duplicate') return createApi(defaultParams.token);
+
     const p = Object.assign({}, params[0], defaultParams);
 
     return Observable.ajax.post(`https://slack.com/api/${names.slice(1).join('.')}`, p)

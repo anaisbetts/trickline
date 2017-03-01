@@ -6,8 +6,8 @@ import './standard-operators';
 export type Pair<K, V> = { Key: K, Value: V };
 
 export interface SparseMap<K, V> {
-  listen(key: K): Updatable<V>;
-  listenAll(): Map<K, Updatable<V>>;
+  listen(key: K, hint?: any): Updatable<V>;
+  listenAll(hint?: any): Map<K, Updatable<V>>;
 
   setDirect(key: K, value: Updatable<V>): Promise<void>;
   setLazy(key: K, value: Observable<V>): Promise<void>;
@@ -15,9 +15,9 @@ export interface SparseMap<K, V> {
 };
 
 export class SparseMapMixins {
-  static subscribeMany<K, V>(this: SparseMap<K, V>, keys: Array<K>): Map<K, Updatable<V>> {
+  static listenMany<K, V>(this: SparseMap<K, V>, keys: Array<K>, hint?: any): Map<K, Updatable<V>> {
     return keys.reduce((acc, x) => {
-      acc.set(x, this.listen(x));
+      acc.set(x, this.listen(x, hint));
       return acc;
     }, new Map<K, Updatable<V>>());
   }
@@ -26,9 +26,9 @@ export class SparseMapMixins {
     return this.listen(key).take(1).toPromise();
   }
 
-  static getMany<K, V>(this: SparseMap<K, V>, keys: Array<K>): Promise<Map<K, V>> {
+  static getMany<K, V>(this: SparseMap<K, V>, keys: Array<K>, hint?: any): Promise<Map<K, V>> {
     return Observable.of(...keys)
-      .flatMap(k => this.listen(k).take(1).map(v => ({Key: k, Value: v})))
+      .flatMap(k => this.listen(k, hint).take(1).map(v => ({Key: k, Value: v})))
       .reduce((acc, x) => {
         acc.set(x.Key, x.Value);
         return acc;
@@ -47,20 +47,20 @@ export class SparseMapMixins {
 
 class InMemorySparseMap<K, V> implements SparseMap<K, V> {
   private _latest: Map<K, Updatable<V>>;
-  private _factory: ((key: K) => Observable<V>) | undefined;
+  private _factory: ((key: K, hint?: any) => Observable<V>) | undefined;
 
-  constructor(factory: ((key: K) => Observable<V>) | undefined = undefined) {
+  constructor(factory: ((key: K, hint?: any) => Observable<V>) | undefined = undefined) {
     this._latest = new Map();
     this._factory = factory;
   }
 
-  listen(key: K): Updatable<V> {
+  listen(key: K, hint?: any): Updatable<V> {
     let ret = this._latest.get(key);
     if (ret) return ret;
 
     if (this._factory) {
       let fact = this._factory.bind(this);
-      ret = new Updatable<V>(() => fact(key));
+      ret = new Updatable<V>(() => fact(key, hint));
     } else {
       ret = new Updatable<V>();
     }
@@ -69,7 +69,7 @@ class InMemorySparseMap<K, V> implements SparseMap<K, V> {
     return ret;
   }
 
-  listenAll(): Map<K, Updatable<V>> {
+  listenAll(hint?: any): Map<K, Updatable<V>> {
     let ret = new Map<K, Updatable<V>>();
     for (let k of this._latest.keys()) {
       ret.set(k, this._latest.get(k));

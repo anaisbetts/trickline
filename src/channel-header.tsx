@@ -6,7 +6,7 @@ import { Action } from './lib/action';
 import { ChannelBase } from './lib/models/api-shapes';
 import { Model, fromObservable } from './lib/model';
 import { SimpleView } from './lib/view';
-import { Store } from './lib/store';
+import { Store } from './store';
 
 export class ChannelHeaderViewModel extends Model {
   toggleDrawer: Action<boolean>;

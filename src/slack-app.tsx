@@ -12,7 +12,7 @@ import getMuiTheme from 'material-ui/styles/getMuiTheme';
 import { Action } from './lib/action';
 import { SimpleView } from './lib/view';
 import { fromObservable, Model } from './lib/model';
-import { Store } from './lib/store';
+import { Store } from './store';
 
 import { ChannelHeaderViewModel, ChannelHeaderView } from './channel-header';
 import { ChannelListViewModel, ChannelListView } from './channel-list';
@@ -55,7 +55,10 @@ export class SlackAppModel extends Model {
     // NB: Solely for debugging purposes
     global.slackApp = this;
 
-    this.store = new Store(process.env.SLACK_API_TOKEN || window.localStorage.getItem('token'));
+    let tokenSource = process.env.SLACK_API_TOKEN || window.localStorage.getItem('token') || '';
+    let tokens = tokenSource.indexOf(',') >= 0 ? tokenSource.split(',') : [tokenSource];
+
+    this.store = new Store(tokens);
     this.channelList = new ChannelListViewModel(this.store);
     this.channelHeader = new ChannelHeaderViewModel(this.store);
 

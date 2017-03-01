@@ -40,6 +40,7 @@ export class Updatable<T> extends Subject<T> {
 
     let shouldNext = true;
     if (!this._hasPendingValue) {
+      this._hasPendingValue = true;
       this.playOnto(this._factory());
       shouldNext = false;
     }
