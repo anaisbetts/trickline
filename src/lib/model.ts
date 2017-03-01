@@ -77,7 +77,10 @@ export function fromObservable(target: Model, propertyKey: string): void {
       if (!this[subPropertyKey]) {
         this[subPropertyKey] = new Subscription();
 
-        this[subPropertyKey].add((this[obsPropertyKey] as Observable<any>).subscribe(
+        const observableForProperty = this[obsPropertyKey] as Observable<any>;
+        if (!observableForProperty) throw new Error(`Cannot find '${propertyKey}' on ${target.constructor.name}`);
+
+        this[subPropertyKey].add(observableForProperty.subscribe(
           (x) => {
             this.changing.next({sender: target, property: propertyKey, value: this[valPropertyKey]});
             this[valPropertyKey] = x;

@@ -7,7 +7,6 @@ import { channelSort, isDM } from './channel-utils';
 import { CollectionView } from './lib/collection-view';
 import { fromObservable, notify, Model } from './lib/model';
 import { Store, ChannelList } from './lib/store';
-
 import { when } from './lib/when';
 
 @notify('selectedChannel')
@@ -24,7 +23,7 @@ export class ChannelListViewModel extends Model {
     when(this, x => x.channels)
       .map(list => {
         return list
-          .filter(c => !c.value.is_archived || (isDM(c) && c.value.is_open))
+          .filter(c => !c.value.is_archived || (isDM(c.value) && c.value.is_open))
           .sort(channelSort);
       })
       .toProperty(this, 'orderedChannels');
