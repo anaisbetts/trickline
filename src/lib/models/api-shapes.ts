@@ -17,6 +17,8 @@ export interface ChannelBase {
   unread_count_display?: number;
   mention_count?: number;
   dm_count?: number;
+
+  api: any;
 }
 
 export interface UsersCounts {
