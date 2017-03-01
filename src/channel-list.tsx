@@ -12,14 +12,12 @@ import {when} from './lib/when';
 
 @notify('selectedChannel')
 export class ChannelListViewModel extends Model {
-  store: Store;
   selectedChannel: ChannelBase;
   @fromObservable channels: ChannelList;
   @fromObservable orderedChannels: ChannelList;
 
-  constructor(store: Store) {
+  constructor(public store: Store) {
     super();
-    this.store = store;
 
     store.channels.toProperty(this, 'channels');
 

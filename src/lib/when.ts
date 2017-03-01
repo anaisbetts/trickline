@@ -114,11 +114,7 @@ export function notificationForProperty(target: any, prop: string, before = fals
 // tslint:disable-next-line:no-empty
 const EMPTY_FN = () => {};
 export class SelfDescribingProxyHandler {
-  name: string;
-
-  constructor(name: string) {
-    this.name = name;
-  }
+  constructor(public name: string) {}
 
   get(_target: any, name: string) {
     return SelfDescribingProxyHandler.create(`${this.name}.${name}`);
