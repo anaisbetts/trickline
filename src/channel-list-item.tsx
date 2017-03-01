@@ -4,6 +4,7 @@ import Avatar from 'material-ui/Avatar';
 import { ListItem } from 'material-ui/List';
 import Star from 'material-ui/svg-icons/toggle/star';
 import { grey700, pinkA200, transparent } from 'material-ui/styles/colors';
+import { Observable } from 'rxjs/Observable';
 
 import { Action } from './lib/action';
 import { ChannelBase } from './lib/models/api-shapes';
@@ -15,6 +16,8 @@ import { Store } from './store';
 import { Updatable } from './lib/updatable';
 
 import { when } from './lib/when';
+
+import './lib/standard-operators';
 
 export class ChannelViewModel extends Model {
   store: Store;
@@ -38,8 +41,8 @@ export class ChannelViewModel extends Model {
     when(this, x => x.model.is_starred).toProperty(this, 'starred');
     when(this, x => x.model.mention_count).toProperty(this, 'mentions');
 
-    when(this, x => x.model.name)
-      .map((n) => this.getDisplayName(n))
+    when(this, x => x.model)
+      .switchMap((n) => this.getDisplayName(n))
       .toProperty(this, 'displayName');
 
     when(this, x => x.model)
@@ -57,8 +60,16 @@ export class ChannelViewModel extends Model {
     }, undefined);
   }
 
-  private getDisplayName(name: string) {
-    return name.length < 25 ? name : `${name.substr(0, 25)}...`;
+  private getDisplayName(c: ChannelBase): Observable<string> {
+    // NB: This Feels Bad. We should be encouraging people to *create*
+    // Updatables.
+
+    if (isDM(c)) {
+      return this.store.users.listen(c.user_id, c.api)
+        .map(x => x.real_name || x.name);
+    }
+
+    return Observable.of(c.name.length < 25 ? c.name : `${c.name.substr(0, 25)}...`);
   }
 }
 
