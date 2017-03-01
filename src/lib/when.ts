@@ -111,7 +111,6 @@ export function notificationForProperty(target: any, prop: string, before = fals
     .filter(({property}) => prop === property);
 }
 
-
 // tslint:disable-next-line:no-empty
 const EMPTY_FN = () => {};
 export class SelfDescribingProxyHandler {

@@ -1,7 +1,6 @@
 import { Observable } from 'rxjs/Observable';
 import { ISubscription, Subscription } from 'rxjs/Subscription';
 import { Subject } from 'rxjs/Subject';
-import { PropSelector, when, whenProperty } from './when';
 
 import * as debug from 'debug';
 
