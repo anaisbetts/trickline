@@ -16,7 +16,6 @@ export interface MemoryPopoverState {
 }
 
 export class MemoryPopover extends React.Component<MemoryPopoverProps, MemoryPopoverState> {
-
   constructor(props: MemoryPopoverProps) {
     super(props);
 

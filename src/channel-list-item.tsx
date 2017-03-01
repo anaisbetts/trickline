@@ -14,6 +14,8 @@ import { SimpleView } from './lib/view';
 import { Store } from './lib/store';
 import { Updatable } from './lib/updatable';
 
+import { when } from './lib/when';
+
 export class ChannelViewModel extends Model {
   store: Store;
   selectChannel: Action<void>;
@@ -32,30 +34,22 @@ export class ChannelViewModel extends Model {
 
     model.toProperty(this, 'model');
 
-    this.when('model.id')
-      .map((id: any) => id.value)
-      .toProperty(this, 'id');
+    when(this, x => x.model.id).toProperty(this, 'id');
+    when(this, x => x.model.is_starred).toProperty(this, 'starred');
+    when(this, x => x.model.mention_count).toProperty(this, 'mentions');
 
-    this.when('model.name')
-      .map((n: any) => this.getDisplayName(n.value))
+    when(this, x => x.model.name)
+      .map((n) => this.getDisplayName(n))
       .toProperty(this, 'displayName');
 
-    this.when('model')
-      .filter((c: any) => isDM(c.value))
-      .switchMap((c: any) => this.store.users.listen(c.value.user_id))
+    when(this, x => x.model)
+      .filter(c => isDM(c))
+      .switchMap(c => this.store.users.listen(c.user_id))
       .map((res) => res.user.profile.image_48)
       .toProperty(this, 'profileImage');
 
-    this.when('model.is_starred')
-      .map((starred: any) => starred.value)
-      .toProperty(this, 'starred');
-
-    this.when('model.mention_count')
-      .map((c: any) => c.value)
-      .toProperty(this, 'mentions');
-
-    this.when('mentions', 'model.has_unreads',
-      (mentions, hasUnreads) => mentions.value > 0 || hasUnreads.value)
+    when(this, x => x.mentions, x => x.model.has_unreads,
+      (mentions, hasUnreads) => mentions > 0 || hasUnreads)
       .toProperty(this, 'highlighted');
 
     this.selectChannel = Action.create(() => {

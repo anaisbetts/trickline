@@ -1,9 +1,9 @@
-import {Observable} from 'rxjs/Observable';
-import {Subscriber} from 'rxjs/Subscriber';
-import {Subscription, ISubscription} from 'rxjs/Subscription';
-import {SerialSubscription} from './serial-subscription';
+import { Observable } from 'rxjs/Observable';
+import { Subscriber } from 'rxjs/Subscriber';
+import { Subscription, ISubscription } from 'rxjs/Subscription';
+import { SerialSubscription } from './serial-subscription';
 
-import {Subject} from 'rxjs/Subject';
+import { Subject } from 'rxjs/Subject';
 
 import './standard-operators';
 

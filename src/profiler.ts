@@ -1,11 +1,11 @@
 import * as os from 'os';
 import * as fs from 'fs';
 import * as path from 'path';
-import {contentTracing} from 'electron';
+import { contentTracing } from 'electron';
 
 let v8profiler: any = null;
 
-function getTargetFilename(type) {
+function getTargetFilename(type: string) {
   const targetDir = process.env['SURF_ARTIFACT_DIR'] || os.tmpdir();
   const file = `trickline-${type}-${(new Date()).toISOString()}.json`.replace(/:/g, '-');
 

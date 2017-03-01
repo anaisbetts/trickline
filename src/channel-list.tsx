@@ -8,23 +8,23 @@ import { CollectionView } from './lib/collection-view';
 import { fromObservable, notify, Model } from './lib/model';
 import { Store, ChannelList } from './lib/store';
 
+import { when } from './lib/when';
+
 @notify('selectedChannel')
 export class ChannelListViewModel extends Model {
-  store: Store;
   selectedChannel: ChannelBase;
   @fromObservable channels: ChannelList;
   @fromObservable orderedChannels: ChannelList;
 
-  constructor(store: Store) {
+  constructor(public store: Store) {
     super();
-    this.store = store;
 
     store.channels.toProperty(this, 'channels');
 
-    this.when('channels')
-      .map((list: any) => {
-        return list.value
-          .filter((c: any) => !c.value.is_archived || (isDM(c) && c.value.is_open))
+    when(this, x => x.channels)
+      .map(list => {
+        return list
+          .filter(c => !c.value.is_archived || (isDM(c) && c.value.is_open))
           .sort(channelSort);
       })
       .toProperty(this, 'orderedChannels');

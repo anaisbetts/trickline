@@ -1,8 +1,8 @@
 /// <reference path="../typings/globals/mocha/index.d.ts" />
 
-import {expect} from './support';
+import { expect } from './support';
 
-function delay(ms) {
+function delay(ms: number) {
   return new Promise((resolve) => {
     setTimeout(resolve, ms);
   });
