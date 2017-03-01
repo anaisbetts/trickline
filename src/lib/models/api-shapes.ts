@@ -1,4 +1,5 @@
 import { EventType, EventSubType } from './event-type';
+import { Api } from './api-call';
 
 export interface ChannelBase {
   id: string;
@@ -18,7 +19,7 @@ export interface ChannelBase {
   mention_count?: number;
   dm_count?: number;
 
-  api: any;
+  api: Api;
 }
 
 export interface UsersCounts {
@@ -132,6 +133,8 @@ export interface Message {
   last_read: string;
 
   is_ephemeral: boolean;
+
+  api: Api;
 }
 
 export interface Profile {
@@ -195,6 +198,7 @@ export interface Team {
   plan: string;
   description: string;
   discoverable: string;
+  api: Api;
 };
 
 export interface TeamPrefs {
@@ -247,6 +251,7 @@ export interface User {
   has_files: boolean;
   enterprise_user: EnterpriseUser;
   profile: Profile;
+  api: Api;
 }
 
 export interface UserProfileField {
