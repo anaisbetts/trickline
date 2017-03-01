@@ -18,51 +18,14 @@ function isFunction(o: any): boolean {
 
 const identifier = /^[$A-Z_][0-9A-Z_$]*$/i;
 
-export type PropSelector<TIn, TOut> = (t: TIn) => TOut;
-
-export function whenProperty<TSource, TRet>(
-    target: TSource,
-    prop: PropSelector<TSource, TRet>):
-  Observable<TypedChangeNotification<TSource, TRet>>;
-
-export function whenProperty<TSource, TProp1, TProp2, TRet>(
-    target: TSource,
-    prop1: PropSelector<TSource, TProp1>,
-    prop2: PropSelector<TSource, TProp2>,
-    sel: ((p1: TypedChangeNotification<TSource, TProp1>, p2: TypedChangeNotification<TSource, TProp2>) => TRet)):
-  Observable<TypedChangeNotification<TSource, TRet>>;
-
-export function whenProperty<TSource, TProp1, TProp2, TProp3, TRet>(
-    target: TSource,
-    prop1: PropSelector<TSource, TProp1>,
-    prop2: PropSelector<TSource, TProp2>,
-    prop3: PropSelector<TSource, TProp3>,
-    sel: ((
-      p1: TypedChangeNotification<TSource, TProp1>,
-      p2: TypedChangeNotification<TSource, TProp2>,
-      p3: TypedChangeNotification<TSource, TProp3>) => TRet)):
-  Observable<TypedChangeNotification<TSource, TRet>>;
-
-export function whenProperty<TSource, TProp1, TProp2, TProp3, TProp4, TRet>(
-    target: TSource,
-    prop1: PropSelector<TSource, TProp1>,
-    prop2: PropSelector<TSource, TProp2>,
-    prop3: PropSelector<TSource, TProp3>,
-    prop4: PropSelector<TSource, TProp4>,
-    sel: ((
-      p1: TypedChangeNotification<TSource, TProp1>,
-      p2: TypedChangeNotification<TSource, TProp2>,
-      p3: TypedChangeNotification<TSource, TProp3>,
-      p4: TypedChangeNotification<TSource, TProp4>) => TRet)):
-  Observable<TypedChangeNotification<TSource, TRet>>;
-
-export function whenProperty(target: any, ...propsAndSelector: Array<string|Function|string[]>): Observable<any> {
+export function whenPropertyInternal(target: any, valueOnly: boolean, ...propsAndSelector: Array<string|Function|string[]>): Observable<any> {
   if (propsAndSelector.length < 1) {
     throw new Error('Must specify at least one property!');
   }
 
   if (propsAndSelector.length === 1) {
-    return observableForPropertyChain(target, propsAndSelector[0] as string);
+    let ret = observableForPropertyChain(target, propsAndSelector[0] as string);
+    return valueOnly ? ret.map(x => x.value) : ret;
   }
 
   let [selector] = propsAndSelector.splice(-1, 1);
@@ -71,7 +34,11 @@ export function whenProperty(target: any, ...propsAndSelector: Array<string|Func
   }
 
   let propsOnly = propsAndSelector as Array<string|string[]>;
-  let propWatchers = propsOnly.map((p) => observableForPropertyChain(target, p));
+  let propWatchers = propsOnly.map((p) =>
+    valueOnly ?
+      observableForPropertyChain(target, p).map(x => x.value) :
+      observableForPropertyChain(target, p));
+
   return Observable.combineLatest(...propWatchers, selector).distinctUntilChanged();
 }
 
@@ -224,4 +191,80 @@ export function getValue<T, TRet>(target: T, accessor: ((x: T) => TRet)): { resu
   return fetchValueForPropertyChain(target, propChain);
 }
 
-Model.prototype.when = function(...args) { return whenProperty(this, ...args); }
+/*
+ * Extremely boring and ugly type descriptions ahead
+ */
+
+export type PropSelector<TIn, TOut> = (t: TIn) => TOut;
+
+export function when<TSource, TRet>(
+    target: TSource,
+    prop: PropSelector<TSource, TRet>): Observable<TRet>;
+
+export function when<TSource, TProp1, TProp2, TRet>(
+    target: TSource,
+    prop1: PropSelector<TSource, TProp1>,
+    prop2: PropSelector<TSource, TProp2>,
+    sel: ((p1: TProp1, p2: TProp2) => TRet)):
+  Observable<TRet>;
+
+export function when<TSource, TProp1, TProp2, TProp3, TRet>(
+    target: TSource,
+    prop1: PropSelector<TSource, TProp1>,
+    prop2: PropSelector<TSource, TProp2>,
+    prop3: PropSelector<TSource, TProp3>,
+    sel: ((p1: TProp1, p2: TProp2, p3: TProp3) => TRet)):
+  Observable<TRet>;
+
+export function when<TSource, TProp1, TProp2, TProp3, TProp4, TRet>(
+    target: TSource,
+    prop1: PropSelector<TSource, TProp1>,
+    prop2: PropSelector<TSource, TProp2>,
+    prop3: PropSelector<TSource, TProp3>,
+    prop4: PropSelector<TSource, TProp4>,
+    sel: ((p1: TProp1, p2: TProp2, p3: TProp3, p4: TProp4) => TRet)):
+  Observable<TRet>;
+
+export function when(target: any, ...propsAndSelector: Array<string|Function|string[]>): Observable<any> {
+  return whenPropertyInternal(target, true, ...propsAndSelector);
+}
+
+export function whenProperty<TSource, TRet>(
+    target: TSource,
+    prop: PropSelector<TSource, TRet>):
+  Observable<TypedChangeNotification<TSource, TRet>>;
+
+export function whenProperty<TSource, TProp1, TProp2, TRet>(
+    target: TSource,
+    prop1: PropSelector<TSource, TProp1>,
+    prop2: PropSelector<TSource, TProp2>,
+    sel: ((p1: TypedChangeNotification<TSource, TProp1>, p2: TypedChangeNotification<TSource, TProp2>) => TRet)):
+  Observable<TypedChangeNotification<TSource, TRet>>;
+
+export function whenProperty<TSource, TProp1, TProp2, TProp3, TRet>(
+    target: TSource,
+    prop1: PropSelector<TSource, TProp1>,
+    prop2: PropSelector<TSource, TProp2>,
+    prop3: PropSelector<TSource, TProp3>,
+    sel: ((
+      p1: TypedChangeNotification<TSource, TProp1>,
+      p2: TypedChangeNotification<TSource, TProp2>,
+      p3: TypedChangeNotification<TSource, TProp3>) => TRet)):
+  Observable<TypedChangeNotification<TSource, TRet>>;
+
+export function whenProperty<TSource, TProp1, TProp2, TProp3, TProp4, TRet>(
+    target: TSource,
+    prop1: PropSelector<TSource, TProp1>,
+    prop2: PropSelector<TSource, TProp2>,
+    prop3: PropSelector<TSource, TProp3>,
+    prop4: PropSelector<TSource, TProp4>,
+    sel: ((
+      p1: TypedChangeNotification<TSource, TProp1>,
+      p2: TypedChangeNotification<TSource, TProp2>,
+      p3: TypedChangeNotification<TSource, TProp3>,
+      p4: TypedChangeNotification<TSource, TProp4>) => TRet)):
+  Observable<TypedChangeNotification<TSource, TRet>>;
+
+export function whenProperty(target: any, ...propsAndSelector: Array<string|Function|string[]>): Observable<any> {
+  return whenPropertyInternal(target, false, ...propsAndSelector);
+}
