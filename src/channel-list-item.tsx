@@ -42,12 +42,12 @@ export class ChannelViewModel extends Model {
     when(this, x => x.model.is_starred).toProperty(this, 'starred');
     when(this, x => x.model.mention_count).toProperty(this, 'mentions');
 
-
     when(this, x => x.model)
       .switchMap((n) => this.getDisplayName(n))
       .toProperty(this, 'displayName');
 
     when(this, x => x.model)
+      .filter(c => isDM(c))
       .switchMap(c => this.store.users.listen(c.user_id, c.api))
       .map((user) => {
         if (!user) return defaultAvatar;
