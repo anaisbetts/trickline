@@ -1,5 +1,5 @@
 import { Observable } from 'rxjs/Observable';
-import { ChangeNotification, Model } from './model';
+import { ChangeNotification, Model, TypedChangeNotification } from './model';
 
 import * as LRU from 'lru-cache';
 import {Updatable} from './updatable';
@@ -8,19 +8,33 @@ const proxyCache = LRU(64);
 
 import './standard-operators';
 
-function isObject(o: any): Boolean {
+function isObject(o: any): boolean {
   return o === Object(o);
 }
 
-export interface WhenSelector<TRet> { (...vals: Array<any>) : TRet; };
+function isFunction(o: any): boolean {
+  return !!(o && o.constructor && o.call && o.apply);
+};
 
 const identifier = /^[$A-Z_][0-9A-Z_$]*$/i;
 
-export function when<TRet>(target: any, prop1: string): Observable<TRet>;
-export function when<TRet>(target: any, prop1: string, prop2: string, sel: WhenSelector<TRet>): Observable<TRet>;
-export function when<TRet>(target: any, prop1: string, prop2: string, prop3: string, sel: WhenSelector<TRet>): Observable<TRet>;
-export function when<TRet>(target: any, prop1: string, prop2: string, prop3: string, prop4: string, sel: WhenSelector<TRet>): Observable<TRet>;
-export function when(target: any, ...propsAndSelector: Array<string|Function>): Observable<any> {
+export type PropSelector<TIn, TOut> = (t: TIn) => TOut;
+
+/*
+export function whenProperty<TSource, TRet>(target: TSource, prop: PropSelector<TSource, TRet>): Observable<TypedChangeNotification<TSource, TRet>> {
+  return whenDynamic(target, ...functionToPropertyChain(prop));
+}
+
+export function whenProperty<TSource, TProp1, TProp2, TRet>(
+    target: TSource,
+    prop1: PropSelector<TSource, TProp1>,
+    prop2: PropSelector<TSource, TProp2>,
+    sel: ((p1: TProp1, p2: TProp2) => TRet)) {
+  return whenDynamic(target, functionToPropertyChain(prop1), functionToPropertyChain(prop2), sel);
+}
+*/
+
+export function whenProperty(target: any, ...propsAndSelector: Array<string|Function|string[]>): Observable<any> {
   if (propsAndSelector.length < 1) {
     throw new Error('Must specify at least one property!');
   }
@@ -34,18 +48,20 @@ export function when(target: any, ...propsAndSelector: Array<string|Function>): 
     throw new Error('In multi-item properties, the last function must be a selector');
   }
 
-  let propsOnly = propsAndSelector as Array<string>;
+  let propsOnly = propsAndSelector as Array<string|string[]>;
   let propWatchers = propsOnly.map((p) => observableForPropertyChain(target, p));
   return Observable.combineLatest(...propWatchers, selector).distinctUntilChanged();
 }
 
-export function observableForPropertyChain(target: any, chain: (Array<string> | string), before = false): Observable<ChangeNotification> {
+export function observableForPropertyChain(target: any, chain: (Array<string> | string | Function), before = false): Observable<ChangeNotification> {
   let props: Array<string>;
 
   if (Array.isArray(chain)) {
     props = chain;
+  } else if (isFunction(chain)) {
+    props = functionToPropertyChain(chain as Function);
   } else {
-    props = chain.split('.');
+    props = (chain as string).split('.');
 
     if (props.find((x) => x.match(identifier) === null)) {
       throw new Error("property name must be of the form 'foo.bar.baz'");
@@ -186,4 +202,4 @@ export function getValue<T, TRet>(target: T, accessor: ((x: T) => TRet)): { resu
   return fetchValueForPropertyChain(target, propChain);
 }
 
-Model.prototype.when = function(...args) { return when(this, ...args); }
+Model.prototype.when = function(...args) { return whenProperty(this, ...args); }

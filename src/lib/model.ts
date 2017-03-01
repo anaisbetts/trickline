@@ -9,9 +9,15 @@ import './standard-operators';
 const d = debug('trickline:model');
 
 export interface ChangeNotification {
-  sender: Model;
+  sender: any;
   property: string;
   value?: any;
+};
+
+export interface TypedChangeNotification<TSender, TVal> extends ChangeNotification {
+  sender: TSender;
+  property: string;
+  value?: TVal;
 };
 
 function getDescriptorsForProperty(name: string, descriptor: PropertyDescriptor) {
