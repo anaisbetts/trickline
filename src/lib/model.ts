@@ -104,6 +104,8 @@ export function toProperty<T>(this: Observable<T>, target: Model, propertyKey: s
   }
 
   target[obsPropertyKey] = this;
+  // tslint:disable-next-line:no-unused-variable
+  const _dontcare = target[propertyKey];
 }
 
 Observable.prototype['toProperty'] = toProperty;
