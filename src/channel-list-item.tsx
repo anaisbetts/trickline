@@ -6,7 +6,7 @@ import Star from 'material-ui/svg-icons/toggle/star';
 import { grey700, pinkA200, transparent } from 'material-ui/styles/colors';
 
 import { Action } from './lib/action';
-import { ChannelBase } from './lib/models/api-shapes';
+import { ChannelBase, DirectMessage } from './lib/models/api-shapes';
 import { ChannelListViewModel } from './channel-list';
 import { fromObservable, Model } from './lib/model';
 import { isDM } from './channel-utils';
@@ -44,7 +44,7 @@ export class ChannelViewModel extends Model {
 
     when(this, x => x.model)
       .filter(c => isDM(c))
-      .switchMap(c => this.store.users.listen(c.user_id, c.api))
+      .switchMap((c: DirectMessage) => this.store.users.listen(c.user_id, c.api))
       .map((res) => res.profile.image_48)
       .toProperty(this, 'profileImage');
 
