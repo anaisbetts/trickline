@@ -19,7 +19,7 @@ export class ChannelListViewModel extends Model {
   constructor(public store: Store) {
     super();
 
-    store.channels.toProperty(this, 'channels');
+    store.joinedChannels.toProperty(this, 'channels');
 
     when(this, x => x.channels)
       .map(list => {
