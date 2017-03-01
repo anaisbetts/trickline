@@ -40,6 +40,7 @@ export interface Channel extends ChannelBase {
   is_general: boolean;
   is_archived: boolean;
   is_open: boolean;
+  members: Array<string>;
   topic: { value: string, creator: string, last_set: string };
   purpose: { value: string, creator: string, last_set: string };
 }

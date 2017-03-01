@@ -1,7 +1,7 @@
 import { RecursiveProxyHandler } from 'electron-remote';
 import { Observable } from 'rxjs/Observable';
 
-import { User } from './api-shapes';
+import { User, Channel } from './api-shapes';
 
 import '../standard-operators';
 import 'rxjs/add/observable/dom/ajax';
@@ -13,6 +13,10 @@ export interface ApiCall {
 
 export interface UserResponse extends ApiCall {
   user: User;
+}
+
+export interface ChannelResponse extends ApiCall {
+  channel: Channel;
 }
 
 export function createApi(token?: string): any {
