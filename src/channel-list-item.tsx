@@ -14,9 +14,8 @@ import { SimpleView } from './lib/view';
 import { Store } from './lib/store';
 import { Updatable } from './lib/updatable';
 
-import {when} from './lib/when';
+import { when } from './lib/when';
 
-@notify('isSelected')
 export class ChannelViewModel extends Model {
   store: Store;
   selectChannel: Action<void>;

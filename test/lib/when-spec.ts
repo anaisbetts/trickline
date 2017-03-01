@@ -3,9 +3,9 @@ import { Subject } from 'rxjs/Subject';
 import { Updatable } from '../../src/lib/updatable';
 import { getValue, when, whenProperty } from '../../src/lib/when';
 
-import {observableForPropertyChain, notificationForProperty} from '../../src/lib/when';
+import { observableForPropertyChain, notificationForProperty } from '../../src/lib/when';
 
-import {expect, TestClass} from '../support';
+import { expect, TestClass } from '../support';
 
 describe('the getValue method', function() {
   it ('should fetch simple values', function() {

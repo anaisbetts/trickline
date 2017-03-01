@@ -1,5 +1,5 @@
-import {Observable} from 'rxjs/Observable';
-import {Updatable} from './updatable';
+import { Observable } from 'rxjs/Observable';
+import { Updatable } from './updatable';
 
 import './standard-operators';
 

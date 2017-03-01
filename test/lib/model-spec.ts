@@ -1,5 +1,5 @@
-import {expect, TestClass} from '../support';
-import {Observable} from 'rxjs/Rx';
+import { expect, TestClass } from '../support';
+import { Observable } from 'rxjs/Rx';
 
 import '../../src/lib/custom-operators';
 

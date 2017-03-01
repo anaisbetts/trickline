@@ -2,7 +2,7 @@ import { Observable } from 'rxjs/Observable';
 import { Subject } from 'rxjs/Subject';
 import { Updatable } from '../../src/lib/updatable';
 
-import {expect} from '../support';
+import { expect } from '../support';
 
 describe('The Updatable class', function() {
   it('mostly acts like a BehaviorSubject', function() {

@@ -8,7 +8,7 @@ import { CollectionView } from './lib/collection-view';
 import { fromObservable, notify, Model } from './lib/model';
 import { Store, ChannelList } from './lib/store';
 
-import {when} from './lib/when';
+import { when } from './lib/when';
 
 @notify('selectedChannel')
 export class ChannelListViewModel extends Model {

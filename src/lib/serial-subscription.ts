@@ -1,4 +1,4 @@
-import {ISubscription, Subscription} from 'rxjs/Subscription';
+import { ISubscription, Subscription } from 'rxjs/Subscription';
 
 /**
  * @export

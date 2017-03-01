@@ -2,7 +2,7 @@ import { Observable } from 'rxjs/Observable';
 import { ChangeNotification, Model, TypedChangeNotification } from './model';
 
 import * as LRU from 'lru-cache';
-import {Updatable} from './updatable';
+import { Updatable } from './updatable';
 
 const proxyCache = LRU(64);
 
