@@ -20,19 +20,41 @@ const identifier = /^[$A-Z_][0-9A-Z_$]*$/i;
 
 export type PropSelector<TIn, TOut> = (t: TIn) => TOut;
 
-/*
-export function whenProperty<TSource, TRet>(target: TSource, prop: PropSelector<TSource, TRet>): Observable<TypedChangeNotification<TSource, TRet>> {
-  return whenDynamic(target, ...functionToPropertyChain(prop));
-}
+export function whenProperty<TSource, TRet>(
+    target: TSource,
+    prop: PropSelector<TSource, TRet>):
+  Observable<TypedChangeNotification<TSource, TRet>>;
 
 export function whenProperty<TSource, TProp1, TProp2, TRet>(
     target: TSource,
     prop1: PropSelector<TSource, TProp1>,
     prop2: PropSelector<TSource, TProp2>,
-    sel: ((p1: TProp1, p2: TProp2) => TRet)) {
-  return whenDynamic(target, functionToPropertyChain(prop1), functionToPropertyChain(prop2), sel);
-}
-*/
+    sel: ((p1: TypedChangeNotification<TSource, TProp1>, p2: TypedChangeNotification<TSource, TProp2>) => TRet)):
+  Observable<TypedChangeNotification<TSource, TRet>>;
+
+export function whenProperty<TSource, TProp1, TProp2, TProp3, TRet>(
+    target: TSource,
+    prop1: PropSelector<TSource, TProp1>,
+    prop2: PropSelector<TSource, TProp2>,
+    prop3: PropSelector<TSource, TProp3>,
+    sel: ((
+      p1: TypedChangeNotification<TSource, TProp1>,
+      p2: TypedChangeNotification<TSource, TProp2>,
+      p3: TypedChangeNotification<TSource, TProp3>) => TRet)):
+  Observable<TypedChangeNotification<TSource, TRet>>;
+
+export function whenProperty<TSource, TProp1, TProp2, TProp3, TProp4, TRet>(
+    target: TSource,
+    prop1: PropSelector<TSource, TProp1>,
+    prop2: PropSelector<TSource, TProp2>,
+    prop3: PropSelector<TSource, TProp3>,
+    prop4: PropSelector<TSource, TProp4>,
+    sel: ((
+      p1: TypedChangeNotification<TSource, TProp1>,
+      p2: TypedChangeNotification<TSource, TProp2>,
+      p3: TypedChangeNotification<TSource, TProp3>,
+      p4: TypedChangeNotification<TSource, TProp4>) => TRet)):
+  Observable<TypedChangeNotification<TSource, TRet>>;
 
 export function whenProperty(target: any, ...propsAndSelector: Array<string|Function|string[]>): Observable<any> {
   if (propsAndSelector.length < 1) {
