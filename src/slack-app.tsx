@@ -17,6 +17,7 @@ import { Store } from './lib/store';
 import { ChannelHeaderViewModel, ChannelHeaderView } from './channel-header';
 import { ChannelListViewModel, ChannelListView } from './channel-list';
 import { MemoryPopover } from './memory-popover';
+import { when } from './lib/when';
 //import { takeHeapSnapshot } from './profiler';
 
 import './lib/standard-operators';
@@ -58,12 +59,10 @@ export class SlackAppModel extends Model {
     this.channelList = new ChannelListViewModel(this.store);
     this.channelHeader = new ChannelHeaderViewModel(this.store);
 
-    this.when('channelList.selectedChannel')
-      .map((c: any) => c.value)
+    when(this, x => x.channelList.selectedChannel)
       .toProperty(this.channelHeader, 'selectedChannel');
 
-    this.when('channelHeader.isDrawerOpen')
-      .map((o: any) => o.value)
+    when(this, x => x.channelHeader.isDrawerOpen)
       .toProperty(this, 'isDrawerOpen');
 
     this.loadInitialState = new Action<void>(() => this.store.fetchInitialChannelList(), undefined);
