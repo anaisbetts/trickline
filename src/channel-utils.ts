@@ -13,6 +13,20 @@ export function channelSort(
   return a.name.localeCompare(b.name);
 }
 
-export function isDM(channel: ChannelBase): boolean {
-  return !!channel.id && channel.id[0] === 'D';
+export function isChannel(channel: ChannelBase|string): boolean {
+  return typeof channel == 'string' ?
+    channel[0] === 'C' :
+    !!channel.id && channel.id[0] === 'C';
+}
+
+export function isGroup(channel: ChannelBase|string): boolean {
+  return typeof channel == 'string' ?
+    channel[0] === 'G' :
+    !!channel.id && channel.id[0] === 'G';
+}
+
+export function isDM(channel: ChannelBase|string): boolean {
+  return typeof channel == 'string' ?
+    channel[0] === 'D' :
+    !!channel.id && channel.id[0] === 'D';
 }
