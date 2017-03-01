@@ -19,7 +19,7 @@ export class ChannelListViewModel extends Model {
     super();
     this.store = store;
 
-    store.channels.toProperty(this, 'channels');
+    store.joinedChannels.toProperty(this, 'channels');
 
     this.when('channels')
       .map((list: any) => {

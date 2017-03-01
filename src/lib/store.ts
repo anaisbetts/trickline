@@ -11,49 +11,46 @@ export type ChannelList = Array<Updatable<ChannelBase>>;
 
 export class Store {
   api: any;
-  channels: Updatable<ChannelList>;
+  channels: SparseMap<string, ChannelBase>;
   users: SparseMap<string, UserResponse>;
+  joinedChannels: Updatable<ChannelList>;
 
   constructor(token?: string) {
     this.api = createApi(token);
-    this.channels = new Updatable<ChannelList>(() => Observable.of([]));
+    this.channels = new InMemorySparseMap<string, ChannelBase>();
     this.users = new InMemorySparseMap<string, UserResponse>((user) => {
       return this.api.users.info({ user });
     });
+    this.joinedChannels = new Updatable<ChannelList>(() => Observable.of([]));
   }
 
   async fetchInitialChannelList(): Promise<void> {
-    const channels: ChannelList = [];
+    const joinedChannels: ChannelList = [];
 
     const result: UsersCounts = await this.api.users.counts({ simple_unreads: true }).toPromise();
 
     result.channels.forEach((c) => {
-      const updater = new Updatable(() =>
-        this.api.channels.info({ channel: c.id })
-          .map((x: any) => x.channel) as Observable<Channel>);
-
-      updater.playOnto(Observable.of(c));
-      channels.push(updater);
+      joinedChannels.push(this.makeUpdatableForChannel<Channel>(c, this.api.channels, 'channel'));
     });
 
     result.groups.forEach((g) => {
-      const updater = new Updatable(() =>
-        this.api.groups.info({ channel: g.id })
-          .map((x: any) => x.group) as Observable<Group>);
-
-      updater.playOnto(Observable.of(g));
-      channels.push(updater);
+      joinedChannels.push(this.makeUpdatableForChannel<Group>(g, this.api.groups, 'group'));
     });
 
     result.ims.forEach((dm) => {
-      const updater = new Updatable(() =>
-        this.api.im.info({ channel: dm.id })
-          .map((x: any) => x.im) as Observable<DirectMessage>);
-
-      updater.playOnto(Observable.of(dm));
-      channels.push(updater);
+      joinedChannels.push(this.makeUpdatableForChannel<DirectMessage>(dm, this.api.ims, 'im'));
     });
 
-    this.channels.next(channels);
+    this.joinedChannels.next(joinedChannels);
+  }
+
+  private makeUpdatableForChannel<T extends ChannelBase>(channel: ChannelBase, apiRoute: any, modelName: string) {
+    const updater = new Updatable(() =>
+      apiRoute.info({ channel: channel.id })
+        .map((model: any) => model[modelName]) as Observable<T>);
+
+    updater.playOnto(Observable.of(channel));
+    this.channels.setDirect(channel.id, updater);
+    return updater;
   }
 }

@@ -84,7 +84,7 @@ export class SlackApp extends SimpleView<SlackAppModel> {
 
   async takeHeapshot() {
     await this.viewModel.channelHeader.toggleDrawer.execute().toPromise();
-    await this.viewModel.store.channels
+    await this.viewModel.store.joinedChannels
       .filter((x: any) => x && x.length > 0)
       .take(1)
       .timeout(10 * 1000)

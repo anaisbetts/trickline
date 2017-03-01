@@ -1,7 +1,9 @@
+import { SlackAppModel } from './slack-app';
+
 declare global {
   namespace NodeJS {
     interface Global {
-      slackApp: any;
+      slackApp: SlackAppModel;
     }
   }
 }
