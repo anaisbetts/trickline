@@ -11,7 +11,7 @@ import { ChannelListViewModel } from './channel-list';
 import { fromObservable, Model } from './lib/model';
 import { isDM } from './channel-utils';
 import { SimpleView } from './lib/view';
-import { Store } from './lib/store';
+import { Store } from './store';
 import { Updatable } from './lib/updatable';
 
 import { when } from './lib/when';
