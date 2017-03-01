@@ -9,6 +9,8 @@ import { Store, ChannelList } from './lib/store';
 import { ChannelViewModel, ChannelListItem } from './channel-list-item';
 import { channelSort } from './channel-utils';
 
+import {when} from './lib/when';
+
 export class ChannelListViewModel extends Model {
   store: Store;
   selectedChannel: ChannelBase;
@@ -21,9 +23,9 @@ export class ChannelListViewModel extends Model {
 
     store.channels.toProperty(this, 'channels');
 
-    this.when('channels')
+    when(this, x => x.channels)
       .map((list: any) => {
-        return list.value
+        return list
           .filter((c: any) => !c.value.is_archived)
           .sort(channelSort);
       })
