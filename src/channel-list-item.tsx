@@ -19,6 +19,7 @@ import { when } from './lib/when';
 
 import './lib/standard-operators';
 
+const defaultAvatar = require.resolve('./images/default-avatar.png');
 export class ChannelViewModel extends Model {
   store: Store;
   selectChannel: Action<void>;
@@ -41,14 +42,17 @@ export class ChannelViewModel extends Model {
     when(this, x => x.model.is_starred).toProperty(this, 'starred');
     when(this, x => x.model.mention_count).toProperty(this, 'mentions');
 
+
     when(this, x => x.model)
       .switchMap((n) => this.getDisplayName(n))
       .toProperty(this, 'displayName');
 
     when(this, x => x.model)
-      .filter(c => isDM(c))
       .switchMap(c => this.store.users.listen(c.user_id, c.api))
-      .map((res) => res.profile.image_48)
+      .map((user) => {
+        if (!user) return defaultAvatar;
+        return user.profile.image_48;
+      })
       .toProperty(this, 'profileImage');
 
     when(this, x => x.mentions, x => x.model.has_unreads,
@@ -66,7 +70,7 @@ export class ChannelViewModel extends Model {
 
     if (isDM(c)) {
       return this.store.users.listen(c.user_id, c.api)
-        .map(x => x.real_name || x.name);
+        .map(x => x ? (x.real_name || x.name) : c.name);
     }
 
     return Observable.of(c.name.length < 25 ? c.name : `${c.name.substr(0, 25)}...`);

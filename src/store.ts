@@ -35,7 +35,7 @@ export class Store {
 
     this.events = new InMemorySparseMap<EventType, Message>();
     this.events.listen('user_change')
-      .do(({user}) => console.log("Updating a user!!! " + JSON.stringify(user)))
+      .do(({user}) => console.log(`Updating a user!!! ${JSON.stringify(user)}`))
       .subscribe(({user}) => this.users.listen(user.id).playOnto(Observable.of(user)));
 
     this.connectToRtm()
