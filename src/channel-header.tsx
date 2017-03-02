@@ -15,7 +15,7 @@ export class ChannelHeaderViewModel extends Model {
   @fromObservable selectedChannel: ChannelBase;
   @fromObservable channelInfo: Channel;
   @fromObservable members: Array<string>;
-  @fromObservable topic: string;
+  @fromObservable topic: { value: string};
   @fromObservable isDrawerOpen: boolean;
   toggleDrawer: Action<boolean>;
 
@@ -32,7 +32,21 @@ export class ChannelHeaderViewModel extends Model {
     when(this, x => x.selectedChannel)
       .filter(c => !!c)
       .switchMap(c => this.store.channels.listen(c.id, c.api))
+      .do(x => console.log(`New ChannelInfo! ${JSON.stringify(x)}`))
       .toProperty(this, 'channelInfo');
+
+    // NB: This works but it's too damn clever
+    when(this, x => x.channelInfo)
+      .filter(x => x && !x.topic)
+      .subscribe(x => this.store.channels.listen(x.id, x.api).invalidate())
+
+    when(this, x => x.channelInfo.members)
+      .startWith([])
+      .toProperty(this, 'members');
+
+    when(this, x => x.channelInfo.topic)
+      .startWith({value: ''})
+      .toProperty(this, 'topic');
   }
 }
 
@@ -52,7 +66,7 @@ export class ChannelHeaderView extends SimpleView<ChannelHeaderViewModel> {
       tabs.push(
         <Tab
           key='members'
-          label={`Members: ${this.viewModel.channelInfo.members.length}`}
+          label={`Members: ${this.viewModel.members.length}`}
           style={tabStyle}
         />
       );
@@ -60,7 +74,7 @@ export class ChannelHeaderView extends SimpleView<ChannelHeaderViewModel> {
       tabs.push(
         <Tab
           key='topic'
-          label={this.viewModel.channelInfo.topic.value}
+          label={this.viewModel.topic.value}
           style={tabStyle}
         />
       );

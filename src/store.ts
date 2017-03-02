@@ -39,7 +39,7 @@ export class Store {
 
     this.events = new InMemorySparseMap<EventType, Message>();
     this.events.listen('user_change')
-      .subscribe(({user}) => this.users.listen(user.id).playOnto(Observable.of(user)));
+      .subscribe(msg => this.users.listen(msg.user.id, msg.api).playOnto(Observable.of(msg.user)));
 
     // NB: This is the lulzy way to update channel counts when marks
     // change, but we should definitely remove this code later
@@ -97,7 +97,7 @@ export class Store {
   private makeUpdatableForModel(model: ChannelBase & Api, api: Api) {
     model.api = api;
 
-    const updater = this.channels.listen(model.id);
+    const updater = this.channels.listen(model.id, api);
     updater.playOnto(Observable.of(model));
     return updater;
   }
