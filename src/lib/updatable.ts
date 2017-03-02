@@ -23,7 +23,7 @@ export class Updatable<T> extends Subject<T> {
     this._factory = factory ? factory : () => Observable.empty();
     this._playOnto = new SerialSubscription();
 
-    switch(strategy || 'overwrite') {
+    switch (strategy || 'overwrite') {
     case 'overwrite':
       this.next = this.nextOverwrite;
       break;

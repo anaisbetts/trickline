@@ -5,4 +5,3 @@ export function isObject(o: any): boolean {
 export function isFunction(o: any): boolean {
   return !!(o && o.constructor && o.call && o.apply);
 };
-
