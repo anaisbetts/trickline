@@ -1,5 +1,6 @@
 import { Observable } from 'rxjs/Observable';
 import { ChangeNotification, Model, TypedChangeNotification } from './model';
+import { isFunction, isObject } from './utils';
 
 import * as LRU from 'lru-cache';
 import { Updatable } from './updatable';
@@ -7,14 +8,6 @@ import { Updatable } from './updatable';
 const proxyCache = LRU(64);
 
 import './standard-operators';
-
-function isObject(o: any): boolean {
-  return o === Object(o);
-}
-
-function isFunction(o: any): boolean {
-  return !!(o && o.constructor && o.call && o.apply);
-};
 
 const identifier = /^[$A-Z_][0-9A-Z_$]*$/i;
 
