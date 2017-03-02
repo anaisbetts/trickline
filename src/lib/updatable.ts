@@ -74,7 +74,7 @@ export class Updatable<T> extends Subject<T> {
 
   invalidate() {
     this._hasPendingValue = false;
-    this._playOnto.set(Subscription.EMPTY);
+    this.playOnto(this._factory());
   }
 
   playOnto(source: Observable<T>) {
