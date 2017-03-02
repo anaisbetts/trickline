@@ -39,8 +39,18 @@ export class Store {
 
     this.events = new InMemorySparseMap<EventType, Message>();
     this.events.listen('user_change')
-      .do(({user}) => console.log(`Updating a user!!! ${JSON.stringify(user)}`))
       .subscribe(({user}) => this.users.listen(user.id).playOnto(Observable.of(user)));
+
+    // NB: This is the lulzy way to update channel counts when marks
+    // change, but we should definitely remove this code later
+    let somethingMarked = Observable.merge(
+      this.events.listen('channel_marked'),
+      this.events.listen('im_marked'),
+      this.events.listen('group_marked')
+    );
+
+    somethingMarked.throttleTime(3000)
+      .subscribe(x => this.fetchSingleInitialChannelList(x.api));
 
     this.connectToRtm()
       .groupBy(x => x.type)
@@ -86,7 +96,8 @@ export class Store {
 
   private makeUpdatableForModel(model: ChannelBase & Api, api: Api) {
     model.api = api;
-    const updater = new Updatable(this.infoApiForModel(model.id, api));
+
+    const updater = this.channels.listen(model.id);
     updater.playOnto(Observable.of(model));
     return updater;
   }
