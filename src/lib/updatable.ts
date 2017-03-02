@@ -68,7 +68,8 @@ export class Updatable<T> extends Subject<T> {
 
   nextMerge(value: T): void {
     this._hasPendingValue = true;
-    super.next(this._value = Object.assign({}, value || {}, this._value || {}));
+    this._value = Object.assign(this._value || {}, value || {});
+    super.next(this._value);
   }
 
   invalidate() {
