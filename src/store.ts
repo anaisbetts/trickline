@@ -39,7 +39,7 @@ export class Store {
 
     this.events = new InMemorySparseMap<EventType, Message>();
     this.events.listen('user_change')
-      .subscribe(msg => this.users.listen(msg.user.id, msg.api).playOnto(Observable.of(msg.user)));
+      .subscribe(msg => this.users.listen((msg.user! as User).id, msg.api).playOnto(Observable.of(msg.user)));
 
     // NB: This is the lulzy way to update channel counts when marks
     // change, but we should definitely remove this code later
@@ -61,8 +61,10 @@ export class Store {
 
   connectToRtm(): Observable<Message> {
     return Observable.merge(
-      ...this.api.map(x => this.createRtmConnection(x))
-    );
+      ...this.api.map(x => this.createRtmConnection(x).retry(5).catch(e => {
+        console.log(`Failed to connect via token ${x} - ${e.message}`);
+        return Observable.empty();
+      })));
   }
 
   async fetchInitialChannelList(): Promise<void> {
