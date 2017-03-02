@@ -96,6 +96,7 @@ class InMemorySparseMap<K, V> implements SparseMap<K, V> {
   invalidate(key: K): Promise<void> {
     let val = this._latest.get(key);
     if (val) {
+      // Release whatever subscription val's playOnto is holding currently
       val.playOnto(Observable.empty());
       this._latest.delete(key);
     }
