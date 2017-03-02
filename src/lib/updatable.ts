@@ -74,6 +74,7 @@ export class Updatable<T> extends Subject<T> {
 
   invalidate() {
     this._hasPendingValue = false;
+    this._value = undefined;
     this.playOnto(this._factory());
   }
 
