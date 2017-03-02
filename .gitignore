@@ -41,3 +41,4 @@ src/bower_components
 
 typings/
 out/
+.vscode/*
