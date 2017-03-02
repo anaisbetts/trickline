@@ -10,6 +10,8 @@ import { Store } from './store';
 import { User } from './lib/models/api-shapes';
 import { when } from './lib/when';
 
+const defaultAvatar = require.resolve('./images/default-avatar.png');
+
 export class UserViewModel extends Model {
   @fromObservable model: User;
   @fromObservable displayName: string;
@@ -21,13 +23,14 @@ export class UserViewModel extends Model {
     this.store.users.listen(id, api).toProperty(this, 'model');
 
     when(this, x => x.model)
-      .filter(model => !!model)
-      .map(user => user.real_name || user.name)
+      .map(user => user ? user.real_name || user.name : '')
       .toProperty(this, 'displayName');
 
     when(this, x => x.model)
-      .filter(model => !!model)
-      .map(user => user.profile.image_48)
+      .map(user => {
+        if (!user) return defaultAvatar;
+        return user.profile.image_48;
+      })
       .toProperty(this, 'profileImage');
   }
 }

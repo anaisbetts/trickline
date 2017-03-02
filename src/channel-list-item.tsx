@@ -20,6 +20,7 @@ import { when } from './lib/when';
 import './lib/standard-operators';
 
 const defaultAvatar = require.resolve('./images/default-avatar.png');
+
 export class ChannelViewModel extends Model {
   store: Store;
   selectChannel: Action<void>;
