@@ -7,7 +7,7 @@ import { View, HasViewModel } from './view';
 
 export interface CollectionViewProps<T extends Model> extends HasViewModel<T> {
   viewModel: T;
-  rowHeight: number;
+  rowHeight?: number;
   width?: number;
   height?: number;
   disableWidth?: boolean;
@@ -24,6 +24,12 @@ export abstract class CollectionView<
   abstract viewModelFactory(index: number): TChild;
   abstract renderItem(viewModel: TChild): JSX.Element;
   abstract rowCount(): number;
+
+  static defaultProps = {
+    rowHeight: 32,
+    width: 300,
+    disableWidth: true
+  };
 
   getOrCreateViewModel(index: number): TChild {
     if (!this.viewModelCache[index]) {
@@ -45,6 +51,16 @@ export abstract class CollectionView<
   render() {
     const autoSizerProps = pick(this.props, ['disableWidth', 'disableHeight']);
     const listProps = pick(this.props, ['width', 'height', 'rowHeight']);
+
+    if (listProps.width && listProps.height) {
+      return (
+        <List
+          {...listProps}
+          rowRenderer={this.rowRenderer.bind(this)}
+          rowCount={this.rowCount()}
+        />
+      );
+    }
 
     return (
       <AutoSizer {...autoSizerProps}>
