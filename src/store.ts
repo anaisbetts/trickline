@@ -9,7 +9,7 @@ import { asyncMap } from './lib/promise-extras';
 import { isChannel, isGroup, isDM } from './channel-utils';
 
 import './lib/standard-operators';
-import 'rxjs/Observable/dom/webSocket';
+import 'rxjs/add/observable/dom/webSocket';
 
 export type ChannelList = Array<Updatable<ChannelBase|null>>;
 
