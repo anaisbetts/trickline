@@ -60,10 +60,7 @@ export class SlackAppModel extends Model {
 
     this.store = new Store(tokens);
     this.channelList = new ChannelListViewModel(this.store);
-    this.channelHeader = new ChannelHeaderViewModel(this.store);
-
-    when(this, x => x.channelList.selectedChannel)
-      .toProperty(this.channelHeader, 'selectedChannel');
+    this.channelHeader = new ChannelHeaderViewModel(this.store, this.channelList);
 
     when(this, x => x.channelHeader.isDrawerOpen)
       .toProperty(this, 'isDrawerOpen');

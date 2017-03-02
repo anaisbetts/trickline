@@ -3,14 +3,15 @@ import { Observable } from 'rxjs/Observable';
 import { InMemorySparseMap, SparseMap } from './lib/sparse-map';
 import { Updatable } from './lib/updatable';
 import { Api, createApi } from './lib/models/api-call';
-import { Channel, ChannelBase, Group, DirectMessage, Message, UsersCounts, User } from './lib/models/api-shapes';
+import { ChannelBase, Message, UsersCounts, User } from './lib/models/api-shapes';
 import { EventType } from './lib/models/event-type';
 import { asyncMap } from './lib/promise-extras';
+import { isChannel, isGroup, isDM } from './channel-utils';
 
 import './lib/standard-operators';
 import 'rxjs/Observable/dom/webSocket';
 
-export type ChannelList = Array<Updatable<ChannelBase>>;
+export type ChannelList = Array<Updatable<ChannelBase|null>>;
 
 export class Store {
   api: Api[];
@@ -23,9 +24,12 @@ export class Store {
   constructor(tokenList: string[] = []) {
     this.api = tokenList.map(x => createApi(x));
 
-    this.channels = new InMemorySparseMap<string, ChannelBase>();
+    this.channels = new InMemorySparseMap<string, ChannelBase>((channel, api: Api) => {
+      return this.infoApiForModel(channel, api)();
+    });
+
     this.users = new InMemorySparseMap<string, User>((user, api: Api) => {
-      return api.users.info({ user }).map(({user}) => {
+      return api.users.info({ user }).map(({ user }: { user: User }) => {
         user.api = api;
         return user;
       });
@@ -52,9 +56,9 @@ export class Store {
   }
 
   async fetchInitialChannelList(): Promise<void> {
-    let results = await asyncMap(this.api, (api) => this.fetchSingleInitialChannelList(api));
+    const results = await asyncMap(this.api, (api) => this.fetchSingleInitialChannelList(api));
 
-    let allJoinedChannels = Array.from(results.values())
+    const allJoinedChannels = Array.from(results.values())
       .reduce((acc, x) => acc.concat(x), []);
 
     this.joinedChannels.next(allJoinedChannels);
@@ -66,29 +70,39 @@ export class Store {
     const result: UsersCounts = await api.users.counts({ simple_unreads: true }).toPromise();
 
     result.channels.forEach((c) => {
-      joinedChannels.push(this.makeUpdatableForChannel<Channel>(c, api, 'channels', 'channel'));
+      joinedChannels.push(this.makeUpdatableForModel(c, api));
     });
 
     result.groups.forEach((g) => {
-      joinedChannels.push(this.makeUpdatableForChannel<Group>(g, api, 'groups', 'group'));
+      joinedChannels.push(this.makeUpdatableForModel(g, api));
     });
 
     result.ims.forEach((dm) => {
-      joinedChannels.push(this.makeUpdatableForChannel<DirectMessage>(dm, api, 'ims', 'im'));
+      joinedChannels.push(this.makeUpdatableForModel(dm, api));
     });
 
     return joinedChannels;
   }
 
-  private makeUpdatableForChannel<T extends ChannelBase>(channel: ChannelBase, api: Api, route: string, modelName: string) {
-    channel.api = api;
-    const updater = new Updatable(() =>
-      api[route].info({ channel: channel.id })
-        .map((model: any) => model[modelName]) as Observable<T>);
-
-    updater.playOnto(Observable.of(channel));
-    this.channels.setDirect(channel.id, updater);
+  private makeUpdatableForModel(model: ChannelBase & Api, api: Api) {
+    model.api = api;
+    const updater = new Updatable(this.infoApiForModel(model.id, api));
+    updater.playOnto(Observable.of(model));
     return updater;
+  }
+
+  private infoApiForModel(id: string, api: Api): () => Observable<ChannelBase|null> {
+    if (isChannel(id)) {
+      return () => api.channels.info({ channel: id })
+        .map((response: any) => Object.assign(response.channel, { api }));
+    } else if (isGroup(id)) {
+      return () => api.groups.info({ channel: id })
+        .map((response: any) => Object.assign(response.group, { api }));
+    } else if (isDM(id)) {
+      return () => Observable.of(null);
+    } else {
+      throw new Error(`Unsupported model: ${id}`);
+    }
   }
 
   private createRtmConnection(api: Api): Observable<Message> {
