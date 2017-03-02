@@ -8,6 +8,7 @@ import { Subject } from 'rxjs/Subject';
 import './standard-operators';
 
 export type Pair<K, V> = { Key: K, Value: V };
+export type MergeStrategy = 'overwrite' | 'merge';
 
 export class Updatable<T> extends Subject<T> {
   private _value: T;
@@ -15,12 +16,21 @@ export class Updatable<T> extends Subject<T> {
   private _factory: () => Observable<T>;
   private _playOnto: SerialSubscription;
 
-  constructor(factory?: () => Observable<T>) {
+  constructor(factory?: () => Observable<T>, strategy?: MergeStrategy) {
     super();
 
     this._hasPendingValue = false;
     this._factory = factory ? factory : () => Observable.empty();
     this._playOnto = new SerialSubscription();
+
+    switch(strategy || 'overwrite') {
+    case 'overwrite':
+      this.next = this.nextOverwrite;
+      break;
+    case 'merge':
+      this.next = this.nextMerge;
+      break;
+    }
   }
 
   get value(): T {
@@ -40,7 +50,6 @@ export class Updatable<T> extends Subject<T> {
 
     let shouldNext = true;
     if (!this._hasPendingValue) {
-      this._hasPendingValue = true;
       this.playOnto(this._factory());
       shouldNext = false;
     }
@@ -52,9 +61,14 @@ export class Updatable<T> extends Subject<T> {
     return subscription;
   }
 
-  next(value: T): void {
+  nextOverwrite(value: T): void {
     this._hasPendingValue = true;
     super.next(this._value = value);
+  }
+
+  nextMerge(value: T): void {
+    this._hasPendingValue = true;
+    super.next(this._value = Object.assign({}, value || {}, this._value || {}));
   }
 
   invalidate() {
