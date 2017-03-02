@@ -234,6 +234,7 @@ export interface TeamProfile {
 export interface User {
   id: string;
   name: string;
+  real_name: string;
   deleted: boolean;
   icons: Icon;
 
