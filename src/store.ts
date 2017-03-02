@@ -26,14 +26,14 @@ export class Store {
 
     this.channels = new InMemorySparseMap<string, ChannelBase>((channel, api: Api) => {
       return this.infoApiForModel(channel, api)();
-    });
+    }, 'merge');
 
     this.users = new InMemorySparseMap<string, User>((user, api: Api) => {
       return api.users.info({ user }).map(({ user }: { user: User }) => {
         user.api = api;
         return user;
       });
-    });
+    }, 'merge');
 
     this.joinedChannels = new Updatable<ChannelList>(() => Observable.of([]));
 
