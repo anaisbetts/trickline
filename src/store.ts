@@ -1,6 +1,7 @@
 import { Observable } from 'rxjs/Observable';
 
 import { InMemorySparseMap, SparseMap } from './lib/sparse-map';
+import { DexieSparseMap } from './lib/dexie-sparse-map';
 import { Updatable } from './lib/updatable';
 import { Api, createApi } from './lib/models/api-call';
 import { ChannelBase, Message, UsersCounts, User } from './lib/models/api-shapes';
@@ -28,12 +29,12 @@ export class Store {
       return this.infoApiForModel(channel, api)();
     }, 'merge');
 
-    this.users = new InMemorySparseMap<string, User>((user, api: Api) => {
+    this.users = new DexieSparseMap<User>((user, api: Api) => {
       return api.users.info({ user }).map(({ user }: { user: User }) => {
         user.api = api;
         return user;
       });
-    }, 'merge');
+    }, 'merge', 'users');
 
     this.joinedChannels = new Updatable<ChannelList>(() => Observable.of([]));
 
