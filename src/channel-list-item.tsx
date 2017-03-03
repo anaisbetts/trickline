@@ -7,7 +7,7 @@ import { grey700, pinkA200, transparent } from 'material-ui/styles/colors';
 import { Observable } from 'rxjs/Observable';
 
 import { Action } from './lib/action';
-import { ChannelBase, DirectMessage } from './lib/models/api-shapes';
+import { ChannelBase } from './lib/models/api-shapes';
 import { ChannelListViewModel } from './channel-list';
 import { fromObservable, Model } from './lib/model';
 import { isDM } from './channel-utils';
@@ -20,6 +20,7 @@ import { when } from './lib/when';
 import './lib/standard-operators';
 
 const defaultAvatar = require.resolve('./images/default-avatar.png');
+
 export class ChannelViewModel extends Model {
   store: Store;
   selectChannel: Action<void>;
