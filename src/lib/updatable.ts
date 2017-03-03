@@ -2,6 +2,7 @@ import { Observable } from 'rxjs/Observable';
 import { Subscriber } from 'rxjs/Subscriber';
 import { Subscription, ISubscription } from 'rxjs/Subscription';
 import { SerialSubscription } from './serial-subscription';
+import * as debug from 'debug';
 
 import { Subject } from 'rxjs/Subject';
 
@@ -9,6 +10,8 @@ import './standard-operators';
 
 export type Pair<K, V> = { Key: K, Value: V };
 export type MergeStrategy = 'overwrite' | 'merge';
+
+const d = debug('trickline:updatable');
 
 export class Updatable<T> extends Subject<T> {
   private _value: T;
@@ -70,6 +73,11 @@ export class Updatable<T> extends Subject<T> {
     this._hasPendingValue = true;
     this._value = Object.assign(this._value || {}, value || {});
     super.next(this._value);
+  }
+
+  error(error: any) {
+    d(`Updatable threw error: ${error.message}\nCurrent value is ${JSON.stringify(this._value)}\n${error.stack}`);
+    super.error(error);
   }
 
   invalidate() {
