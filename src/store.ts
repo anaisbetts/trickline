@@ -130,7 +130,7 @@ export class Store {
 
     this.users.created.subscribe(u => {
       u.Value
-        .flatMap(v => this.database.users.deferredPut(v).catch(() => {}))
+        .flatMap(v => this.database.users.deferredPut(v).catch(() => Observable.empty()))
         .subscribe();
     });
 

@@ -142,7 +142,7 @@ class LRUSparseMap<V> implements SparseMap<string, V> {
     opts.dispose = (k, v) => {
       this.evicted.next({Key: k, Value: v});
       v.playOnto(Observable.empty());
-    }
+    };
 
     this._latest = LRU<Updatable<V>>(opts);
 
