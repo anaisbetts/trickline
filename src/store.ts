@@ -19,14 +19,14 @@ const VERSION = 1;
 
 export class DataModel extends Dexie  {
   users: Dexie.Table<User, string>;
-  usersSchema: string;
+  channels: Dexie.Table<ChannelBase, string>;
 
   constructor() {
     super('SparseMap');
 
-    this.usersSchema = 'id,name,real_name,color,profile';
     this.version(VERSION).stores({
-      users: this.usersSchema
+      users: 'id,name,real_name,color,profile',
+      channels: 'id,name,is_starred,unread_count_display,mention_count,dm_count,user,topic,purpose'
     });
   }
 }
@@ -46,15 +46,36 @@ export class Store {
     this.database.open();
 
     this.channels = new LRUSparseMap<ChannelBase>((channel, api: Api) => {
-      return this.infoApiForModel(channel, api)();
+      let apiCall = this.infoApiForModel(channel, api)();
+
+      return Observable.fromPromise(this.database.users.get(channel))
+        .flatMap(x => x ? Observable.of(x) : apiCall);
     }, 'merge');
 
+    this.channels.created.subscribe(u => {
+      u.Value
+        .flatMap(v => this.database.channels.put(v).catch((e) => {
+          console.log(`Can't save channel info! ${e.message}`);
+        }))
+        .subscribe(() => console.log(`Saving user ${u.Key}`));
+    });
+
     this.users = new LRUSparseMap<User>((user, api: Api) => {
-      return api.users.info({ user }).map(({ user }: { user: User }) => {
+      let apiCall = api.users.info({ user }).map(({ user }: { user: User }) => {
         user.api = api;
         return user;
       });
+
+      return Observable.fromPromise(this.database.users.get(user))
+        .flatMap(x => x ? Observable.of(x) : apiCall)
+        .catch(() => apiCall);
     }, 'merge');
+
+    this.users.created.subscribe(u => {
+      u.Value
+        .flatMap(v => this.database.users.put(v).catch(() => {}))
+        .subscribe(() => console.log(`Saving user ${u.Key}`));
+    });
 
     this.joinedChannels = new Updatable<ChannelList>(() => Observable.of([]));
 
