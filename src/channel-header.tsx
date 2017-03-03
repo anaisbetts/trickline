@@ -19,8 +19,9 @@ import { Observable } from 'rxjs/Observable';
 export class ChannelHeaderViewModel extends Model {
   @fromObservable selectedChannel: ChannelBase;
   @fromObservable channelInfo: Channel;
-  @fromObservable channelMembers: ChannelMembersViewModel;
+  @fromObservable members: Array<string>;
   @fromObservable topic: { value: string };
+  @fromObservable channelMembers: ChannelMembersViewModel;
 
   toggleDrawer: Action<boolean>;
   toggleMembersList: Action<boolean>;
@@ -51,13 +52,18 @@ export class ChannelHeaderViewModel extends Model {
       .filter(x => !!x)
       .subscribe(x => this.store.updateChannelToLatest(x.id, x.api)));
 
-    when(this, x => x.channelInfo)
-      .map(info => info ? new ChannelMembersViewModel(this.store, this.selectedChannel.api, info.members) : null)
-      .toProperty(this, 'channelMembers');
+    when(this, x => x.channelInfo.members)
+      .startWith([])
+      .toProperty(this, 'members');
 
     when(this, x => x.channelInfo.topic)
       .startWith({ value: '' })
       .toProperty(this, 'topic');
+
+    when(this, x => x.selectedChannel, x => x.members,
+      (channel, members) => channel && members ?
+        new ChannelMembersViewModel(this.store, channel.api, members) : null)
+      .toProperty(this, 'channelMembers');
   }
 }
 
@@ -73,8 +79,12 @@ export class ChannelHeaderView extends SimpleView<ChannelHeaderViewModel> {
     this.viewModel.toggleMembersList.execute();
   }
 
+  shouldShowChannelInfo() {
+    return this.viewModel.channelInfo && this.viewModel.channelMembers;
+  }
+
   renderChannelInfo() {
-    if (!this.viewModel.channelInfo || !this.viewModel.channelInfo.members) return null;
+    if (!this.shouldShowChannelInfo()) return null;
 
     const tabStyle = {
       paddingLeft: '20px',
@@ -85,7 +95,7 @@ export class ChannelHeaderView extends SimpleView<ChannelHeaderViewModel> {
       <Tab
         key='members'
         ref={this.refHandlers.membersTab}
-        label={`Members: ${this.viewModel.channelInfo.members.length}`}
+        label={`Members: ${this.viewModel.members.length}`}
         onTouchTap={this.openMembersList.bind(this)}
         style={tabStyle}
       />,
@@ -98,7 +108,7 @@ export class ChannelHeaderView extends SimpleView<ChannelHeaderViewModel> {
   }
 
   renderMembersList() {
-    if (!this.viewModel.channelMembers) return null;
+    if (!this.shouldShowChannelInfo()) return null;
     const { anchorElement }: { anchorElement?: HTMLElement } = (this.state || {});
 
     return (
