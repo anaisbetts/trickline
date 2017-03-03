@@ -11,7 +11,7 @@ import getMuiTheme from 'material-ui/styles/getMuiTheme';
 
 import { Action } from './lib/action';
 import { SimpleView } from './lib/view';
-import { fromObservable, Model } from './lib/model';
+import { fromObservable, Model, notify } from './lib/model';
 import { Store } from './store';
 
 import { ChannelHeaderViewModel, ChannelHeaderView } from './channel-header';
@@ -42,6 +42,7 @@ const slackTheme = getMuiTheme({
   }
 });
 
+@notify('channelList')
 export class SlackAppModel extends Model {
   store: Store;
   channelList: ChannelListViewModel;
@@ -62,8 +63,7 @@ export class SlackAppModel extends Model {
     this.channelList = new ChannelListViewModel(this.store);
     this.channelHeader = new ChannelHeaderViewModel(this.store, this.channelList);
 
-    when(this, x => x.channelHeader.isDrawerOpen)
-      .toProperty(this, 'isDrawerOpen');
+    when(this, x => x.channelHeader.isDrawerOpen).toProperty(this, 'isDrawerOpen');
 
     this.loadInitialState = new Action<void>(() => this.store.fetchInitialChannelList(), undefined);
   }
@@ -83,7 +83,7 @@ export class SlackApp extends SimpleView<SlackAppModel> {
 
   async takeHeapshot() {
     await this.viewModel.channelHeader.toggleDrawer.execute().toPromise();
-    await this.viewModel.store.joinedChannels
+    await this.viewModel.store.keyValueStore.listen('joinedChannels')
       .filter((x: any) => x && x.length > 0)
       .take(1)
       .timeout(10 * 1000)
