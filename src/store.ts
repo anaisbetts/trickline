@@ -1,5 +1,7 @@
 import { Observable } from 'rxjs/Observable';
 
+import Dexie from 'dexie';
+
 import { InMemorySparseMap, LRUSparseMap, SparseMap } from './lib/sparse-map';
 import { Updatable } from './lib/updatable';
 import { Api, createApi } from './lib/models/api-call';
@@ -13,8 +15,25 @@ import 'rxjs/add/observable/dom/webSocket';
 
 export type ChannelList = Array<Updatable<ChannelBase|null>>;
 
+const VERSION = 1;
+
+export class DataModel extends Dexie  {
+  users: Dexie.Table<User, string>;
+  usersSchema: string;
+
+  constructor() {
+    super('SparseMap');
+
+    this.usersSchema = 'id,name,real_name,color,profile';
+    this.version(VERSION).stores({
+      users: this.usersSchema
+    });
+  }
+}
+
 export class Store {
   api: Api[];
+  database: DataModel;
 
   channels: SparseMap<string, ChannelBase>;
   users: SparseMap<string, User>;
@@ -23,6 +42,8 @@ export class Store {
 
   constructor(tokenList: string[] = []) {
     this.api = tokenList.map(x => createApi(x));
+    this.database = new DataModel();
+    this.database.open();
 
     this.channels = new LRUSparseMap<ChannelBase>((channel, api: Api) => {
       return this.infoApiForModel(channel, api)();
