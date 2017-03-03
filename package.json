@@ -4,7 +4,7 @@
   "description": "A fast, offline Slack client",
   "main": "src/main.ts",
   "scripts": {
-    "start": "cross-env DEBUG='*,-babel,-electron-compile,-trickline-noisy' electron-forge start",
+    "start": "cross-env DEBUG='trickline' electron-forge start",
     "clean-build": "ts-node -D ./docker/surf-build-current",
     "test-renderer": "xvfb-maybe electron-mocha --renderer --watch-extensions tsx,ts \"./test/**/*.{js,ts}\"",
     "dtest": "electron-mocha --renderer --interactive --watch-extensions tsx,ts \"./test/**/*.{js,ts}\"",
