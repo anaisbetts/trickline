@@ -76,6 +76,10 @@ export class Store {
     this.joinedChannels.next(allJoinedChannels);
   }
 
+  updateChannelToLatest(id: string, api: Api) {
+    this.channels.listen(id).playOnto(this.infoApiForModel(id, api)());
+  }
+
   private async fetchSingleInitialChannelList(api: Api): Promise<ChannelList> {
     const joinedChannels: ChannelList = [];
 
