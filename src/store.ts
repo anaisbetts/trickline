@@ -64,13 +64,15 @@ function deferredPut<T, Key>(this: Dexie.Table<T, Key>, item: T): Promise<void> 
 export class DataModel extends Dexie  {
   users: Dexie.Table<User, string>;
   channels: Dexie.Table<ChannelBase, string>;
+  keyValues: Dexie.Table<Pair<string, string>, string>;
 
   constructor() {
     super('SparseMap');
 
     this.version(VERSION).stores({
       users: 'id,name,real_name,color,profile',
-      channels: 'id,name,is_starred,unread_count_display,mention_count,dm_count,user,topic,purpose'
+      channels: 'id,name,is_starred,unread_count_display,mention_count,dm_count,user,topic,purpose',
+      keyValues: 'key,value'
     });
 
     Object.getPrototypeOf(this.users).deferredPut = deferredPut;
@@ -83,8 +85,8 @@ export class Store {
 
   channels: SparseMap<string, ChannelBase>;
   users: SparseMap<string, User>;
-  joinedChannels: Updatable<ChannelList>;
   events: SparseMap<EventType, Message>;
+  keyValueStore: SparseMap<string, any>;
 
   constructor(tokenList: string[] = []) {
     this.api = tokenList.map(x => createApi(x));
@@ -131,7 +133,13 @@ export class Store {
         .subscribe();
     });
 
-    this.joinedChannels = new Updatable<ChannelList>(() => Observable.of([]));
+    this.keyValueStore = new LRUSparseMap<string>((key) =>
+      Observable.fromPromise(this.database.keyValues.get(key).then(x => x ? JSON.parse(x.Value) : null)));
+
+    this.keyValueStore.created
+      .flatMap(x => x.Value.map(v => ({ Key: x.Key, Value: JSON.stringify(v) })))
+      .flatMap(x => this.database.keyValues.deferredPut(x))
+      .subscribe();
 
     this.events = new InMemorySparseMap<EventType, Message>();
     this.events.listen('user_change')
