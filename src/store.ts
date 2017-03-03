@@ -1,8 +1,9 @@
 import { Observable } from 'rxjs/Observable';
+import { AsyncSubject } from 'rxjs/AsyncSubject';
 
 import Dexie from 'dexie';
 
-import { InMemorySparseMap, LRUSparseMap, SparseMap } from './lib/sparse-map';
+import { InMemorySparseMap, LRUSparseMap, Pair, SparseMap } from './lib/sparse-map';
 import { Updatable } from './lib/updatable';
 import { Api, createApi } from './lib/models/api-call';
 import { ChannelBase, Message, UsersCounts, User } from './lib/models/api-shapes';
@@ -17,6 +18,49 @@ export type ChannelList = Array<Updatable<ChannelBase|null>>;
 
 const VERSION = 1;
 
+export interface DeferredPutItem<T> {
+  item: T;
+  completion: AsyncSubject<void>;
+}
+
+declare module 'dexie' {
+  module Dexie {
+    interface Table<T, Key> {
+      deferredPut: ((item: T) => Promise<void>);
+      idleHandle: number | null;
+      deferredItems: DeferredPutItem<T>[];
+    }
+  }
+}
+
+function deferredPut<T, Key>(this: Dexie.Table<T, Key>, item: T): Promise<void> {
+  let newItem = { item, completion: new AsyncSubject<void>() };
+
+  let createIdle = () => window.requestIdleCallback(deadline => {
+    while (deadline.timeRemaining() > 0) {
+      let itemsToAdd = this.deferredItems;
+      this.deferredItems = itemsToAdd.splice(128);
+
+      this.bulkPut(itemsToAdd.map(x => Object.assign({}, x.item, { api: null })));
+      itemsToAdd.forEach(x => { x.completion.next(undefined); x.completion.complete(); });
+    }
+
+    if (this.deferredItems.length) {
+      this.idleHandle = createIdle();
+    } else {
+      this.idleHandle = null;
+    }
+  });
+
+  this.deferredItems = this.deferredItems || [];
+  this.deferredItems.push(newItem);
+  if (!this.idleHandle) {
+    this.idleHandle = createIdle();
+  }
+
+  return newItem.completion.toPromise();
+}
+
 export class DataModel extends Dexie  {
   users: Dexie.Table<User, string>;
   channels: Dexie.Table<ChannelBase, string>;
@@ -28,6 +72,8 @@ export class DataModel extends Dexie  {
       users: 'id,name,real_name,color,profile',
       channels: 'id,name,is_starred,unread_count_display,mention_count,dm_count,user,topic,purpose'
     });
+
+    Object.getPrototypeOf(this.users).deferredPut = deferredPut;
   }
 }
 
@@ -54,10 +100,18 @@ export class Store {
 
     this.channels.created.subscribe(u => {
       u.Value
-        .flatMap(v => this.database.channels.put(v).catch((e) => {
-          console.log(`Can't save channel info! ${e.message}`);
-        }))
-        .subscribe(() => console.log(`Saving user ${u.Key}`));
+        .flatMap(async v => {
+          try {
+            let toSave = Object.assign({}, v);
+            delete toSave.api;
+
+            await this.database.channels.deferredPut(toSave);
+            //console.log(`Saving channel ${v.id}`);
+          } catch (e) {
+            console.log(`Can't save channel info! ${e.message}`);
+          }
+        })
+        .subscribe();
     });
 
     this.users = new LRUSparseMap<User>((user, api: Api) => {
@@ -73,8 +127,8 @@ export class Store {
 
     this.users.created.subscribe(u => {
       u.Value
-        .flatMap(v => this.database.users.put(v).catch(() => {}))
-        .subscribe(() => console.log(`Saving user ${u.Key}`));
+        .flatMap(v => this.database.users.deferredPut(v).catch(() => {}))
+        .subscribe();
     });
 
     this.joinedChannels = new Updatable<ChannelList>(() => Observable.of([]));
