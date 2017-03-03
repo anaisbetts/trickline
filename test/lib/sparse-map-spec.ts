@@ -1,7 +1,7 @@
 import { Observable } from 'rxjs/Observable';
 
 import { MergeStrategy } from '../../src/lib/updatable';
-import { InMemorySparseMap, SparseMap } from '../../src/lib/sparse-map';
+import { InMemorySparseMap, LRUSparseMap, SparseMap } from '../../src/lib/sparse-map';
 import { TestClass, expect } from '../support';
 
 export type ValueFactoryFunction =
@@ -34,4 +34,8 @@ function testsForClass(Klass: Function, createFixture: CreateFixtureFunction) {
 
 testsForClass(InMemorySparseMap, (factory, strategy) => {
   return new InMemorySparseMap(factory, strategy);
+});
+
+testsForClass(LRUSparseMap, (factory, strategy) => {
+  return new LRUSparseMap(factory, strategy);
 });

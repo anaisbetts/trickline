@@ -111,14 +111,24 @@ class LRUSparseMap<V> implements SparseMap<string, V> {
   private _factory: ((key: string, hint?: any) => Observable<V>) | undefined;
   private _strategy: MergeStrategy;
 
-  constructor(factory: ((key: string, hint?: any) => Observable<V>) | undefined = undefined, strategy: MergeStrategy = 'overwrite') {
-    this._latest = LRU<Updatable<V>>({
-      max: 10,
-      dispose: (_k, v) => {
-        v.playOnto(Observable.empty());
-        v.unsubscribe();
-      }
-    });
+  constructor(
+      factory: ((key: string, hint?: any) => Observable<V>) | undefined = undefined,
+      strategy: MergeStrategy = 'overwrite',
+      options?: LRU.Options<Updatable<V>>) {
+
+    let opts = options || {max: 100};
+    let disp = (_k: string, v: Updatable<V>) => {
+      v.playOnto(Observable.empty());
+    }
+
+    if (opts.dispose) {
+      let oldDisp = opts.dispose;
+      opts.dispose = (k, v) => { disp(k, v); oldDisp(k, v); };
+    } else {
+      opts.dispose = disp;
+    }
+
+    this._latest = LRU<Updatable<V>>(opts);
 
     this._factory = factory;
     this._strategy = strategy;
@@ -139,10 +149,10 @@ class LRUSparseMap<V> implements SparseMap<string, V> {
     return ret;
   }
 
-  listenAll(hint?: any): Map<string, Updatable<V>> {
+  listenAll(): Map<string, Updatable<V>> {
     let ret = new Map<string, Updatable<V>>();
     for (let k of this._latest.keys()) {
-      ret.set(k, this.listen(k, hint));
+      ret.set(k, this.listen(k));
     }
 
     return ret;
