@@ -1,4 +1,5 @@
 import { Observable } from 'rxjs/Observable';
+import { Subject } from 'rxjs/Subject';
 import { Updatable, MergeStrategy } from './updatable';
 import * as LRU from 'lru-cache';
 
@@ -13,6 +14,9 @@ export interface SparseMap<K, V> {
   setDirect(key: K, value: Updatable<V>): Promise<void>;
   setLazy(key: K, value: Observable<V>): Promise<void>;
   invalidate(key: K): Promise<void>;
+
+  created: Observable<Pair<K, Updatable<V>>>;
+  evicted: Observable<Pair<K, Updatable<V>>>;
 };
 
 export class SparseMapMixins {
@@ -47,6 +51,9 @@ export class SparseMapMixins {
 }
 
 class InMemorySparseMap<K, V> implements SparseMap<K, V> {
+  created: Subject<Pair<K, Updatable<V>>>;
+  evicted: Subject<Pair<K, Updatable<V>>>;
+
   private _latest: Map<K, Updatable<V>>;
   private _factory: ((key: K, hint?: any) => Observable<V>) | undefined;
   private _strategy: MergeStrategy;
@@ -55,6 +62,9 @@ class InMemorySparseMap<K, V> implements SparseMap<K, V> {
     this._latest = new Map();
     this._factory = factory;
     this._strategy = strategy;
+
+    this.created = new Subject();
+    this.evicted = new Subject();
   }
 
   listen(key: K, hint?: any): Updatable<V> {
@@ -69,6 +79,7 @@ class InMemorySparseMap<K, V> implements SparseMap<K, V> {
     }
 
     this._latest.set(key, ret);
+    this.created.next({ Key: key, Value: ret });
     return ret;
   }
 
@@ -100,6 +111,7 @@ class InMemorySparseMap<K, V> implements SparseMap<K, V> {
       // Release whatever subscription val's playOnto is holding currently
       val.playOnto(Observable.empty());
       this._latest.delete(key);
+      this.evicted.next({ Key: key, Value: val });
     }
 
     return Promise.resolve();
@@ -111,21 +123,25 @@ class LRUSparseMap<V> implements SparseMap<string, V> {
   private _factory: ((key: string, hint?: any) => Observable<V>) | undefined;
   private _strategy: MergeStrategy;
 
+  created: Subject<Pair<string, Updatable<V>>>;
+  evicted: Subject<Pair<string, Updatable<V>>>;
+
   constructor(
       factory: ((key: string, hint?: any) => Observable<V>) | undefined = undefined,
       strategy: MergeStrategy = 'overwrite',
       options?: LRU.Options<Updatable<V>>) {
+    this.created = new Subject();
+    this.evicted = new Subject();
 
     let opts = options || {max: 100};
-    let disp = (_k: string, v: Updatable<V>) => {
-      v.playOnto(Observable.empty());
-    }
 
     if (opts.dispose) {
-      let oldDisp = opts.dispose;
-      opts.dispose = (k, v) => { disp(k, v); oldDisp(k, v); };
-    } else {
-      opts.dispose = disp;
+      throw new Error("Don't set dispose, use the evicted observable");
+    }
+
+    opts.dispose = (k, v) => {
+      this.evicted.next({Key: k, Value: v});
+      v.playOnto(Observable.empty());
     }
 
     this._latest = LRU<Updatable<V>>(opts);
@@ -146,6 +162,7 @@ class LRUSparseMap<V> implements SparseMap<string, V> {
     }
 
     this._latest.set(key, ret);
+    this.created.next({ Key: key, Value: ret });
     return ret;
   }
 
@@ -173,11 +190,7 @@ class LRUSparseMap<V> implements SparseMap<string, V> {
 
   invalidate(key: string): Promise<void> {
     let val = this._latest.get(key);
-    if (val) {
-      // Release whatever subscription val's playOnto is holding currently
-      val.playOnto(Observable.empty());
-      this._latest.del(key);
-    }
+    if (val) { this._latest.del(key); }
 
     return Promise.resolve();
   }
