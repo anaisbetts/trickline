@@ -44,6 +44,11 @@ export class ChannelHeaderViewModel extends Model {
       .switchMap(c => this.store.channels.listen(c.id, c.api))
       .toProperty(this, 'channelInfo');
 
+    // NB: This works but it's too damn clever
+    this.innerDisp.add(when(this, x => x.channelInfo)
+      .filter(x => x && !x.topic)
+      .subscribe(x => this.store.channels.listen(x.id, x.api).invalidate()));
+
     when(this, x => x.channelInfo)
       .map(info => info ? new ChannelMembersViewModel(this.store, this.selectedChannel.api, info.members) : null)
       .toProperty(this, 'channelMembers');
@@ -67,7 +72,7 @@ export class ChannelHeaderView extends SimpleView<ChannelHeaderViewModel> {
   }
 
   renderChannelInfo() {
-    if (!this.viewModel.channelInfo) return null;
+    if (!this.viewModel.channelInfo || !this.viewModel.channelInfo.members) return null;
 
     const tabStyle = {
       paddingLeft: '20px',
