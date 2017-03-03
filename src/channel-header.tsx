@@ -18,8 +18,7 @@ export class ChannelHeaderViewModel extends Model {
   @fromObservable selectedChannel: ChannelBase;
   @fromObservable channelInfo: Channel;
   @fromObservable channelMembers: ChannelMembersViewModel;
-  @fromObservable members: Array<string>;
-  @fromObservable topic: string;
+  @fromObservable topic: { value: string };
 
   toggleDrawer: Action<boolean>;
   toggleMembersList: Action<boolean>;
@@ -48,6 +47,10 @@ export class ChannelHeaderViewModel extends Model {
     when(this, x => x.channelInfo)
       .map(info => info ? new ChannelMembersViewModel(this.store, this.selectedChannel.api, info.members) : null)
       .toProperty(this, 'channelMembers');
+
+    when(this, x => x.channelInfo.topic)
+      .startWith({ value: '' })
+      .toProperty(this, 'topic');
   }
 }
 
@@ -81,7 +84,7 @@ export class ChannelHeaderView extends SimpleView<ChannelHeaderViewModel> {
       />,
       <Tab
         key='topic'
-        label={this.viewModel.channelInfo.topic.value}
+        label={this.viewModel.topic.value}
         style={tabStyle}
       />
     ];

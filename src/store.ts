@@ -9,7 +9,7 @@ import { asyncMap } from './lib/promise-extras';
 import { isChannel, isGroup, isDM } from './channel-utils';
 
 import './lib/standard-operators';
-import 'rxjs/Observable/dom/webSocket';
+import 'rxjs/add/observable/dom/webSocket';
 
 export type ChannelList = Array<Updatable<ChannelBase|null>>;
 
@@ -26,20 +26,31 @@ export class Store {
 
     this.channels = new InMemorySparseMap<string, ChannelBase>((channel, api: Api) => {
       return this.infoApiForModel(channel, api)();
-    });
+    }, 'merge');
 
     this.users = new InMemorySparseMap<string, User>((user, api: Api) => {
       return api.users.info({ user }).map(({ user }: { user: User }) => {
         user.api = api;
         return user;
       });
-    });
+    }, 'merge');
 
     this.joinedChannels = new Updatable<ChannelList>(() => Observable.of([]));
 
     this.events = new InMemorySparseMap<EventType, Message>();
     this.events.listen('user_change')
-      .subscribe(({ user }) => this.users.listen(user!.id).playOnto(Observable.of(user)));
+      .subscribe(msg => this.users.listen((msg.user! as User).id, msg.api).playOnto(Observable.of(msg.user)));
+
+    // NB: This is the lulzy way to update channel counts when marks
+    // change, but we should definitely remove this code later
+    let somethingMarked = Observable.merge(
+      this.events.listen('channel_marked'),
+      this.events.listen('im_marked'),
+      this.events.listen('group_marked')
+    );
+
+    somethingMarked.throttleTime(3000)
+      .subscribe(x => this.fetchSingleInitialChannelList(x.api));
 
     this.connectToRtm()
       .groupBy(x => x.type)
@@ -50,8 +61,10 @@ export class Store {
 
   connectToRtm(): Observable<Message> {
     return Observable.merge(
-      ...this.api.map(x => this.createRtmConnection(x))
-    );
+      ...this.api.map(x => this.createRtmConnection(x).retry(5).catch(e => {
+        console.log(`Failed to connect via token ${x} - ${e.message}`);
+        return Observable.empty();
+      })));
   }
 
   async fetchInitialChannelList(): Promise<void> {
@@ -85,7 +98,8 @@ export class Store {
 
   private makeUpdatableForModel(model: ChannelBase & Api, api: Api) {
     model.api = api;
-    const updater = new Updatable(this.infoApiForModel(model.id, api));
+
+    const updater = this.channels.listen(model.id, api);
     updater.playOnto(Observable.of(model));
     return updater;
   }

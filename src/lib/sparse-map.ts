@@ -1,5 +1,5 @@
 import { Observable } from 'rxjs/Observable';
-import { Updatable } from './updatable';
+import { Updatable, MergeStrategy } from './updatable';
 
 import './standard-operators';
 
@@ -48,10 +48,12 @@ export class SparseMapMixins {
 class InMemorySparseMap<K, V> implements SparseMap<K, V> {
   private _latest: Map<K, Updatable<V>>;
   private _factory: ((key: K, hint?: any) => Observable<V>) | undefined;
+  private _strategy: MergeStrategy;
 
-  constructor(factory: ((key: K, hint?: any) => Observable<V>) | undefined = undefined) {
+  constructor(factory: ((key: K, hint?: any) => Observable<V>) | undefined = undefined, strategy: MergeStrategy = 'overwrite') {
     this._latest = new Map();
     this._factory = factory;
+    this._strategy = strategy;
   }
 
   listen(key: K, hint?: any): Updatable<V> {
@@ -60,9 +62,9 @@ class InMemorySparseMap<K, V> implements SparseMap<K, V> {
 
     if (this._factory) {
       let fact = this._factory.bind(this);
-      ret = new Updatable<V>(() => fact(key, hint));
+      ret = new Updatable<V>(() => fact(key, hint), this._strategy);
     } else {
-      ret = new Updatable<V>();
+      ret = new Updatable<V>(undefined, this._strategy);
     }
 
     this._latest.set(key, ret);
@@ -94,6 +96,7 @@ class InMemorySparseMap<K, V> implements SparseMap<K, V> {
   invalidate(key: K): Promise<void> {
     let val = this._latest.get(key);
     if (val) {
+      // Release whatever subscription val's playOnto is holding currently
       val.playOnto(Observable.empty());
       this._latest.delete(key);
     }

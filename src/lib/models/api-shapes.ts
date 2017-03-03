@@ -91,7 +91,7 @@ export interface Message {
 
   ephemeral_msg_type: number; // based on EphemeralMsgType.id
 
-  user?: string; // nullable userId
+  user?: string | User; // nullable userId
   username: string;
   topic: string;
   purpose: string;
