@@ -4,6 +4,8 @@ import { Subscription, ISubscription } from 'rxjs/Subscription';
 import { SerialSubscription } from './serial-subscription';
 import * as debug from 'debug';
 
+import { captureStack } from './utils';
+
 import { Subject } from 'rxjs/Subject';
 
 import './standard-operators';
@@ -70,6 +72,12 @@ export class Updatable<T> extends Subject<T> {
   }
 
   nextMerge(value: T): void {
+    if (value === undefined) {
+      captureStack();
+      d(`Updatable with merge strategy received undefined, this is probably a bug\n${captureStack()}`);
+      return;
+    }
+
     this._hasPendingValue = true;
     this._value = Object.assign(this._value || {}, value || {});
     super.next(this._value);
@@ -82,7 +90,7 @@ export class Updatable<T> extends Subject<T> {
 
   invalidate() {
     this._hasPendingValue = false;
-    this._value = undefined;
+    delete this._value;
     this.playOnto(this._factory());
   }
 
