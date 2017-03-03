@@ -4,7 +4,7 @@
   "description": "A fast, offline Slack client",
   "main": "src/main.ts",
   "scripts": {
-    "start": "electron-forge start",
+    "start": "cross-env DEBUG='*,-babel,-electron-compile,-trickline-noisy' electron-forge start",
     "clean-build": "ts-node -D ./docker/surf-build-current",
     "test-renderer": "xvfb-maybe electron-mocha --renderer --watch-extensions tsx,ts \"./test/**/*.{js,ts}\"",
     "dtest": "electron-mocha --renderer --interactive --watch-extensions tsx,ts \"./test/**/*.{js,ts}\"",
@@ -59,7 +59,7 @@
     "bigrig": "1.3.0",
     "chai": "^3.5.0",
     "chai-as-promised": "^6.0.0",
-    "cross-env": "^3.1.4",
+    "cross-env": "3.1.4",
     "csslint": "^1.0.5",
     "electron-compilers": "^5.5.1",
     "electron-mocha": "^3.3.0",
