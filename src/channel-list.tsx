@@ -18,11 +18,11 @@ export class ChannelListViewModel extends Model {
   constructor(public store: Store) {
     super();
 
-    store.keyValueStore.listen('joinedChannels').toProperty(this, 'channels');
+    store.joinedChannels.toProperty(this, 'channels');
 
     when(this, x => x.channels)
       .map(list => {
-        return (list || [])
+        return list
           .filter(c => !c.value.is_archived || (isDM(c.value) && c.value.is_open))
           .sort(channelSort);
       })

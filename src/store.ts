@@ -86,6 +86,7 @@ export class Store {
   channels: SparseMap<string, ChannelBase>;
   users: SparseMap<string, User>;
   events: SparseMap<EventType, Message>;
+  joinedChannels: Updatable<ChannelList>;
   keyValueStore: SparseMap<string, any>;
 
   constructor(tokenList: string[] = []) {
@@ -140,6 +141,8 @@ export class Store {
       .flatMap(x => x.Value.map(v => ({ Key: x.Key, Value: JSON.stringify(v) })))
       .flatMap(x => this.database.keyValues.deferredPut(x))
       .subscribe();
+
+    this.joinedChannels = new Updatable<ChannelList>(() => Observable.of([]));
 
     this.events = new InMemorySparseMap<EventType, Message>();
     this.events.listen('user_change')
