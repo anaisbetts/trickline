@@ -75,7 +75,7 @@ class DexieSparseMap<V> implements SparseMap<string, V> {
 
     let table: Dexie.Table<V, string> = this.dbConnection[this.tableName];
     ret.playOnto(Observable.fromPromise(table.get(key as string)).catch((e) => {
-      console.log(`Failed to get ${key}! ${e.message}`)
+      console.log(`Failed to get ${key}! ${e.message}`);
       return Observable.empty();
     }));
     ret.subscribe(x => {
@@ -98,7 +98,6 @@ class DexieSparseMap<V> implements SparseMap<string, V> {
     this.inMemoryCache.del(key);
     this.inMemoryCache.set(key, value);
 
-    let table: Dexie.Table<V, string> = this.dbConnection[this.tableName];
     value.subscribe(x => {
       console.log('Saving to db because changed!');
       this.save(key, x);
