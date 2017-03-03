@@ -105,4 +105,29 @@ describe('The Updatable class', function() {
     fixture.subscribe(x => latest = x);
     expect(latest).to.equal(42);
   });
+
+  it('shallow merges objects when used with the merge strategy', function() {
+    let fixture = new Updatable<Object>(() => Observable.of({a: 1}), 'merge');
+    expect(fixture.value).to.deep.equal({a: 1});
+
+    fixture.next({b: 2});
+    expect(fixture.value).to.deep.equal({a: 1, b: 2});
+
+    fixture.next({a: 5});
+    expect(fixture.value).to.deep.equal({a: 5, b: 2});
+  });
+
+  it('drops the current value on invalidate', function() {
+    let fixture = new Updatable<Object>(() => Observable.of({a: 1}), 'merge');
+    expect(fixture.value).to.deep.equal({a: 1});
+
+    fixture.next({b: 2});
+    expect(fixture.value).to.deep.equal({a: 1, b: 2});
+
+    fixture.next({a: 5});
+    expect(fixture.value).to.deep.equal({a: 5, b: 2});
+
+    fixture.invalidate();
+    expect(fixture.value).to.deep.equal({a: 1});
+  });
 });

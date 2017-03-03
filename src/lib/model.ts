@@ -85,7 +85,10 @@ export function fromObservable(target: Model, propertyKey: string): void {
             this.changing.next({sender: target, property: propertyKey, value: this[valPropertyKey]});
             this[valPropertyKey] = x;
             this.changed.next({sender: target, property: propertyKey, value: this[valPropertyKey]});
-          }, (e) => { throw e; }, () => {
+          }, (e) => {
+            d(`ToProperty on key ${propertyKey} failed! Last value was ${JSON.stringify(this[valPropertyKey])}`);
+            setTimeout(() => { throw e; }, 10);
+          }, () => {
             d(`Observable for ${propertyKey} completed!`);
           }));
 

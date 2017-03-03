@@ -14,6 +14,7 @@ export interface ActionCtor<TRet> {
 }
 
 const d = debug('trickline:action');
+const dn = debug('trickline-noisy:action');
 
 export class Action<T> {
   private readonly executeFactory: CreateAsyncSelector<T>;
@@ -46,7 +47,7 @@ export class Action<T> {
     if (this.currentExecution) return this.currentExecution;
 
     let result: ConnectableObservable<T>;
-    d('Executing Action!');
+    d('Executing Action');
 
     try {
       result = Observable.from(this.executeFactory()).publish();
@@ -57,9 +58,10 @@ export class Action<T> {
 
     result
       .finally(() => this.currentExecution = null)
-      .subscribe(
-        this.resultSubject.next.bind(this.resultSubject),
-        this.thrownErrorsSubject.next.bind(this.thrownErrorsSubject));
+      .subscribe((x: T) => {
+        dn(`Dispatching result from Action: ${JSON.stringify(x)}`);
+        this.resultSubject.next(x);
+      }, this.thrownErrorsSubject.next.bind(this.thrownErrorsSubject));
 
     this.currentExecution = result;
     this.inflightRequest.set(result.connect());
