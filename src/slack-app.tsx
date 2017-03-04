@@ -66,6 +66,7 @@ export class SlackAppModel extends Model {
 
     const tokenSource = process.env.SLACK_API_TOKEN || window.localStorage.getItem('token') || '';
     const tokens = tokenSource.indexOf(',') >= 0 ? tokenSource.split(',') : [tokenSource];
+
     this.tokenSelector = tokens.reduce((acc: TokenSelector, token: string) => {
       acc[token] = true;
       return acc;
@@ -99,7 +100,7 @@ export class SlackApp extends SimpleView<SlackAppModel> {
     this.viewModel.loadInitialState.execute();
 
     if (process.env['TRICKLINE_HEAPSHOT_AND_BAIL']) {
-      let mainProcess = createProxyForRemote(null);
+      const mainProcess = createProxyForRemote(null);
       this.takeHeapshot().then(() => mainProcess.tracingControl.stopTracing(true));
     }
   }
@@ -133,11 +134,8 @@ export class SlackApp extends SimpleView<SlackAppModel> {
     };
 
     const channelListView = vm.isDrawerOpen ? (
-      <ChannelListView
-        viewModel={vm.channelList}
-        rowHeight={32}
-        width={300} />
-      ) : null;
+      <ChannelListView viewModel={vm.channelList} />
+    ) : null;
 
     const teamSwitcherItems = Object.keys(vm.tokenSelector).map((token) => {
       const checked = vm.tokenSelector[token];
