@@ -174,7 +174,7 @@ export abstract class View<T extends Model, P extends HasViewModel<T>>
       View.isInFocusSub = Observable.merge(
         Observable.fromEvent(window, 'blur').map(() => false),
         Observable.fromEvent(window, 'focus').map(() => true),
-      ).subscribe(x => {
+      ).startWith(true).subscribe(x => {
         View.isInFocus = x;
 
         // NB: If the window loses focus, then comes back, there could
