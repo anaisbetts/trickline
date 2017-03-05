@@ -166,7 +166,7 @@ export abstract class View<T extends Model, P extends HasViewModel<T>>
         View.isInFocus = x;
 
         // NB: If the window loses focus, then comes back, there could
-        // be an up-to-250ms delay between the window regaining focus
+        // be an up-to-750ms delay between the window regaining focus
         // and the idle setTimeout actually running. That's bad, we will
         // instead cancel our lazy timer and fire a quick one
         if (x && View.currentRafToken) {
@@ -179,7 +179,7 @@ export abstract class View<T extends Model, P extends HasViewModel<T>>
     if (View.currentRafToken === 0 || View.currentRafToken === undefined) {
       View.currentRafToken = View.isInFocus ?
         requestAnimationFrame(View.dispatchUpdates) :
-        window.setTimeout(View.dispatchUpdates, 250);
+        window.setTimeout(View.dispatchUpdates, 750);
     }
   }
 }
