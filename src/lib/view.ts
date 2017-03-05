@@ -142,16 +142,28 @@ export abstract class View<T extends Model, P extends HasViewModel<T>>
   static currentRafToken: number;
   static isInFocus: boolean;
   static isInFocusSub: Subscription;
+  static isForceUpdating: boolean;
+  hasBeenRendered: boolean;
 
   static dispatchUpdates() {
     const ourViews = View.toUpdate;
     View.toUpdate = [];
 
     View.currentRafToken = 0;
-    ourViews.forEach(x => {
-      if (!x.viewModel) return;
-      x.forceUpdate();
-    });
+    View.isForceUpdating = true;
+
+    try {
+      for (let i = 0; i < ourViews.length; i++) {
+        const current = ourViews[i];
+        if (!current.viewModel || current.hasBeenRendered) continue;
+
+        current.forceUpdate();
+        current.hasBeenRendered = true;
+      }
+    } finally {
+      for (let i = 0; i < ourViews.length; i++) { ourViews[i].hasBeenRendered = false; }
+      View.isForceUpdating = false;
+    }
   }
 
   private queueUpdate() {
