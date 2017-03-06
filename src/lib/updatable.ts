@@ -106,7 +106,7 @@ export class Updatable<T> extends Subject<T> {
   }
 
   nextAsync(source: (Promise<T>|Observable<T>)) {
-    if (source instanceof Promise) {
+    if ('then' in source) {
       source.then(
         (x) => this.next(x),
         (e) => this.error(e));

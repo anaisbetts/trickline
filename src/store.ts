@@ -23,9 +23,12 @@ export interface DeferredPutItem<T> {
   completion: AsyncSubject<void>;
 }
 
+Dexie.Promise = window.Promise;
+
 declare module 'dexie' {
   module Dexie {
     interface Table<T, Key> {
+      getWithApi: ((key: Key) => Promise<T>);
       deferredPut: ((item: T) => Promise<void>);
       idleHandle: number | null;
       deferredItems: DeferredPutItem<T>[];
@@ -33,8 +36,28 @@ declare module 'dexie' {
   }
 }
 
+async function getWithApi<T, Key>(this: Dexie.Table<T, Key>, key: Key): Promise<T> {
+  let ret = await this.get(key);
+  if (!ret) return ret;
+
+  if (ret.token) {
+    ret.api = createApi(ret.token);
+    delete ret.token;
+  } else {
+    debugger;
+  }
+
+  return ret;
+}
+
 function deferredPut<T, Key>(this: Dexie.Table<T, Key>, item: T): Promise<void> {
   let newItem = { item, completion: new AsyncSubject<void>() };
+
+  if (item.token && !item.api) return Promise.resolve();
+  if (!item.api) {
+    debugger;
+    return Promise.reject(new Error(`Saved Item with ID ${item.id} doesn't have an API`));
+  }
 
   let createIdle = () => window.requestIdleCallback(deadline => {
     while (deadline.timeRemaining() > 5/*ms*/) {
@@ -42,7 +65,12 @@ function deferredPut<T, Key>(this: Dexie.Table<T, Key>, item: T): Promise<void> 
       this.deferredItems = itemsToAdd.splice(128);
 
       try {
-        this.bulkPut(itemsToAdd.map(x => Object.assign({}, x.item, { api: null })));
+        let toAdd = itemsToAdd.map(x => {
+          if (!x.item.api) debugger;
+          return Object.assign({}, x.item, { api: null, token: x.item.api.token() });
+        });
+
+        this.bulkPut(toAdd);
         itemsToAdd.forEach(x => { x.completion.next(undefined); x.completion.complete(); });
       } catch (e) {
         itemsToAdd.forEach(x => { x.completion.error(e); });
@@ -74,12 +102,15 @@ export class DataModel extends Dexie  {
     super('SparseMap');
 
     this.version(VERSION).stores({
-      users: 'id,name,real_name,color,profile',
-      channels: 'id,name,is_starred,unread_count_display,mention_count,dm_count,user,topic,purpose',
+      users: 'id,name,real_name,color,profile,token',
+      channels: 'id,name,is_starred,unread_count_display,mention_count,dm_count,user,topic,purpose,token',
       keyValues: 'key,value'
     });
 
+    // XXX: This hack is horrendous
     Object.getPrototypeOf(this.users).deferredPut = deferredPut;
+    Object.getPrototypeOf(this.users).getWithApi = getWithApi;
+    Dexie.Promise = window.Promise;
   }
 }
 
@@ -99,37 +130,44 @@ export class Store {
     this.database.open();
 
     this.channels = new LRUSparseMap<ChannelBase>(async (channel, api: Api) => {
-      let ret = await this.database.channels.get(channel);
+      if (!api) throw new Error("No API!");
+      let ret = await this.database.channels.getWithApi(channel);
       if (ret) return ret;
 
       return await this.infoApiForModel(channel, api)!();
     }, 'merge');
-/*
-    this.channels.created.subscribe(u => {
-      u.Value
-        .flatMap(async v => {
-          try {
-            let toSave = Object.assign({}, v);
-            delete toSave.api;
 
-            await this.database.channels.deferredPut(toSave);
-            //console.log(`Saving channel ${v.id}`);
-          } catch (e) {
-            console.log(`Can't save channel info! ${e.message}`);
-          }
-        })
-        .subscribe();
-    });
-   */
+    this.channels.created
+      .flatMap(u => u.Value)
+      .flatMap(async v => {
+        try {
+          await this.database.channels.deferredPut(v);
+        } catch (e) {
+          console.log(`Can't save channel info! ${e.message}`);
+        }
+      })
+      .subscribe();
 
     this.users = new LRUSparseMap<User>(async (user, api: Api) => {
-      let ret = await this.database.users.get(user);
+      if (!api) throw new Error("No API!");
+      let ret = await this.database.users.getWithApi(user);
       if (ret) return ret;
 
-      ret = await api.users.info({ user }) as User;
+      ret = (await api.users.info({ user }).toPromise()).user;
       ret.api = api;
       return ret;
     }, 'merge');
+
+    this.users.created
+      .flatMap(u => u.Value)
+      .flatMap(async v => {
+        try {
+          await this.database.users.deferredPut(v);
+        } catch (e) {
+          console.log(`Can't save user info! ${e.message}`);
+        }
+      })
+      .subscribe();
 
     this.keyValueStore = new LRUSparseMap<string>((key) =>
       this.database.keyValues.get(key).then(x => x ? JSON.parse(x.Value) : null));
@@ -145,7 +183,8 @@ export class Store {
     this.events.listen('user_change')
       .subscribe(msg => {
         if (!msg || !msg.user) return;
-        this.database.users.deferredPut(msg.user as User);
+
+        msg.user.api = msg.api;
 
         let ret = this.users.listen((msg.user as User).id, msg.api, true);
         if (ret) ret.next(msg.user as User);
@@ -190,7 +229,7 @@ export class Store {
   }
 
   async updateChannelToLatest(id: string, api: Api) {
-    await this.channels.listen(id).nextAsync(this.infoApiForModel(id, api)!());
+    this.channels.listen(id, api).nextAsync(this.infoApiForModel(id, api)!());
   }
 
   private async fetchSingleInitialChannelList(api: Api): Promise<ChannelList> {
@@ -222,19 +261,25 @@ export class Store {
     return updater;
   }
 
-  private infoApiForModel(id: string, api: Api): (() => Promise<ChannelBase>) | null {
+  private infoApiForModel(id: string, api: Api): (() => (Promise<ChannelBase>|Observable<ChannelBase>)) | null {
+    if (!api) throw new Error("Can't call infoApiForModel with null");
+
     if (isChannel(id)) {
       return async () => {
-        let ret = await api.channels.info({ channel: id });
+        let ret = await api.channels.info({ channel: id }).toPromise();
+        if (!ret || !ret.channel) return null;
+
         return Object.assign(ret.channel, { api });
       };
     } else if (isGroup(id)) {
       return async () => {
-        let ret = await api.groups.info({ channel: id });
+        let ret = await api.groups.info({ channel: id }).toPromise();
+        if (!ret || !ret.group) return null;
+
         return Object.assign(ret.group, { api });
       };
     } else if (isDM(id)) {
-      return null;
+      return () => Observable.empty();
     } else {
       throw new Error(`Unsupported model: ${id}`);
     }
