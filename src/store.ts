@@ -37,7 +37,7 @@ function deferredPut<T, Key>(this: Dexie.Table<T, Key>, item: T): Promise<void> 
   let newItem = { item, completion: new AsyncSubject<void>() };
 
   let createIdle = () => window.requestIdleCallback(deadline => {
-    while (deadline.timeRemaining() > 0) {
+    while (deadline.timeRemaining() > 5/*ms*/) {
       let itemsToAdd = this.deferredItems;
       this.deferredItems = itemsToAdd.splice(128);
 

@@ -1,5 +1,6 @@
 import { Observable } from 'rxjs/Observable';
 import { AsyncSubject } from 'rxjs/AsyncSubject';
+import { Subscription } from 'rxjs/Subscription';
 import { Subject } from 'rxjs/Subject';
 import { asap } from 'rxjs/scheduler/asap';
 
@@ -99,7 +100,7 @@ export abstract class View<T extends Model, P extends HasViewModel<T>>
       .flatMap(() => this.viewModel.changed)
       .takeUntil(this.lifecycle.willUnmount)
       .observeOn(asap)
-      .subscribe(() => { if (this.viewModel) { this.forceUpdate(); } });
+      .subscribe(() => { if (this.viewModel) { this.queueUpdate(); } });
 
     this.lifecycle.willUnmount.subscribe(() => { if (this.viewModel) this.viewModel.unsubscribe(); this.viewModel = null; });
   }
@@ -135,6 +136,63 @@ export abstract class View<T extends Model, P extends HasViewModel<T>>
     if (!this.lifecycle.willUnmountSubj) return;
     this.lifecycle.willUnmountSubj.next(true);
     this.lifecycle.willUnmountSubj.complete();
+  }
+
+  static toUpdate: View<any, any>[];
+  static currentRafToken: number;
+  static isInFocus: boolean;
+  static isInFocusSub: Subscription;
+  static isForceUpdating: boolean;
+  hasBeenRendered: boolean;
+
+  static dispatchUpdates() {
+    const ourViews = View.toUpdate;
+    View.toUpdate = [];
+
+    View.currentRafToken = 0;
+    View.isForceUpdating = true;
+
+    try {
+      for (let i = 0; i < ourViews.length; i++) {
+        const current = ourViews[i];
+        if (!current.viewModel || current.hasBeenRendered) continue;
+
+        current.forceUpdate();
+        current.hasBeenRendered = true;
+      }
+    } finally {
+      for (let i = 0; i < ourViews.length; i++) { ourViews[i].hasBeenRendered = false; }
+      View.isForceUpdating = false;
+    }
+  }
+
+  private queueUpdate() {
+    View.toUpdate = View.toUpdate || [];
+    View.toUpdate.push(this);
+
+    if (!View.isInFocusSub) {
+      View.isInFocusSub = Observable.merge(
+        Observable.fromEvent(window, 'blur').map(() => false),
+        Observable.fromEvent(window, 'focus').map(() => true),
+      ).startWith(true).subscribe(x => {
+        View.isInFocus = x;
+
+        // NB: If the window loses focus, then comes back, there could
+        // be an up-to-750ms delay between the window regaining focus
+        // and the idle setTimeout actually running. That's bad, we will
+        // instead cancel our lazy timer and fire a quick one
+        if (x && View.currentRafToken) {
+          clearTimeout(View.currentRafToken);
+          this.queueUpdate();
+        }
+      });
+    }
+
+    if (View.currentRafToken === 0 || View.currentRafToken === undefined) {
+      View.currentRafToken = View.isInFocus ?
+        requestAnimationFrame(View.dispatchUpdates) :
+        window.setTimeout(View.dispatchUpdates, 750);
+    }
   }
 }
 
