@@ -8,11 +8,11 @@ import './standard-operators';
 export type Pair<K, V> = { Key: K, Value: V };
 
 export interface SparseMap<K, V> {
-  listen(key: K, hint?: any): Updatable<V>;
+  listen(key: K, hint?: any, dontCreate?: boolean): Updatable<V>;
   listenAll(): Map<K, Updatable<V>>;
 
   setDirect(key: K, value: Updatable<V>): Promise<void>;
-  setLazy(key: K, value: Observable<V>): Promise<void>;
+  setAsync(key: K, value: Promise<V>): Promise<void>;
   invalidate(key: K): Promise<void>;
 
   created: Observable<Pair<K, Updatable<V>>>;
@@ -20,20 +20,28 @@ export interface SparseMap<K, V> {
 };
 
 export class SparseMapMixins {
-  static listenMany<K, V>(this: SparseMap<K, V>, keys: Array<K>, hint?: any): Map<K, Updatable<V>> {
+  static listenMany<K, V>(this: SparseMap<K, V>, keys: Array<K>, hint?: any, dontCreate?: boolean): Map<K, Updatable<V>> {
     return keys.reduce((acc, x) => {
-      acc.set(x, this.listen(x, hint));
+      acc.set(x, this.listen(x, hint, dontCreate));
       return acc;
     }, new Map<K, Updatable<V>>());
   }
 
-  static get<K, V>(this: SparseMap<K, V>, key: K): Promise<V> {
+  static get<K, V>(this: SparseMap<K, V>, key: K, hint?: any, dontCreate?: boolean): Promise<V|null> {
+    let ret = this.listen(key, hint, dontCreate);
+    if (!ret) return Promise.resolve(null);
+
     return this.listen(key).take(1).toPromise();
   }
 
-  static getMany<K, V>(this: SparseMap<K, V>, keys: Array<K>, hint?: any): Promise<Map<K, V>> {
+  static getMany<K, V>(this: SparseMap<K, V>, keys: Array<K>, hint?: any, dontCreate?: boolean): Promise<Map<K, V|null>> {
     return Observable.of(...keys)
-      .flatMap(k => this.listen(k, hint).take(1).map(v => ({Key: k, Value: v})))
+      .flatMap(k => {
+        let ret = this.listen(k, hint, dontCreate);
+        if (!ret) return Observable.empty();
+
+        return ret.take(1).map(v => ({Key: k, Value: v}));
+      })
       .reduce((acc, x) => {
         acc.set(x.Key, x.Value);
         return acc;
@@ -42,11 +50,8 @@ export class SparseMapMixins {
   }
 
   static setValue<K, V>(this: SparseMap<K, V>, key: K, value: V): Promise<void> {
-    return this.setLazy(key, Observable.of(value));
-  }
-
-  static setPromise<K, V>(this: SparseMap<K, V>, key: K, value: () => Promise<V>): Promise<void> {
-    return this.setLazy(key, Observable.defer(() => Observable.fromPromise(value())));
+    this.listen(key).next(value);
+    return Promise.resolve();
   }
 }
 
@@ -55,10 +60,10 @@ class InMemorySparseMap<K, V> implements SparseMap<K, V> {
   evicted: Subject<Pair<K, Updatable<V>>>;
 
   private _latest: Map<K, Updatable<V>>;
-  private _factory: ((key: K, hint?: any) => Observable<V>) | undefined;
+  private _factory: ((key: K, hint?: any) => Promise<V>) | undefined;
   private _strategy: MergeStrategy;
 
-  constructor(factory: ((key: K, hint?: any) => Observable<V>) | undefined = undefined, strategy: MergeStrategy = 'overwrite') {
+  constructor(factory: ((key: K, hint?: any) => Promise<V>) | undefined = undefined, strategy: MergeStrategy = 'overwrite') {
     this._latest = new Map();
     this._factory = factory;
     this._strategy = strategy;
@@ -93,23 +98,17 @@ class InMemorySparseMap<K, V> implements SparseMap<K, V> {
   }
 
   setDirect(key: K, value: Updatable<V>): Promise<void> {
-    let prev = this._latest.get(key);
-    if (prev) prev.playOnto(Observable.empty());
-
     this._latest.set(key, value);
     return Promise.resolve();
   }
 
-  setLazy(key: K, value: Observable<V>): Promise<void> {
-    this.listen(key).playOnto(value);
-    return Promise.resolve();
+  async setAsync(key: K, value: Promise<V>): Promise<void> {
+    this.listen(key).next(await value);
   }
 
   invalidate(key: K): Promise<void> {
     let val = this._latest.get(key);
     if (val) {
-      // Release whatever subscription val's playOnto is holding currently
-      val.playOnto(Observable.empty());
       this._latest.delete(key);
       this.evicted.next({ Key: key, Value: val });
     }
@@ -120,14 +119,14 @@ class InMemorySparseMap<K, V> implements SparseMap<K, V> {
 
 class LRUSparseMap<V> implements SparseMap<string, V> {
   private _latest: LRU.Cache<Updatable<V>>;
-  private _factory: ((key: string, hint?: any) => Observable<V>) | undefined;
+  private _factory: ((key: string, hint?: any) => Promise<V>) | undefined;
   private _strategy: MergeStrategy;
 
   created: Subject<Pair<string, Updatable<V>>>;
   evicted: Subject<Pair<string, Updatable<V>>>;
 
   constructor(
-      factory: ((key: string, hint?: any) => Observable<V>) | undefined = undefined,
+      factory: ((key: string, hint?: any) => Promise<V>) | undefined = undefined,
       strategy: MergeStrategy = 'overwrite',
       options?: LRU.Options<Updatable<V>>) {
     this.created = new Subject();
@@ -139,10 +138,7 @@ class LRUSparseMap<V> implements SparseMap<string, V> {
       throw new Error("Don't set dispose, use the evicted observable");
     }
 
-    opts.dispose = (k, v) => {
-      this.evicted.next({Key: k, Value: v});
-      v.playOnto(Observable.empty());
-    };
+    opts.dispose = (k, v) => { this.evicted.next({Key: k, Value: v}); };
 
     this._latest = LRU<Updatable<V>>(opts);
 
@@ -176,16 +172,12 @@ class LRUSparseMap<V> implements SparseMap<string, V> {
   }
 
   setDirect(key: string, value: Updatable<V>): Promise<void> {
-    let prev = this._latest.get(key);
-    if (prev) prev.playOnto(Observable.empty());
-
     this._latest.set(key, value);
     return Promise.resolve();
   }
 
-  setLazy(key: string, value: Observable<V>): Promise<void> {
-    this.listen(key).playOnto(value);
-    return Promise.resolve();
+  async setAsync(key: string, value: Promise<V>): Promise<void> {
+    this.listen(key).next(await value);
   }
 
   invalidate(key: string): Promise<void> {

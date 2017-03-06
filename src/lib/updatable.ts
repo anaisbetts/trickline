@@ -1,7 +1,5 @@
-import { Observable } from 'rxjs/Observable';
 import { Subscriber } from 'rxjs/Subscriber';
 import { Subscription, ISubscription } from 'rxjs/Subscription';
-import { SerialSubscription } from './serial-subscription';
 import * as debug from 'debug';
 
 import { captureStack } from './utils';
@@ -18,15 +16,13 @@ const d = debug('trickline:updatable');
 export class Updatable<T> extends Subject<T> {
   private _value: T;
   private _hasPendingValue: boolean;
-  private _factory: () => Observable<T>;
-  private _playOnto: SerialSubscription;
+  private _factory?: () => Promise<T>;
 
-  constructor(factory?: () => Observable<T>, strategy?: MergeStrategy) {
+  constructor(factory?: () => Promise<T>, strategy?: MergeStrategy) {
     super();
 
     this._hasPendingValue = false;
-    this._factory = factory ? factory : () => Observable.empty();
-    this._playOnto = new SerialSubscription();
+    this._factory = factory;
 
     switch (strategy || 'overwrite') {
     case 'overwrite':
@@ -39,8 +35,8 @@ export class Updatable<T> extends Subject<T> {
   }
 
   get value(): T {
-    if (!this._hasPendingValue) {
-      this.playOnto(this._factory());
+    if (!this._hasPendingValue && this._factory) {
+      this.nextAsync(this._factory());
     }
 
     if (this.hasError) {
@@ -54,8 +50,8 @@ export class Updatable<T> extends Subject<T> {
     const subscription = super._subscribe(subscriber);
 
     let shouldNext = true;
-    if (!this._hasPendingValue) {
-      this.playOnto(this._factory());
+    if (!this._hasPendingValue && this._factory) {
+      this.nextAsync(this._factory());
       shouldNext = false;
     }
 
@@ -97,10 +93,16 @@ export class Updatable<T> extends Subject<T> {
   invalidate() {
     this._hasPendingValue = false;
     delete this._value;
-    this.playOnto(this._factory());
+
+    if (this._factory) {
+      this.nextAsync(this._factory());
+    }
   }
 
-  playOnto(source: Observable<T>) {
-    this._playOnto.set(source.subscribe(this.next.bind(this), this.error.bind(this)));
+  nextAsync(source: Promise<T>) {
+    if (!source || !source.then) debugger;
+    source.then(
+      (x) => this.next(x),
+      (e) => this.error(e));
   }
 }
