@@ -45,6 +45,6 @@ app.on('ready', async () => {
     await installExtension(REACT_DEVELOPER_TOOLS);
     mainWindow.webContents.openDevTools();
   } else {
-    mainWindow.webContents.openDevTools();
+    if (!process.env.TRICKLINE_DONT_DEVTOOLS) mainWindow.webContents.openDevTools();
   }
 });
