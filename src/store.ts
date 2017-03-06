@@ -43,8 +43,6 @@ async function getWithApi<T, Key>(this: Dexie.Table<T, Key>, key: Key): Promise<
   if (ret.token) {
     ret.api = createApi(ret.token);
     delete ret.token;
-  } else {
-    debugger;
   }
 
   return ret;
@@ -55,7 +53,6 @@ function deferredPut<T, Key>(this: Dexie.Table<T, Key>, item: T): Promise<void> 
 
   if (item.token && !item.api) return Promise.resolve();
   if (!item.api) {
-    debugger;
     return Promise.reject(new Error(`Saved Item with ID ${item.id} doesn't have an API`));
   }
 
@@ -66,7 +63,6 @@ function deferredPut<T, Key>(this: Dexie.Table<T, Key>, item: T): Promise<void> 
 
       try {
         let toAdd = itemsToAdd.map(x => {
-          if (!x.item.api) debugger;
           return Object.assign({}, x.item, { api: null, token: x.item.api.token() });
         });
 
@@ -130,7 +126,8 @@ export class Store {
     this.database.open();
 
     this.channels = new LRUSparseMap<ChannelBase>(async (channel, api: Api) => {
-      if (!api) throw new Error("No API!");
+      if (!api) throw new Error('You must provide the API object as a hint to listen');
+
       let ret = await this.database.channels.getWithApi(channel);
       if (ret) return ret;
 
@@ -149,7 +146,8 @@ export class Store {
       .subscribe();
 
     this.users = new LRUSparseMap<User>(async (user, api: Api) => {
-      if (!api) throw new Error("No API!");
+      if (!api) throw new Error('You must provide the API object as a hint to listen');
+
       let ret = await this.database.users.getWithApi(user);
       if (ret) return ret;
 
