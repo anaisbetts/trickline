@@ -55,6 +55,7 @@ addons:
       - lightdm
       - curl
       - rpm
+      - imagemagick
       - wget
 
 install:
