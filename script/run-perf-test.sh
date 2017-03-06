@@ -13,7 +13,12 @@ TRICKLINE_BIN="$( $ROOT/node_modules/.bin/ts-node ./script/find-trickline-exe.ts
 TRICKLINE_HEAPSHOT_AND_BAIL=1 $ROOT/node_modules/.bin/timeout -t 30s -- $ROOT/node_modules/.bin/xvfb-maybe $TRICKLINE_BIN
 
 if [$? != 0]; then
-  import -window root $SURF_ARTIFACT_DIR/screenshot.png
+  if [ "$(uname)" = "Darwin" ]; then
+    screencapture $SURF_ARTIFACT_DIR/screenshot.png
+  else
+    import -window root $SURF_ARTIFACT_DIR/screenshot.png
+  fi
+
   exit 1
 fi
 
