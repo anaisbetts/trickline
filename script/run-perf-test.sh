@@ -10,7 +10,7 @@ if [ -n "$SURF_ARTIFACT_DIR" ]; then
 fi
 
 TRICKLINE_BIN="$( $ROOT/node_modules/.bin/ts-node ./script/find-trickline-exe.ts)"
-TRICKLINE_HEAPSHOT_AND_BAIL=1 $ROOT/node_modules/.bin/timeout -t 30s -- $ROOT/node_modules/.bin/xvfb-maybe $TRICKLINE_BIN
+TRICKLINE_HEAPSHOT_AND_BAIL=1 timeout -t 30s -- xvfb-maybe $TRICKLINE_BIN
 
 if [$? != 0]; then
   if [ "$(uname)" = "Darwin" ]; then
