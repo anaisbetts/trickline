@@ -2,7 +2,7 @@
 
 set -ex
 npm install
-npm test
+#npm test
 
 ROOT="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
