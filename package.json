@@ -71,7 +71,7 @@
     "eslint": "~3.12.2",
     "eslint-plugin-react": "^6.8.0",
     "react-hot-loader": "^3.0.0-beta.6",
-    "timeout-cli": "0.1.1",
+    "timeout-cli": "0.2.1",
     "ts-node": "2.1.0",
     "tslint": "^4.5.0",
     "tslint-microsoft-contrib": "^4.0.0",
