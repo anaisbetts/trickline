@@ -69,34 +69,6 @@ describe('The Updatable class', function() {
     expect(value).to.equal(50);
   });
 
-  it('plays onto from only one source at a time', function() {
-    let input1 = new Subject<number>();
-    let input2 = new Subject<number>();
-
-    let latest = 0;
-    let fixture = new Updatable<number>();
-    fixture.subscribe(x => latest = x);
-    expect(latest).to.equal(0);
-
-    fixture.playOnto(input1);
-    expect(latest).to.equal(0);
-
-    input2.next(2);
-    expect(latest).to.equal(0);
-
-    input1.next(1);
-    expect(latest).to.equal(1);
-
-    fixture.playOnto(input2);
-    expect(latest).to.equal(1);
-
-    input1.next(2);
-    expect(latest).to.equal(1);
-
-    input2.next(2);
-    expect(latest).to.equal(2);
-  });
-
   it("doesn't reset once next is called", function() {
     let fixture = new Updatable<number>(() => Observable.of(-1));
     fixture.next(42);

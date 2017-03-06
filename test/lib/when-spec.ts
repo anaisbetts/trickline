@@ -22,7 +22,7 @@ describe('the getValue method', function() {
     let fixture = new TestClass();
     expect(getValue(fixture, f => f.updatableFoo).result).to.equal(6);
 
-    fixture.updatableFoo.playOnto(Observable.of(10));
+    fixture.updatableFoo.next(10);
     expect(getValue(fixture, f => f.updatableFoo).result).to.equal(10);
   });
 
@@ -30,7 +30,7 @@ describe('the getValue method', function() {
     let fixture = new TestClass();
     expect(getValue(fixture, f => f.updatableFoo.value).result).to.equal(6);
 
-    fixture.updatableFoo.playOnto(Observable.of(10));
+    fixture.updatableFoo.next(10);
     expect(getValue(fixture, f => f.updatableFoo.value).result).to.equal(10);
   });
 
@@ -64,7 +64,7 @@ describe('the getValue method', function() {
 
   it ('should fail if walking the chain throws in an Updatable', function() {
     let fixture = new TestClass();
-    fixture.updatableFoo.playOnto(Observable.throw(new Error('die')));
+    fixture.updatableFoo.nextAsync(Observable.throw(new Error('die')));
 
     let { result, failed } = getValue(fixture, f => f.updatableFoo);
 

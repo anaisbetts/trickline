@@ -1,3 +1,4 @@
+import { Observable } from 'rxjs/Observable';
 import { Subscriber } from 'rxjs/Subscriber';
 import { Subscription, ISubscription } from 'rxjs/Subscription';
 import * as debug from 'debug';
@@ -16,9 +17,11 @@ const d = debug('trickline:updatable');
 export class Updatable<T> extends Subject<T> {
   private _value: T;
   private _hasPendingValue: boolean;
-  private _factory?: () => Promise<T>;
+  private _factory?: () => (Promise<T>|Observable<T>);
+  private _errFunc: ((e: Error) => void);
+  private _nextFunc: ((x: T) => void);
 
-  constructor(factory?: () => Promise<T>, strategy?: MergeStrategy) {
+  constructor(factory?: () => (Promise<T>|Observable<T>), strategy?: MergeStrategy) {
     super();
 
     this._hasPendingValue = false;
@@ -32,6 +35,9 @@ export class Updatable<T> extends Subject<T> {
       this.next = this.nextMerge;
       break;
     }
+
+    this._nextFunc = this.next.bind(this);
+    this._errFunc = this.error.bind(this);
   }
 
   get value(): T {
@@ -99,10 +105,13 @@ export class Updatable<T> extends Subject<T> {
     }
   }
 
-  nextAsync(source: Promise<T>) {
-    if (!source || !source.then) debugger;
-    source.then(
-      (x) => this.next(x),
-      (e) => this.error(e));
+  nextAsync(source: (Promise<T>|Observable<T>)) {
+    if (source instanceof Promise) {
+      source.then(
+        (x) => this.next(x),
+        (e) => this.error(e));
+    } else {
+      source.take(1).subscribe(this._nextFunc, this._errFunc);
+    }
   }
 }
