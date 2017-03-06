@@ -10,9 +10,10 @@ if [ -n "$SURF_ARTIFACT_DIR" ]; then
 fi
 
 TRICKLINE_BIN="$( $ROOT/node_modules/.bin/ts-node ./script/find-trickline-exe.ts)"
-TRICKLINE_HEAPSHOT_AND_BAIL=1 timeout -t 30s -- xvfb-maybe $TRICKLINE_BIN
 
-if [$? != 0]; then
+export TRICKLINE_HEAPSHOT_AND_BAIL=1
+
+if ! timeout -t 30s -- $TRICKLINE_BIN; then
   if [ "$(uname)" = "Darwin" ]; then
     screencapture $SURF_ARTIFACT_DIR/screenshot.png
   else
