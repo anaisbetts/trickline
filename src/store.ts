@@ -104,7 +104,6 @@ export class Store {
 
       return await this.infoApiForModel(channel, api)!();
     }, 'merge');
-
 /*
     this.channels.created.subscribe(u => {
       u.Value
@@ -122,7 +121,6 @@ export class Store {
         .subscribe();
     });
    */
-
 
     this.users = new LRUSparseMap<User>(async (user, api: Api) => {
       let ret = await this.database.users.get(user);
