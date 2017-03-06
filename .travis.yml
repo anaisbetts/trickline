@@ -59,7 +59,7 @@ addons:
       - wget
 
 install:
-  - npm install -g surf-build@latest electron-forge@latest timeout@0.3.2 xvfb-maybe@latest
+  - npm install -g surf-build@latest electron-forge@latest
 
 script:
   - if [ "$TRAVIS_OS_NAME" == "linux" ]; then surf-build -n surf-travis-linux -s "$TRAVIS_COMMIT"; fi 
