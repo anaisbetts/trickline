@@ -1,3 +1,25 @@
+# THE OUTLINE
+
+#### Why even?
+
+- We can't have everything in memory any more. Full stop.
+- The average developer shouldn't have to think about RTM.start vs users.counts to build features
+  - When views all know about fetching data, it makes changing the data sources Difficult
+- How would we design the Slack data model in 2017, given that Teams aren't going to mean anything, and shared / enterprise identities are The Default?
+
+#### Red Threads
+
+- The amount of memory we use is proportional to the number of things on screen
+- Writing views should be super easy, and reading the implementation of views should be a joy
+- The way that data gets _into_ Slack should be completely unrelated to the way that devs access data
+- Electron apps don't have to use 2GB of memory. Prove it.
+
+---
+
+### BEGIN SLIDES
+
+---
+
 # OK So, React?
 
 We've decided our glorious future will be React-based 🎉
