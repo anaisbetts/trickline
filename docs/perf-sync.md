@@ -82,7 +82,7 @@ Redux is great – we've used it in the Desktop app and it provides some 🆒 be
 
 # Wait, are you building a Slack client tho???
 
-* Our goal is to build _pieces_ that we can end up using.
+* Our goal is to build _pieces_ that we can end up using anywhere
 
 * While these pieces go really well _together_, you're not opting-in to a Capital-F _Framework_. Each piece works standalone!
 
