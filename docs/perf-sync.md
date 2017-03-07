@@ -18,7 +18,7 @@
 #### Demo Ideas
 
 - Boot the app, show memory usage
-- Prove we're connected to ws
+- Prove we're connected to WS
 - Show scrolling speed (open FPS counter)
 
 #### Concepts to Introduce (in order, i.e. drop stuff from the end)
@@ -67,17 +67,36 @@ But it might not even be the Hard Part™
 
 ---
 
-# Wait, What?
-
-The hard part is converting components from a data model that assumes we have everything
-
-(`TS.the.whole.world`)
-
-To one that is populated on-demand
+> We can no longer have all users and channels in memory.
+-- Abraham Lincoln
 
 ---
 
-# How 'bout that Redux lyfe?
+# Wait, What?
+
+The hard part is converting components from a data model that assumes we have everything, to one where you might not.
+
+```js
+// Easy!
+TS.model.channels[0].name
+>>> devel-react
+
+// We'll never be able to debug this as this gets bigger
+TS.models.getChannel(0).then(x => dieInside());
+```
+
+The old model is *straightforward*. New developers can program against it fairly easily. We need a model that retains that ease for Most People.
+
+---
+
+# The long and short of it
+
+### If we hoist the complexity of asynchrony and fetching data up to every view individually, we will be in _the world's biggest can of worms, forever_.
+
+
+---
+
+# Redux is Great....
 
 Redux is great – we've used it in the Desktop app and it provides some 🆒 benefits:
 
@@ -87,11 +106,11 @@ Redux is great – we've used it in the Desktop app and it provides some 🆒 be
 
 ---
 
-# But it is not without drawbacks... 😔
+# But it is Insufficient 😔
 
-* Your whole app state in one tree: *Partial models, doe?*
-* Actions for everything: *So much Boilerplate*
-* Reducers for everything: *What even is a reducer and why am I writing one to toggle a boolean*
+* Redux doesn't solve the core issues that we've been talking about, it doesn't help us solve the problem of partial models.
+
+* Redux deeply wants all view state to be in one object, which in some sense, runs _towards_ this problem rather than away from it. Trying to solve this in Redux will mean that we're trying to work around the system.
 
 ---
 
