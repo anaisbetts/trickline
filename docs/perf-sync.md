@@ -40,6 +40,12 @@
   - Mention `when` and `toProperty`
   - UserViewModel a good demo class
 
+- The Store
+  - Store isn't like a Redux Store
+  - It's our equivalent of TS.model.*
+  - But more importantly, it's where all of the ugly code lives that handles _writing_ data
+  - The store's _interface_ stays the same'ish, but its implementation can change
+
 - React Integration
   - Views know about their containing ViewModels (no props, no state)
   - If a ViewModel updates, the View renders Automagically
@@ -122,7 +128,7 @@ Redux is great – we've used it in the Desktop app and it provides some 🆒 be
 # Our Goals
 
 - The amount of memory we use is proportional to the number of things on screen
-  - Nothing on screen? No memory usage
+  - Nothing on screen? No(\*) memory usage.
 
 - Writing views should be super easy, and reading the implementation of views should be a joy
   - Polluting every view with fetching and retries and caching will make every view a disaster
@@ -249,8 +255,47 @@ myCoolObject.toaster = 5;
 
 ---
 
+# Models and Updatables 2Gether In Love
+
+- ViewModels make it easy to turn Updatables into Properties.
+
+- Conveniently, this means we don't really have to think about Subscribing so much
+
 ---
 
-# Thanks!
+# Models and Updatables 2Gether In Love
+
+```js
+export class UserViewModel extends Model {
+  @fromObservable model: User;
+  @fromObservable displayName: string;
+  @fromObservable profileImage: string;
+
+  constructor(Updatable<User> model, id: string, api: Api) {
+    super();
+
+    // Always keep a current copy of the User
+    model.toProperty(this, 'model');
+
+    // The DisplayName updates whenever the Model changes
+    when(this, x => x.model)
+      .map(user => user ? user.real_name || user.name : '')
+      .toProperty(this, 'displayName');
+
+    // The ProfileImage updates whenever the Model changes, and if it's
+    // initially empty, give them a default
+    when(this, x => x.model)
+      .map(user => {
+        if (!user) return defaultAvatar;
+        return user.profile.image_48;
+      })
+      .toProperty(this, 'profileImage');
+  }
+}
+```
+
+---
+
+# Part Two Coming Soon
 
 ---
