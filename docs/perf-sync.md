@@ -72,24 +72,6 @@ Redux is great – we've used it in the Desktop app and it provides some 🆒 be
 
 ---
 
-# Wait, are you building a Slack client tho???
-
----
-
-# :no_good:
-
----
-
-# Wait, are you building a Slack client tho???
-
-* Our goal is to build _pieces_ that we can end up using anywhere
-
-* While these pieces go really well _together_, you're not opting-in to a Capital-F _Framework_. Each piece works standalone!
-
-* The UI you saw is basically the world's most involved integration test - it's a way to prototype what developers that _work_ with this library will experience.
-
----
-
 # Our Goals
 
 - The amount of memory we use is proportional to the number of things on screen
@@ -106,6 +88,24 @@ Redux is great – we've used it in the Desktop app and it provides some 🆒 be
   - Views don't really care where data comes from, they just say what they want
 
 - Electron apps don't have to use 2GB of memory, and can be *really fast*. Prove it.
+
+---
+
+# Wait, are you building a Slack client tho???
+
+---
+
+# :no_good:
+
+---
+
+# Wait, are you building a Slack client tho???
+
+* Our goal is to build _pieces_ that we can end up using anywhere
+
+* While these pieces go really well _together_, you're not opting-in to a Capital-F _Framework_. Each piece works standalone!
+
+* The UI you saw is basically the world's most involved integration test - it's a way to prototype what developers that _work_ with this library will experience.
 
 ---
 
