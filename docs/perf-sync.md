@@ -93,7 +93,6 @@ The old model is *straightforward*. New developers can program against it fairly
 
 ### If we hoist the complexity of asynchrony and fetching data up to every view individually, we will be in _the world's biggest can of worms, forever_.
 
-
 ---
 
 # Redux is Great....
@@ -114,12 +113,27 @@ Redux is great – we've used it in the Desktop app and it provides some 🆒 be
 
 ---
 
-### We should consider alternatives before diving in
+# Trickline
+
+### Demo
 
 ---
 
-# How about a model layer that:
+# Our Goals
 
-* Supports partial models out-of-the-box
-* Appends onto those models as data is received
-* _Almost_ as easy to work with as plain ol' objects
+- The amount of memory we use is proportional to the number of things on screen
+  - Nothing on screen? No memory usage
+
+- Writing views should be super easy, and reading the implementation of views should be a joy
+  - Polluting every view with fetching and retries and caching will make every view a disaster
+
+---
+
+# Our Goals
+
+- The way that data gets _into_ Slack should be completely unrelated to the way that devs _access_ data
+  - Views don't really care where data comes from, they just say what they want
+
+- Electron apps don't have to use 2GB of memory, and can be *really fast*. Prove it.
+
+---
