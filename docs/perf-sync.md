@@ -42,9 +42,15 @@ The old model is *straightforward*. New developers can program against it fairly
 
 ---
 
-# The long and short of it
+# Managing data changing over time is What Slack Does
 
-### If we hoist the complexity of asynchrony and fetching data up to every view individually, we will be in _the world's biggest can of worms, forever_.
+_Almost every object_ in Slack can be sourced from:
+
+* HTTPS method call
+* RTM event
+* Our local cache
+
+We should get Really Really Good at these kinds of objects and solve their problems in a generalized way.
 
 ---
 
