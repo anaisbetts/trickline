@@ -23,10 +23,6 @@
 
 #### Concepts to Introduce (in order, i.e. drop stuff from the end)
 
-- "Model" aka ViewModels
-  - Easy to test! Just create them
-  - Properties that tell us when they change
-
 - Updatable
   - "A Lazy Promise"
   - Knows what it is Right Now, and how to get the Latest Version
@@ -35,6 +31,10 @@
 - SparseMap
   - Knows how to create Updatables for a certain "class" of thing (users, channels)
   - Conceptually like a Dictionary - you'll always get A Thing, but what you get might be either stale, or pending
+
+- "Model" aka ViewModels
+  - Easy to test! Just create them
+  - Properties that tell us when they change
 
 - Models and Updatables 2Gether In Love
   - Mention `when` and `toProperty`
@@ -135,5 +135,122 @@ Redux is great – we've used it in the Desktop app and it provides some 🆒 be
   - Views don't really care where data comes from, they just say what they want
 
 - Electron apps don't have to use 2GB of memory, and can be *really fast*. Prove it.
+
+---
+
+# Updatable: A Lazy Promise
+
+- Updatables are like a Promise that doesn't necessarily do its work immediately
+
+- You can always get the current value of an Updatable, though it may be null
+
+```js
+// Okay
+console.log(generalChannel.value.name);
+>>> announcements-general
+```
+
+```js
+// Better
+generalChannel.get().then(value => console.log(value.name));
+>>> announcements-general
+```
+---
+
+# Updatable: A Lazy Promise
+
+- Updatables can change _more than once_ (as opposed to a Promise, that only `then`s once).
+
+- Updatables let you listen for when an object changes:
+
+```js
+let currentName = generalChannel.value.name;
+generalChannel.subscribe(channel => {
+  if (currentName === channel.name) return;
+
+  currentName = channel.name;
+  console.log(`The new general channel name is ${x}!`);
+});
+```
+
+---
+
+# Updatables know how to get the latest version of themselves
+
+```js
+// Fetch the very latest channel name
+generalChannel.invalidate();
+generalChannel.get().then(value => console.log(value.name));
+```
+
+---
+
+# Updatables know how to get the latest version of themselves
+
+* Invalidate can also be used to handle models that don't have enough info:
+
+```js
+// Sometimes, our information about a channel may be partial
+channel = generalChannel.value;
+
+if (!channel.topic) {
+  generalChannel.invalidate();
+  channel = await generalChannel.get();
+}
+
+console.log(channel.topic);
+```
+
+---
+
+# SparseMap - like a Map, but maybe not
+
+- Knows how to create Updatables for a certain "class" of thing (users, channels)
+
+```js
+// Always returns an Updatable of _something_
+const myChannel = channelList.listen('C032AB90');
+
+myChannel.get().then(channel => console.log(channel.name));
+>>> "random"
+```
+
+---
+
+# SparseMap - like a Map, but maybe not
+
+- If we've seen that data recently, :tada: - if not, you might make a network request, or receive stale data
+
+- In the future, Updatables will be able to tell you when they've last updated, or you can request that certain fields be present.
+
+---
+
+# A ViewModel is a Model Of A View
+
+- Testing React trees is Not a Joy, testing against Regular Objects way better
+- Our ViewModels have the unique property that, you can listen to changes on them
+
+```js
+myCoolObject.changed
+  .subscribe(x => console.log(`${x.property} is now ${x.value}`));
+```
+
+---
+
+# Let's make that a bit easier
+
+```js
+when(myCoolObject, x => x.toaster)
+  .subscribe(x => console.log(`Toaster is now ${x}`));
+
+myCoolObject.toaster = 5;
+>>> Toaster is now 5
+```
+
+---
+
+---
+
+# Thanks!
 
 ---
