@@ -39,6 +39,9 @@ export class ChannelViewModel extends Model {
 
     model.toProperty(this, 'model');
 
+    model.pinned = true;
+    this.addTeardown(() => model.pinned = false);
+
     when(this, x => x.model.id).toProperty(this, 'id');
     when(this, x => x.model.is_starred).toProperty(this, 'starred');
     when(this, x => x.model.mention_count).toProperty(this, 'mentions');

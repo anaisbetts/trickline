@@ -145,6 +145,10 @@ export class Store {
       })
       .subscribe();
 
+    this.channels.evicted.subscribe(x => {
+      if (x.Value.pinned) this.channels.setDirect(x.Key, x.Value);
+    });
+
     this.users = new LRUSparseMap<User>(async (user, api: Api) => {
       if (!api) throw new Error('You must provide the API object as a hint to listen');
 
@@ -166,6 +170,10 @@ export class Store {
         }
       })
       .subscribe();
+
+    this.users.evicted.subscribe(x => {
+      if (x.Value.pinned) this.users.setDirect(x.Key, x.Value);
+    });
 
     this.keyValueStore = new LRUSparseMap<string>((key) =>
       this.database.keyValues.get(key).then(x => x ? JSON.parse(x.Value) : null));

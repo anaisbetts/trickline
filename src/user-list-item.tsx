@@ -20,7 +20,11 @@ export class UserViewModel extends Model {
   constructor(public readonly store: Store, id: string, api: Api) {
     super();
 
-    this.store.users.listen(id, api).toProperty(this, 'model');
+    let model = this.store.users.listen(id, api);
+    model.toProperty(this, 'model');
+
+    model.pinned = true;
+    this.addTeardown(() => model.pinned = false);
 
     when(this, x => x.model)
       .map(user => user ? user.real_name || user.name : '')

@@ -21,11 +21,14 @@ export class Updatable<T> extends Subject<T> {
   private _errFunc: ((e: Error) => void);
   private _nextFunc: ((x: T) => void);
 
+  pinned: boolean;
+
   constructor(factory?: () => (Promise<T>|Observable<T>), strategy?: MergeStrategy) {
     super();
 
     this._hasPendingValue = false;
     this._factory = factory;
+    this.pinned = false;
 
     switch (strategy || 'overwrite') {
     case 'overwrite':
