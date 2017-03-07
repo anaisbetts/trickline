@@ -6,6 +6,7 @@
 - The average developer shouldn't have to think about RTM.start vs users.counts to build features
   - When views all know about fetching data, it makes changing the data sources Difficult
 - How would we design the Slack data model in 2017, given that Teams aren't going to mean anything, and shared / enterprise identities are The Default?
+- How hard does Offline From Day One make things?
 
 #### Red Threads
 
@@ -14,7 +15,13 @@
 - The way that data gets _into_ Slack should be completely unrelated to the way that devs access data
 - Electron apps don't have to use 2GB of memory. Prove it.
 
-#### Concepts to Introduce (in order)
+#### Demo Ideas
+
+- Boot the app, show memory usage
+- Prove we're connected to ws
+- Show scrolling speed (open FPS counter)
+
+#### Concepts to Introduce (in order, i.e. drop stuff from the end)
 
 - "Model" aka ViewModels
   - Easy to test! Just create them
@@ -36,6 +43,7 @@
 - React Integration
   - Views know about their containing ViewModels (no props, no state)
   - If a ViewModel updates, the View renders Automagically
+  - Views destroy their ViewModels on componentDidUnmount, and ViewModels destroy their connection to the Updatable
 
 ---
 
