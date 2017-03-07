@@ -140,7 +140,7 @@ generalChannel.subscribe(channel => {
   if (currentName === channel.name) return;
 
   currentName = channel.name;
-  console.log(`The new general channel name is ${x}!`);
+  console.log(`The new general channel name is ${currentName}!`);
 });
 ```
 
