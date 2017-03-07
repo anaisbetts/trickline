@@ -14,6 +14,29 @@
 - The way that data gets _into_ Slack should be completely unrelated to the way that devs access data
 - Electron apps don't have to use 2GB of memory. Prove it.
 
+#### Concepts to Introduce (in order)
+
+- "Model" aka ViewModels
+  - Easy to test! Just create them
+  - Properties that tell us when they change
+
+- Updatable
+  - "A Lazy Promise"
+  - Knows what it is Right Now, and how to get the Latest Version
+  - Future: Being able to get staleness, request missing fields (users.counts vs user.info)
+
+- SparseMap
+  - Knows how to create Updatables for a certain "class" of thing (users, channels)
+  - Conceptually like a Dictionary - you'll always get A Thing, but what you get might be either stale, or pending
+
+- Models and Updatables 2Gether In Love
+  - Mention `when` and `toProperty`
+  - UserViewModel a good demo class
+
+- React Integration
+  - Views know about their containing ViewModels (no props, no state)
+  - If a ViewModel updates, the View renders Automagically
+
 ---
 
 ### BEGIN SLIDES
