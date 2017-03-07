@@ -62,7 +62,7 @@
 
 We've decided our glorious future will be React-based 🎉
 
-## Sooo, time to…
+# Sooo, time to…
 
 ---
 
@@ -102,7 +102,7 @@ The old model is *straightforward*. New developers can program against it fairly
 
 ---
 
-# Redux is Great....
+# Redux is Great...
 
 Redux is great – we've used it in the Desktop app and it provides some 🆒 benefits:
 
@@ -114,9 +114,9 @@ Redux is great – we've used it in the Desktop app and it provides some 🆒 be
 
 # But it is Insufficient 😔
 
-* Redux doesn't solve the core issues that we've been talking about, it doesn't help us solve the problem of partial models.
+* Redux doesn't solve the core issue: partial models.
 
-* Redux deeply wants all view state to be in one object, which in some sense, runs _towards_ this problem rather than away from it. Trying to solve this in Redux will mean that we're trying to work around the system.
+* Having your app state in one object might cause us to run _towards_ this problem rather than away from it.
 
 ---
 
@@ -212,10 +212,11 @@ generalChannel.get().then(value => console.log(value.name));
 
 # Updatables know how to get the latest version of themselves
 
-* Invalidate can also be used to handle models that don't have enough info:
+* Invalidate can also be used to handle models that are incomplete:
 
 ```js
-// Sometimes, our information about a channel may be partial
+// If we don't know enough about a channel (because, say, we got it from
+// `users.counts`), fill it up with another API call
 channel = generalChannel.value;
 
 if (!channel.topic) {
@@ -228,7 +229,7 @@ console.log(channel.topic);
 
 ---
 
-# SparseMap - like a Map, but maybe not
+# SparseMap - like an on-demand Map
 
 - Knows how to create Updatables for a certain "class" of thing (users, channels)
 
@@ -242,9 +243,9 @@ myChannel.get().then(channel => console.log(channel.name));
 
 ---
 
-# SparseMap - like a Map, but maybe not
+# SparseMap - like an on-demand Map
 
-- If we've seen that data recently, :tada: - if not, you might make a network request, or receive stale data
+- If we've seen that data recently, :tada: - if not, you might make a network request, or receive stale data.
 
 - In the future, Updatables will be able to tell you when they've last updated, or you can request that certain fields be present.
 
@@ -252,11 +253,12 @@ myChannel.get().then(channel => console.log(channel.name));
 
 # A ViewModel is a Model Of A View
 
-- Testing React trees is Not a Joy, testing against Regular Objects way better
+- Testing React components using tree diffs requires constant maintenance
+- Testing against Plain Ol' Objects is easier
 - Our ViewModels have the unique property that, you can listen to changes on them
 
 ```js
-myCoolObject.changed
+myChannel.changed
   .subscribe(x => console.log(`${x.property} is now ${x.value}`));
 ```
 
@@ -265,11 +267,11 @@ myCoolObject.changed
 # Let's make that a bit easier
 
 ```js
-when(myCoolObject, x => x.toaster)
-  .subscribe(x => console.log(`Toaster is now ${x}`));
+when(myChannel, x => x.unreadCount)
+  .subscribe(x => console.log(`Unread count is now ${x}`));
 
-myCoolObject.toaster = 5;
->>> Toaster is now 5
+myChannel.unreadCount = 5;
+>>> Unread count is now 5
 ```
 
 ---
