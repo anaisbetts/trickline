@@ -74,18 +74,18 @@ Redux is great – we've used it in the Desktop app and it provides some 🆒 be
 
 # Our Goals
 
-- The amount of memory we use is proportional to the number of things on screen
+- The amount of memory we use is proportional to the number of things on screen.
   - Nothing on screen? No(\*) memory usage.
 
-- Writing views should be super easy, and reading the implementation of views should be a joy
-  - Polluting every view with fetching and retries and caching will make every view a disaster
+- Writing views should be super easy, and reading the implementation of views should be a joy.
+  - Polluting every view with fetching and retries and caching will make every view a disaster.
 
 ---
 
 # Our Goals
 
-- The way that data gets _into_ Slack should be completely unrelated to the way that devs _access_ data
-  - Views don't really care where data comes from, they just say what they want
+- The way that data gets _into_ Slack should be completely unrelated to the way that devs _access_ data.
+  - Views don't really care where data comes from, they just say what they want.
 
 - Electron apps don't have to use 2GB of memory, and can be *really fast*. Prove it.
 
@@ -101,11 +101,11 @@ Redux is great – we've used it in the Desktop app and it provides some 🆒 be
 
 # Wait, are you building a Slack client tho???
 
-* Our goal is to build _pieces_ that we can end up using anywhere
+* Our goal is to build _pieces_ that we can end up using anywhere.
 
 * While these pieces go really well _together_, you're not opting-in to a Capital-F _Framework_. Each piece works standalone!
 
-* The UI you saw is basically the world's most involved integration test - it's a way to prototype what developers that _work_ with this library will experience.
+* The UI you saw is basically the world's most involved integration test – it's a way to exercise the developer experience.
 
 ---
 
@@ -226,7 +226,7 @@ myChannel.unreadCount = 5;
 
 - ViewModels make it easy to turn Updatables into Properties.
 
-- Conveniently, this means we don't really have to think about Subscribing so much
+- Conveniently, this means we don't really have to think about Subscribing.
 
 ---
 
@@ -238,6 +238,7 @@ export class UserViewModel extends Model {
   @fromObservable displayName: string;
   @fromObservable profileImage: string;
 
+  // This User is just an object from `users.info` or an RTM event
   constructor(Updatable<User> model, id: string, api: Api) {
     super();
 
@@ -260,6 +261,20 @@ export class UserViewModel extends Model {
   }
 }
 ```
+
+---
+
+# Is this _Not Invented Here_ syndrome??? 🤔
+
+* Most of these concepts aren't new; much of it feels like ![](https://avatars3.githubusercontent.com/u/17475736?v=3&s=200) **MobX**
+
+* MobX is a popular Redux alternative based on **`Observable`s**
+
+* We could ~~pilfer~~ reuse MobX implementations if we prefer their API
+
+---
+
+![Fit](https://github.com/mobxjs/mobx/raw/master/docs/flow.png)
 
 ---
 
