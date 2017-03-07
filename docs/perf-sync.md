@@ -20,6 +20,7 @@
 - Boot the app, show memory usage
 - Prove we're connected to WS
 - Show scrolling speed (open FPS counter)
+- Close drawer, show memory go down
 
 #### Concepts to Introduce (in order, i.e. drop stuff from the end)
 
@@ -122,6 +123,24 @@ Redux is great – we've used it in the Desktop app and it provides some 🆒 be
 # Trickline
 
 ### Demo
+
+---
+
+# Wait, are you building a Slack client tho???
+
+---
+
+# :no_good:
+
+---
+
+# Wait, are you building a Slack client tho???
+
+* Our goal is to build _pieces_ that we can end up using.
+
+* While these pieces go really well _together_, you're not opting-in to a Capital-F _Framework_. Each piece works standalone!
+
+* The UI you saw is basically the world's most involved integration test - it's a way to prototype what developers that _work_ with this library will experience.
 
 ---
 
