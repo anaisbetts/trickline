@@ -5,8 +5,10 @@ import { ChannelBase, Message, User, UsersCounts } from './models/api-shapes';
 import { EventType } from './models/event-type';
 import { asyncMap } from './promise-extras';
 
-import './standard-operators';
 import 'rxjs/add/observable/dom/webSocket';
+import './standard-operators';
+import './custom-operators';
+
 import { Subscription } from "rxjs/Subscription";
 import { Observable } from "rxjs/Observable";
 
@@ -37,10 +39,23 @@ export class NaiveStore implements Store {
     this.api = tokenList.map(x => createApi(x));
 
     this.channels = new InMemorySparseMap((id: string, api: Api) => infoApiForChannel(id, api).toPromise(), 'merge');
-    this.users = new InMemorySparseMap((user: string, api: Api) => api.users.info({user}).map(x => x.user).toPromise(), 'merge');
+    this.users = new InMemorySparseMap<string, User>(
+      (user: string, api: Api) => api.users.info({user}).map((x: any) => x.user! as User).toPromise(),
+      'merge');
     this.events = new InMemorySparseMap<EventType, Message>();
     this.joinedChannels = new Updatable<ChannelList>();
     this.keyValueStore = new InMemorySparseMap<string, any>();
+
+    // NB: This is the lulzy way to update channel counts when marks
+    // change, but we should definitely remove this code later
+    let somethingMarked = Observable.merge(
+      this.events.listen('channel_marked'),
+      this.events.listen('im_marked'),
+      this.events.listen('group_marked')
+    ).skip(3);
+
+    somethingMarked.guaranteedThrottle(3000)
+      .subscribe(x => this.fetchSingleInitialChannelList(x.api));
   }
 
   async fetchInitialChannelList(): Promise<void> {
