@@ -99,7 +99,6 @@ export abstract class View<T extends Model, P extends HasViewModel<T>>
     this.lifecycle.didMount
       .flatMap(() => this.viewModel.changed)
       .takeUntil(this.lifecycle.willUnmount)
-      .observeOn(asap)
       .subscribe(() => { if (this.viewModel) { this.queueUpdate(); } });
 
     this.lifecycle.willUnmount.subscribe(() => { if (this.viewModel) this.viewModel.unsubscribe(); this.viewModel = null; });
