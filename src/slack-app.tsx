@@ -17,6 +17,7 @@ import { Store } from './store';
 import { ChannelHeaderViewModel, ChannelHeaderView } from './channel-header';
 import { ChannelListViewModel, ChannelListView } from './channel-list';
 import { MemoryPopover } from './memory-popover';
+import { MessagesViewModel, MessagesView } from './messages-view';
 import { when } from './lib/when';
 //import { takeHeapSnapshot } from './profiler';
 
@@ -46,6 +47,7 @@ export class SlackAppModel extends Model {
   store: Store;
   channelList: ChannelListViewModel;
   channelHeader: ChannelHeaderViewModel;
+  messagesPane: MessagesViewModel;
   loadInitialState: Action<void>;
   @fromObservable isDrawerOpen: boolean;
 
@@ -61,6 +63,7 @@ export class SlackAppModel extends Model {
     this.store = new Store(tokens);
     this.channelList = new ChannelListViewModel(this.store);
     this.channelHeader = new ChannelHeaderViewModel(this.store, this.channelList);
+    this.messagesPane = new MessagesViewModel(this.store, this.channelList);
 
     when(this, x => x.channelHeader.isDrawerOpen)
       .toProperty(this, 'isDrawerOpen');
@@ -98,6 +101,7 @@ export class SlackApp extends SimpleView<SlackAppModel> {
     const vm = this.viewModel;
     const shouldShift = vm.isDrawerOpen && window.outerWidth > window.outerHeight;
     const containerStyle = {
+      height: '100%',
       marginLeft: shouldShift ? `${DrawerWidth}px` : '0px',
       transition: 'margin-left: 450ms cubic-bezier(0.23, 1, 0.32, 1) 0ms'
     };
@@ -114,6 +118,8 @@ export class SlackApp extends SimpleView<SlackAppModel> {
           <Drawer open={vm.isDrawerOpen} zDepth={1} width={DrawerWidth}>
             {channelListView}
           </Drawer>
+
+          <MessagesView viewModel={vm.messagesPane} />
 
           <MemoryPopover />
         </div>

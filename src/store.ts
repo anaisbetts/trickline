@@ -85,8 +85,9 @@ export class Store {
 
   channels: SparseMap<string, ChannelBase>;
   users: SparseMap<string, User>;
-  events: SparseMap<EventType, Message>;
   joinedChannels: Updatable<ChannelList>;
+  messages: SparseMap<string, Array<Message>>;
+  events: SparseMap<EventType, Message>;
   keyValueStore: SparseMap<string, any>;
 
   constructor(tokenList: string[] = []) {
@@ -133,6 +134,13 @@ export class Store {
         .flatMap(v => this.database.users.deferredPut(v).catch(() => Observable.empty()))
         .subscribe();
     });
+
+    this.messages = new InMemorySparseMap<string, Array<Message>>((channel, api: Api) => {
+      return api.channels.history({ channel }).map(({ messages }: { messages: Array<Message> }) => {
+        messages.api = api;
+        return messages;
+      });
+    }, 'merge');
 
     this.keyValueStore = new LRUSparseMap<string>((key) =>
       Observable.fromPromise(this.database.keyValues.get(key).then(x => x ? JSON.parse(x.Value) : null)));
