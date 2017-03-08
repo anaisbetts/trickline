@@ -5,11 +5,10 @@ import Dexie from 'dexie';
 
 import { InMemorySparseMap, LRUSparseMap, Pair, SparseMap } from './lib/sparse-map';
 import { Updatable } from './lib/updatable';
-import { Api, createApi } from './lib/models/api-call';
+import { Api, createApi, infoApiForModel } from './lib/models/api-call';
 import { ChannelBase, Message, UsersCounts, User } from './lib/models/api-shapes';
 import { EventType } from './lib/models/event-type';
 import { asyncMap } from './lib/promise-extras';
-import { isChannel, isGroup, isDM } from './channel-utils';
 
 import './lib/standard-operators';
 import 'rxjs/add/observable/dom/webSocket';
@@ -79,7 +78,20 @@ export class DataModel extends Dexie  {
   }
 }
 
-export class Store {
+export interface Store {
+  api: Api[];
+  database: DataModel;
+
+  channels: SparseMap<string, ChannelBase>;
+  users: SparseMap<string, User>;
+  events: SparseMap<EventType, Message>;
+  joinedChannels: Updatable<ChannelList>;
+  keyValueStore: SparseMap<string, any>;
+
+  fetchInitialChannelList(): Promise<void>;
+}
+
+export class BrokenOldStoreThatDoesntWorkRight {
   api: Api[];
   database: DataModel;
 
@@ -95,7 +107,7 @@ export class Store {
     this.database.open();
 
     this.channels = new LRUSparseMap<ChannelBase>((channel, api: Api) => {
-      let apiCall = this.infoApiForModel(channel, api)();
+      let apiCall = infoApiForModel(channel, api);
 
       return Observable.fromPromise(this.database.users.get(channel))
         .flatMap(x => x ? Observable.of(x) : apiCall);
@@ -167,14 +179,6 @@ export class Store {
       .subscribe(x => x.multicast(this.events.listen(x.key)).connect());
   }
 
-  connectToRtm(): Observable<Message> {
-    return Observable.merge(
-      ...this.api.map(x => this.createRtmConnection(x).retry(5).catch(e => {
-        console.log(`Failed to connect via token ${x} - ${e.message}`);
-        return Observable.empty();
-      })));
-  }
-
   async fetchInitialChannelList(): Promise<void> {
     const results = await asyncMap(this.api, (api) => this.fetchSingleInitialChannelList(api));
 
@@ -185,7 +189,15 @@ export class Store {
   }
 
   updateChannelToLatest(id: string, api: Api) {
-    this.channels.listen(id).nextAsync(this.infoApiForModel(id, api)());
+    this.channels.listen(id).nextAsync(infoApiForModel(id, api));
+  }
+
+  connectToRtm(): Observable<Message> {
+    return Observable.merge(
+      ...this.api.map(x => this.createRtmConnection(x).retry(5).catch(e => {
+        console.log(`Failed to connect via token ${x} - ${e.message}`);
+        return Observable.empty();
+      })));
   }
 
   private async fetchSingleInitialChannelList(api: Api): Promise<ChannelList> {
@@ -214,20 +226,6 @@ export class Store {
     const updater = this.channels.listen(model.id, api);
     updater.next(model);
     return updater;
-  }
-
-  private infoApiForModel(id: string, api: Api): () => Observable<ChannelBase|null> {
-    if (isChannel(id)) {
-      return () => api.channels.info({ channel: id })
-        .map((response: any) => Object.assign(response.channel, { api }));
-    } else if (isGroup(id)) {
-      return () => api.groups.info({ channel: id })
-        .map((response: any) => Object.assign(response.group, { api }));
-    } else if (isDM(id)) {
-      return () => Observable.of(null);
-    } else {
-      throw new Error(`Unsupported model: ${id}`);
-    }
   }
 
   private createRtmConnection(api: Api): Observable<Message> {
