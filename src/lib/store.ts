@@ -3,14 +3,14 @@ import { AsyncSubject } from 'rxjs/AsyncSubject';
 
 import Dexie from 'dexie';
 
-import { InMemorySparseMap, LRUSparseMap, Pair, SparseMap } from './lib/sparse-map';
-import { Updatable } from './lib/updatable';
-import { Api, createApi, infoApiForChannel } from './lib/models/slack-api';
-import { ChannelBase, Message, UsersCounts, User } from './lib/models/api-shapes';
-import { EventType } from './lib/models/event-type';
-import { asyncMap } from './lib/promise-extras';
+import { InMemorySparseMap, LRUSparseMap, Pair, SparseMap } from './sparse-map';
+import { Updatable } from './updatable';
+import { Api, createApi, infoApiForChannel } from './models/slack-api';
+import { ChannelBase, Message, UsersCounts, User } from './models/api-shapes';
+import { EventType } from './models/event-type';
+import { asyncMap } from './promise-extras';
 
-import './lib/standard-operators';
+import './standard-operators';
 import 'rxjs/add/observable/dom/webSocket';
 
 export type ChannelList = Array<Updatable<ChannelBase|null>>;
