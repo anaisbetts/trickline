@@ -23,7 +23,6 @@ export function guaranteedThrottle<T>(this: Observable<T>, time: number, schedul
       .switch();
 }
 
-
 Observable.prototype['breakOn'] = breakOn;
 Observable.prototype['createCollection'] = createCollection;
 Observable.prototype['guaranteedThrottle'] = guaranteedThrottle;

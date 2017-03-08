@@ -1,3 +1,6 @@
+import { Subscription } from 'rxjs/Subscription';
+import { Observable } from 'rxjs/Observable';
+
 import { SparseMap, InMemorySparseMap } from './sparse-map';
 import { Updatable } from './updatable';
 import { Api, createApi, infoApiForChannel } from './models/slack-api';
@@ -8,9 +11,6 @@ import { asyncMap } from './promise-extras';
 import 'rxjs/add/observable/dom/webSocket';
 import './standard-operators';
 import './custom-operators';
-
-import { Subscription } from "rxjs/Subscription";
-import { Observable } from "rxjs/Observable";
 
 export type ChannelList = Array<Updatable<ChannelBase|null>>;
 
