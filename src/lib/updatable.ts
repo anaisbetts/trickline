@@ -1,4 +1,3 @@
-import { Observable } from 'rxjs/Observable';
 import { Subscriber } from 'rxjs/Subscriber';
 import { Subscription, ISubscription } from 'rxjs/Subscription';
 import * as debug from 'debug';
@@ -78,7 +77,6 @@ export class Updatable<T> extends Subject<T> {
 
   nextMerge(value: T): void {
     if (value === undefined) {
-      captureStack();
       d(`Updatable with merge strategy received undefined, this is probably a bug\n${captureStack()}`);
       return;
     }
@@ -109,11 +107,16 @@ export class Updatable<T> extends Subject<T> {
   }
 
   nextAsync(source: (Promise<T>|Observable<T>)) {
+    this._hasPendingValue = true;
+
     if ('then' in source) {
-      source.then(
-        (x) => this.next(x),
-        (e) => this.error(e));
+      source.then(this._nextFunc, this._errFunc);
     } else {
+      console.log("source is Observable!");
+      if (source === this) {
+        debugger;
+      }
+
       source.take(1).subscribe(this._nextFunc, this._errFunc);
     }
   }
