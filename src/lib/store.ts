@@ -80,7 +80,6 @@ export class DataModel extends Dexie  {
 
 export interface Store {
   api: Api[];
-  database: DataModel;
 
   channels: SparseMap<string, ChannelBase>;
   users: SparseMap<string, User>;
