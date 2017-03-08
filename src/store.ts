@@ -23,12 +23,9 @@ export interface DeferredPutItem<T> {
   completion: AsyncSubject<void>;
 }
 
-Dexie.Promise = window.Promise;
-
 declare module 'dexie' {
   module Dexie {
     interface Table<T, Key> {
-      getWithApi: ((key: Key) => Promise<T>);
       deferredPut: ((item: T) => Promise<void>);
       idleHandle: number | null;
       deferredItems: DeferredPutItem<T>[];
@@ -36,41 +33,16 @@ declare module 'dexie' {
   }
 }
 
-async function getWithApi<T, Key>(this: Dexie.Table<T, Key>, key: Key): Promise<T> {
-  let ret = await this.get(key);
-  if (!ret) return ret;
-
-  if (ret.token) {
-    ret.api = createApi(ret.token);
-    delete ret.token;
-  }
-
-  return ret;
-}
-
 function deferredPut<T, Key>(this: Dexie.Table<T, Key>, item: T): Promise<void> {
   let newItem = { item, completion: new AsyncSubject<void>() };
-
-  if (item.token && !item.api) return Promise.resolve();
-  if (!item.api) {
-    return Promise.reject(new Error(`Saved Item with ID ${item.id} doesn't have an API`));
-  }
 
   let createIdle = () => window.requestIdleCallback(deadline => {
     while (deadline.timeRemaining() > 5/*ms*/) {
       let itemsToAdd = this.deferredItems;
       this.deferredItems = itemsToAdd.splice(128);
 
-      try {
-        let toAdd = itemsToAdd.map(x => {
-          return Object.assign({}, x.item, { api: null, token: x.item.api.token() });
-        });
-
-        this.bulkPut(toAdd);
-        itemsToAdd.forEach(x => { x.completion.next(undefined); x.completion.complete(); });
-      } catch (e) {
-        itemsToAdd.forEach(x => { x.completion.error(e); });
-      }
+      this.bulkPut(itemsToAdd.map(x => Object.assign({}, x.item, { api: null })));
+      itemsToAdd.forEach(x => { x.completion.next(undefined); x.completion.complete(); });
     }
 
     if (this.deferredItems.length) {
@@ -98,15 +70,12 @@ export class DataModel extends Dexie  {
     super('SparseMap');
 
     this.version(VERSION).stores({
-      users: 'id,name,real_name,color,profile,token',
-      channels: 'id,name,is_starred,unread_count_display,mention_count,dm_count,user,topic,purpose,token',
+      users: 'id,name,real_name,color,profile',
+      channels: 'id,name,is_starred,unread_count_display,mention_count,dm_count,user,topic,purpose',
       keyValues: 'key,value'
     });
 
-    // XXX: This hack is horrendous
     Object.getPrototypeOf(this.users).deferredPut = deferredPut;
-    Object.getPrototypeOf(this.users).getWithApi = getWithApi;
-    Dexie.Promise = window.Promise;
   }
 }
 
@@ -125,76 +94,59 @@ export class Store {
     this.database = new DataModel();
     this.database.open();
 
-    this.channels = new LRUSparseMap<ChannelBase>(async (channel, api: Api) => {
-      if (!api) throw new Error('You must provide the API object as a hint to listen');
+    this.channels = new LRUSparseMap<ChannelBase>((channel, api: Api) => {
+      let apiCall = this.infoApiForModel(channel, api)();
 
-      let ret = await this.database.channels.getWithApi(channel);
-      if (ret) return ret;
-
-      return await this.infoApiForModel(channel, api)!();
+      return Observable.fromPromise(this.database.users.get(channel))
+        .flatMap(x => x ? Observable.of(x) : apiCall);
     }, 'merge');
 
-    this.channels.created
-      .flatMap(u => u.Value)
-      .flatMap(async v => {
-        try {
-          await this.database.channels.deferredPut(v);
-        } catch (e) {
-          console.log(`Can't save channel info! ${e.message}`);
-        }
-      })
-      .subscribe();
+    this.channels.created.subscribe(u => {
+      u.Value
+        .flatMap(async v => {
+          try {
+            let toSave = Object.assign({}, v);
+            delete toSave.api;
 
-    this.channels.evicted.subscribe(x => {
-      if (x.Value.pinned) this.channels.setDirect(x.Key, x.Value);
+            await this.database.channels.deferredPut(toSave);
+            //console.log(`Saving channel ${v.id}`);
+          } catch (e) {
+            console.log(`Can't save channel info! ${e.message}`);
+          }
+        })
+        .subscribe();
     });
 
-    this.users = new LRUSparseMap<User>(async (user, api: Api) => {
-      if (!api) throw new Error('You must provide the API object as a hint to listen');
+    this.users = new LRUSparseMap<User>((user, api: Api) => {
+      let apiCall = api.users.info({ user }).map(({ user }: { user: User }) => {
+        user.api = api;
+        return user;
+      });
 
-      let ret = await this.database.users.getWithApi(user);
-      if (ret) return ret;
-
-      ret = (await api.users.info({ user }).toPromise()).user;
-      ret.api = api;
-      return ret;
+      return Observable.fromPromise(this.database.users.get(user))
+        .flatMap(x => x ? Observable.of(x) : apiCall)
+        .catch(() => apiCall);
     }, 'merge');
 
-    this.users.created
-      .flatMap(u => u.Value)
-      .flatMap(async v => {
-        try {
-          await this.database.users.deferredPut(v);
-        } catch (e) {
-          console.log(`Can't save user info! ${e.message}`);
-        }
-      })
-      .subscribe();
-
-    this.users.evicted.subscribe(x => {
-      if (x.Value.pinned) this.users.setDirect(x.Key, x.Value);
+    this.users.created.subscribe(u => {
+      u.Value
+        .flatMap(v => this.database.users.deferredPut(v).catch(() => Observable.empty()))
+        .subscribe();
     });
 
     this.keyValueStore = new LRUSparseMap<string>((key) =>
-      this.database.keyValues.get(key).then(x => x ? JSON.parse(x.Value) : null));
+      Observable.fromPromise(this.database.keyValues.get(key).then(x => x ? JSON.parse(x.Value) : null)));
 
     this.keyValueStore.created
       .flatMap(x => x.Value.map(v => ({ Key: x.Key, Value: JSON.stringify(v) })))
       .flatMap(x => this.database.keyValues.deferredPut(x))
       .subscribe();
 
-    this.joinedChannels = new Updatable<ChannelList>();
+    this.joinedChannels = new Updatable<ChannelList>(() => Observable.of([]));
 
     this.events = new InMemorySparseMap<EventType, Message>();
     this.events.listen('user_change')
-      .subscribe(msg => {
-        if (!msg || !msg.user) return;
-
-        msg.user.api = msg.api;
-
-        let ret = this.users.listen((msg.user as User).id, msg.api, true);
-        if (ret) ret.next(msg.user as User);
-      });
+      .subscribe(msg => this.users.listen((msg.user! as User).id, msg.api).playOnto(Observable.of(msg.user)));
 
     // NB: This is the lulzy way to update channel counts when marks
     // change, but we should definitely remove this code later
@@ -202,19 +154,16 @@ export class Store {
       this.events.listen('channel_marked'),
       this.events.listen('im_marked'),
       this.events.listen('group_marked')
-    ).filter(x => x !== null);
+    );
 
     somethingMarked.throttleTime(3000)
-      .filter(x => x && x.api)
       .subscribe(x => this.fetchSingleInitialChannelList(x.api));
 
     this.connectToRtm()
       .groupBy(x => x.type)
       .publish().refCount()
       .retry()
-      .do(x => console.log(`Group! ${x.key}`))
-      .subscribe(x =>
-        x.subscribe(n => this.events.listen(x.key).next(n)));
+      .subscribe(x => this.events.listen(x.key).playOnto(x));
   }
 
   connectToRtm(): Observable<Message> {
@@ -234,8 +183,8 @@ export class Store {
     this.joinedChannels.next(allJoinedChannels);
   }
 
-  async updateChannelToLatest(id: string, api: Api) {
-    this.channels.listen(id, api).nextAsync(this.infoApiForModel(id, api)!());
+  updateChannelToLatest(id: string, api: Api) {
+    this.channels.listen(id).playOnto(this.infoApiForModel(id, api)());
   }
 
   private async fetchSingleInitialChannelList(api: Api): Promise<ChannelList> {
@@ -262,30 +211,19 @@ export class Store {
     model.api = api;
 
     const updater = this.channels.listen(model.id, api);
-
-    updater.next(model);
+    updater.playOnto(Observable.of(model));
     return updater;
   }
 
-  private infoApiForModel(id: string, api: Api): (() => (Promise<ChannelBase>|Observable<ChannelBase>)) | null {
-    if (!api) throw new Error("Can't call infoApiForModel with null");
-
+  private infoApiForModel(id: string, api: Api): () => Observable<ChannelBase|null> {
     if (isChannel(id)) {
-      return async () => {
-        let ret = await api.channels.info({ channel: id }).toPromise();
-        if (!ret || !ret.channel) return null;
-
-        return Object.assign(ret.channel, { api });
-      };
+      return () => api.channels.info({ channel: id })
+        .map((response: any) => Object.assign(response.channel, { api }));
     } else if (isGroup(id)) {
-      return async () => {
-        let ret = await api.groups.info({ channel: id }).toPromise();
-        if (!ret || !ret.group) return null;
-
-        return Object.assign(ret.group, { api });
-      };
+      return () => api.groups.info({ channel: id })
+        .map((response: any) => Object.assign(response.group, { api }));
     } else if (isDM(id)) {
-      return () => Observable.empty();
+      return () => Observable.of(null);
     } else {
       throw new Error(`Unsupported model: ${id}`);
     }
