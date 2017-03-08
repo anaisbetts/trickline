@@ -5,8 +5,8 @@ import * as React from 'react';
 import { Observable } from 'rxjs/Observable';
 import { createProxyForRemote } from 'electron-remote';
 
-import { default as Drawer } from 'material-ui/Drawer';
-import { default as MuiThemeProvider } from 'material-ui/styles/MuiThemeProvider';
+import Drawer from 'material-ui/Drawer';
+import  MuiThemeProvider from 'material-ui/styles/MuiThemeProvider';
 import getMuiTheme from 'material-ui/styles/getMuiTheme';
 
 import { Action } from './lib/action';
@@ -14,6 +14,7 @@ import { SimpleView } from './lib/view';
 import { fromObservable, Model } from './lib/model';
 import { Store } from './store';
 
+import { ChannelBase } from './lib/models/api-shapes';
 import { ChannelHeaderViewModel, ChannelHeaderView } from './channel-header';
 import { ChannelListViewModel, ChannelListView } from './channel-list';
 import { MemoryPopover } from './memory-popover';
@@ -47,9 +48,9 @@ export class SlackAppModel extends Model {
   store: Store;
   channelList: ChannelListViewModel;
   channelHeader: ChannelHeaderViewModel;
-  messagesPane: MessagesViewModel;
   loadInitialState: Action<void>;
   @fromObservable isDrawerOpen: boolean;
+  @fromObservable messagesViewModel: MessagesViewModel;
 
   constructor() {
     super();
@@ -63,10 +64,14 @@ export class SlackAppModel extends Model {
     this.store = new Store(tokens);
     this.channelList = new ChannelListViewModel(this.store);
     this.channelHeader = new ChannelHeaderViewModel(this.store, this.channelList);
-    this.messagesPane = new MessagesViewModel(this.store, this.channelList);
 
     when(this, x => x.channelHeader.isDrawerOpen)
       .toProperty(this, 'isDrawerOpen');
+
+    when(this, x => x.channelList.selectedChannel)
+      .filter(channel => !!channel)
+      .map(channel => new MessagesViewModel(this.store, channel))
+      .toProperty(this, 'messagesViewModel');
 
     this.loadInitialState = new Action<void>(() => this.store.fetchInitialChannelList(), undefined);
   }
@@ -110,6 +115,13 @@ export class SlackApp extends SimpleView<SlackAppModel> {
       <ChannelListView viewModel={vm.channelList} />
     ) : null;
 
+    const messagesView = vm.messagesViewModel ? (
+      <MessagesView
+        key={vm.messagesViewModel.channel.id}
+        viewModel={vm.messagesViewModel}
+      />
+    ) : null;
+
     return (
       <MuiThemeProvider muiTheme={slackTheme}>
         <div style={containerStyle}>
@@ -119,8 +131,7 @@ export class SlackApp extends SimpleView<SlackAppModel> {
             {channelListView}
           </Drawer>
 
-          <MessagesView viewModel={vm.messagesPane} />
-
+          {messagesView}
           <MemoryPopover />
         </div>
       </MuiThemeProvider>

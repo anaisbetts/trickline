@@ -2,8 +2,8 @@
 import * as React from 'react';
 import { AutoSizer, List, CellMeasurer, CellMeasurerCache } from 'react-virtualized';
 
+import { Api } from './lib/models/api-call';
 import { ChannelBase, Message } from './lib/models/api-shapes';
-import { ChannelListViewModel } from './channel-list';
 import { CollectionView } from './lib/collection-view';
 import { fromObservable, notify, Model } from './lib/model';
 import { isChannel } from './channel-utils';
@@ -24,15 +24,13 @@ export interface RowRendererArgs {
 
 @notify('selectedChannel')
 export class MessagesViewModel extends Model {
-  @fromObservable channel: ChannelBase;
+  readonly api: Api;
   @fromObservable messages: Array<Message>;
   @fromObservable messagesCount: number;
 
-  constructor(public readonly store: Store, listViewModel: ChannelListViewModel) {
+  constructor(public readonly store: Store, public readonly channel: ChannelBase) {
     super();
-
-    when(listViewModel, x => x.selectedChannel)
-      .toProperty(this, 'channel');
+    this.api = this.channel.api;
 
     when(this, x => x.channel)
       .filter(channel => channel && isChannel(channel))
@@ -59,7 +57,7 @@ export class MessagesView extends CollectionView<MessagesViewModel, MessageViewM
 
   viewModelFactory(index: number) {
     const message = this.viewModel.messages[index];
-    return new MessageViewModel(this.viewModel.store, this.viewModel.messages.api, message);
+    return new MessageViewModel(this.viewModel.store, this.viewModel.api, message);
   }
 
   renderItem(viewModel: MessageViewModel) {
