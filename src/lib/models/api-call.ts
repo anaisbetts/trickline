@@ -15,7 +15,8 @@ export function createApi(token?: string): Api {
   const defaultParams: {token?: string} = token ? {token} : {};
 
   return RecursiveProxyHandler.create('api', (names: Array<string>, params: Array<any>) => {
-    if (names.length === 1 && names[0] === 'duplicate') return createApi(defaultParams.token);
+    if (names.length === 2 && names[1] === 'duplicate') return createApi(defaultParams.token);
+    if (names.length === 2 && names[1] === 'token') return defaultParams.token;
 
     const p = Object.assign({}, params[0], defaultParams);
 

@@ -1,6 +1,7 @@
 import { Observable } from 'rxjs/Observable';
 import { ChangeNotification, Model, TypedChangeNotification } from './model';
-import { isFunction, isObject } from './utils';
+import * as isFunction from 'lodash.isfunction';
+import * as isObject from 'lodash.isobject';
 
 import * as LRU from 'lru-cache';
 import { Updatable } from './updatable';

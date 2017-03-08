@@ -22,7 +22,7 @@ export class ChannelListViewModel extends Model {
 
     when(this, x => x.channels)
       .map(list => {
-        return list
+        return (list || [])
           .filter(c => !c.value.is_archived || (isDM(c.value) && c.value.is_open))
           .sort(channelSort);
       })

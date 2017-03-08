@@ -2,7 +2,6 @@ import { Observable } from 'rxjs/Observable';
 import { AsyncSubject } from 'rxjs/AsyncSubject';
 import { Subscription } from 'rxjs/Subscription';
 import { Subject } from 'rxjs/Subject';
-import { asap } from 'rxjs/scheduler/asap';
 
 import * as React from 'react';
 
@@ -99,7 +98,6 @@ export abstract class View<T extends Model, P extends HasViewModel<T>>
     this.lifecycle.didMount
       .flatMap(() => this.viewModel.changed)
       .takeUntil(this.lifecycle.willUnmount)
-      .observeOn(asap)
       .subscribe(() => { if (this.viewModel) { this.queueUpdate(); } });
 
     this.lifecycle.willUnmount.subscribe(() => { if (this.viewModel) this.viewModel.unsubscribe(); this.viewModel = null; });
