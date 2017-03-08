@@ -12,7 +12,7 @@ import getMuiTheme from 'material-ui/styles/getMuiTheme';
 import { Action } from './lib/action';
 import { SimpleView } from './lib/view';
 import { fromObservable, Model } from './lib/model';
-import { BrokenOldStoreThatDoesntWorkRight, Store, NaiveStore } from './lib/store';
+import { BrokenOldStoreThatDoesntWorkRight, Store, NaiveStore, handleRtmMessagesForStore, connectToRtm } from './lib/store';
 
 import { ChannelHeaderViewModel, ChannelHeaderView } from './channel-header';
 import { ChannelListViewModel, ChannelListView } from './channel-list';
@@ -21,6 +21,7 @@ import { when } from './lib/when';
 //import { takeHeapSnapshot } from './profiler';
 
 import './lib/standard-operators';
+import { SerialSubscription } from './lib/serial-subscription';
 
 export const DrawerWidth = 300;
 
@@ -65,7 +66,11 @@ export class SlackAppModel extends Model {
     when(this, x => x.channelHeader.isDrawerOpen)
       .toProperty(this, 'isDrawerOpen');
 
-    this.loadInitialState = new Action<void>(() => this.store.fetchInitialChannelList(), undefined);
+    const rtmSub = new SerialSubscription();
+    this.loadInitialState = new Action<void>(() => {
+      rtmSub.set(handleRtmMessagesForStore(connectToRtm(this.store.api), this.store));
+      return this.store.fetchInitialChannelList();
+    }, undefined);
   }
 }
 
