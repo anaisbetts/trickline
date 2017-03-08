@@ -7,6 +7,8 @@ import { asyncMap } from './promise-extras';
 
 import './standard-operators';
 import 'rxjs/add/observable/dom/webSocket';
+import { Subscription } from "rxjs/Subscription";
+import { Observable } from "rxjs/Observable";
 
 export type ChannelList = Array<Updatable<ChannelBase|null>>;
 
@@ -77,4 +79,35 @@ export class NaiveStore implements Store {
 
     return joinedChannels;
   }
+}
+
+export function handleRtmMessagesForStore(rtm: Observable<Message>, store: Store): Subscription {
+  const ret = new Subscription();
+
+  // Play RTM events onto store.events, grouped by type
+  ret.add(rtm
+    .groupBy(x => x.type)
+    .retry()
+    .subscribe(x => x.multicast(store.events.listen(x.key)).connect()));
+
+  // Play user updates onto the user store
+  ret.add(store.events.listen('user_change')
+      .skip(1)
+      .subscribe(msg => store.users.listen((msg.user! as User).id, msg.api).next(msg.user as User)));
+
+  return ret;
+}
+
+export function connectToRtm(apis: Api[]): Observable<Message> {
+  return Observable.merge(
+    ...apis.map(x => createRtmConnection(x).retry(5).catch(e => {
+      console.log(`Failed to connect via token ${x} - ${e.message}`);
+      return Observable.empty();
+    })));
+}
+
+function createRtmConnection(api: Api): Observable<Message> {
+  return api.rtm.connect()
+    .flatMap(({url}) => Observable.webSocket(url))
+    .map(msg => { msg.api = api; return msg; });
 }

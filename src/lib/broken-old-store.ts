@@ -161,7 +161,6 @@ export class BrokenOldStoreThatDoesntWorkRight implements Store {
 
     this.connectToRtm()
       .groupBy(x => x.type)
-      .publish().refCount()
       .retry()
       .subscribe(x => x.multicast(this.events.listen(x.key)).connect());
   }
