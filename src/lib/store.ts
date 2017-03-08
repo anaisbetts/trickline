@@ -91,7 +91,7 @@ export interface Store {
   fetchInitialChannelList(): Promise<void>;
 }
 
-export class BrokenOldStoreThatDoesntWorkRight {
+export class BrokenOldStoreThatDoesntWorkRight implements Store {
   api: Api[];
   database: DataModel;
 
