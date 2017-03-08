@@ -9,7 +9,7 @@ import { Action } from './lib/action';
 import { Channel, ChannelBase } from './lib/models/api-shapes';
 import { ChannelListViewModel } from './channel-list';
 import { ChannelMembersViewModel, ChannelMembersView } from './channel-members-view';
-import { isDM } from './lib/models/api-call';
+import { isDM } from './lib/models/slack-api';
 import { Model, fromObservable } from './lib/model';
 import { SimpleView } from './lib/view';
 import { Store } from './store';

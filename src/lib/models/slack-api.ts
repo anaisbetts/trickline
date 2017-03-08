@@ -1,6 +1,7 @@
 import { RecursiveProxyHandler } from 'electron-remote';
 import { Observable } from 'rxjs/Observable';
-import { ChannelBase } from './lib/models/api-shapes';
+
+import { ChannelBase } from './api-shapes';
 
 import '../standard-operators';
 
@@ -31,7 +32,7 @@ export function createApi(token?: string): Api {
   });
 }
 
-export function infoApiForModel(id: string, api: Api): Observable<ChannelBase|null> {
+export function infoApiForChannel(id: string, api: Api): Observable<ChannelBase|null> {
   if (isChannel(id)) {
     return api.channels.info({ channel: id })
       .map((response: any) => Object.assign(response.channel, { api }));

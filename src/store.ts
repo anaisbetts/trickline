@@ -5,7 +5,7 @@ import Dexie from 'dexie';
 
 import { InMemorySparseMap, LRUSparseMap, Pair, SparseMap } from './lib/sparse-map';
 import { Updatable } from './lib/updatable';
-import { Api, createApi, infoApiForModel } from './lib/models/api-call';
+import { Api, createApi, infoApiForChannel } from './lib/models/slack-api';
 import { ChannelBase, Message, UsersCounts, User } from './lib/models/api-shapes';
 import { EventType } from './lib/models/event-type';
 import { asyncMap } from './lib/promise-extras';
@@ -107,7 +107,7 @@ export class BrokenOldStoreThatDoesntWorkRight {
     this.database.open();
 
     this.channels = new LRUSparseMap<ChannelBase>((channel, api: Api) => {
-      let apiCall = infoApiForModel(channel, api);
+      let apiCall = infoApiForChannel(channel, api);
 
       return Observable.fromPromise(this.database.users.get(channel))
         .flatMap(x => x ? Observable.of(x) : apiCall);
@@ -189,7 +189,7 @@ export class BrokenOldStoreThatDoesntWorkRight {
   }
 
   updateChannelToLatest(id: string, api: Api) {
-    this.channels.listen(id).nextAsync(infoApiForModel(id, api));
+    this.channels.listen(id).nextAsync(infoApiForChannel(id, api));
   }
 
   connectToRtm(): Observable<Message> {
