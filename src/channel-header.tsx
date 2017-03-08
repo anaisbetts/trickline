@@ -44,7 +44,7 @@ export class ChannelHeaderViewModel extends Model {
 
     when(this, x => x.selectedChannel)
       .filter(c => !!c)
-      .flatMap(c => isDM(c) ? Observable.of(null) : this.store.channels.listen(c.id, c.api))
+      .switchMap(c => isDM(c) ? Observable.of(null) : this.store.channels.listen(c.id, c.api))
       .toProperty(this, 'channelInfo');
 
     // NB: This works but it's too damn clever

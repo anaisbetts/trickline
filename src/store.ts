@@ -143,7 +143,7 @@ export class Store {
     }, 'merge');
 
     this.keyValueStore = new LRUSparseMap<string>((key) =>
-      Observable.fromPromise(this.database.keyValues.get(key).then(x => x ? JSON.parse(x.Value) : null)));
+      this.database.keyValues.get(key).then(x => x ? JSON.parse(x.Value) : null));
 
     this.keyValueStore.created
       .flatMap(x => x.Value.map(v => ({ Key: x.Key, Value: JSON.stringify(v) })))
@@ -154,7 +154,8 @@ export class Store {
 
     this.events = new InMemorySparseMap<EventType, Message>();
     this.events.listen('user_change')
-      .subscribe(msg => this.users.listen((msg.user! as User).id, msg.api).playOnto(Observable.of(msg.user)));
+      .skip(1)
+      .subscribe(msg => this.users.listen((msg.user! as User).id, msg.api).next(msg.user as User));
 
     // NB: This is the lulzy way to update channel counts when marks
     // change, but we should definitely remove this code later
@@ -162,7 +163,7 @@ export class Store {
       this.events.listen('channel_marked'),
       this.events.listen('im_marked'),
       this.events.listen('group_marked')
-    );
+    ).skip(3);
 
     somethingMarked.throttleTime(3000)
       .subscribe(x => this.fetchSingleInitialChannelList(x.api));
@@ -171,7 +172,7 @@ export class Store {
       .groupBy(x => x.type)
       .publish().refCount()
       .retry()
-      .subscribe(x => this.events.listen(x.key).playOnto(x));
+      .subscribe(x => x.multicast(this.events.listen(x.key)).connect());
   }
 
   connectToRtm(): Observable<Message> {
@@ -192,7 +193,7 @@ export class Store {
   }
 
   updateChannelToLatest(id: string, api: Api) {
-    this.channels.listen(id).playOnto(this.infoApiForModel(id, api)());
+    this.channels.listen(id).nextAsync(this.infoApiForModel(id, api)());
   }
 
   private async fetchSingleInitialChannelList(api: Api): Promise<ChannelList> {
@@ -219,7 +220,7 @@ export class Store {
     model.api = api;
 
     const updater = this.channels.listen(model.id, api);
-    updater.playOnto(Observable.of(model));
+    updater.next(model);
     return updater;
   }
 
