@@ -1,7 +1,7 @@
 // tslint:disable-next-line:no-unused-variable
 import * as React from 'react';
 
-import { Api } from './lib/models/api-call';
+import { Api } from './lib/models/slack-api';
 import { UserViewModel, UserListItem } from './user-list-item';
 import { CollectionView } from './lib/collection-view';
 import { Model } from './lib/model';

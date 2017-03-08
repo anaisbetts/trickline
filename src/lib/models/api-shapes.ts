@@ -1,5 +1,5 @@
 import { EventType, EventSubType } from './event-type';
-import { Api } from './api-call';
+import { Api } from './slack-api';
 
 export interface ChannelBase {
   id: string;
