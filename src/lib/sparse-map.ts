@@ -1,11 +1,11 @@
 import { Observable } from 'rxjs/Observable';
 import { Subject } from 'rxjs/Subject';
 import { Updatable, MergeStrategy } from './updatable';
+import { Pair } from './utils';
+
 import * as LRU from 'lru-cache';
 
 import './standard-operators';
-
-export type Pair<K, V> = { Key: K, Value: V };
 
 export interface SparseMap<K, V> {
   listen(key: K, hint?: any, dontCreate?: boolean): Updatable<V>;
