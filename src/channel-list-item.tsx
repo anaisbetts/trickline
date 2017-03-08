@@ -12,7 +12,7 @@ import { ChannelListViewModel } from './channel-list';
 import { fromObservable, Model } from './lib/model';
 import { isDM } from './lib/models/slack-api';
 import { SimpleView } from './lib/view';
-import { Store } from './store';
+import { Store } from './lib/store';
 import { Updatable } from './lib/updatable';
 
 import { when } from './lib/when';

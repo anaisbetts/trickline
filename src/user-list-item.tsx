@@ -6,7 +6,7 @@ import { ListItem } from 'material-ui/List';
 import { Api } from './lib/models/slack-api';
 import { Model, fromObservable } from './lib/model';
 import { SimpleView } from './lib/view';
-import { Store } from './store';
+import { Store } from './lib/store';
 import { User } from './lib/models/api-shapes';
 import { when } from './lib/when';
 

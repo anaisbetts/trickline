@@ -12,7 +12,7 @@ import getMuiTheme from 'material-ui/styles/getMuiTheme';
 import { Action } from './lib/action';
 import { SimpleView } from './lib/view';
 import { fromObservable, Model } from './lib/model';
-import { BrokenOldStoreThatDoesntWorkRight, Store } from './store';
+import { BrokenOldStoreThatDoesntWorkRight, Store } from './lib/store';
 
 import { ChannelHeaderViewModel, ChannelHeaderView } from './channel-header';
 import { ChannelListViewModel, ChannelListView } from './channel-list';
