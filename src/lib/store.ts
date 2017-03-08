@@ -5,7 +5,7 @@ import { ChannelBase, Message, User, UsersCounts } from './models/api-shapes';
 import { EventType } from './models/event-type';
 import { asyncMap } from './promise-extras';
 
-import './lib/standard-operators';
+import './standard-operators';
 import 'rxjs/add/observable/dom/webSocket';
 
 export type ChannelList = Array<Updatable<ChannelBase|null>>;
@@ -35,7 +35,7 @@ export class NaiveStore implements Store {
     this.api = tokenList.map(x => createApi(x));
 
     this.channels = new InMemorySparseMap((id: string, api: Api) => infoApiForChannel(id, api).toPromise(), 'merge');
-    this.users = new InMemorySparseMap((id: string, api: Api) => api.users.info({id}).toPromise(), 'merge');
+    this.users = new InMemorySparseMap((user: string, api: Api) => api.users.info({user}).map(x => x.user).toPromise(), 'merge');
     this.events = new InMemorySparseMap<EventType, Message>();
     this.joinedChannels = new Updatable<ChannelList>();
     this.keyValueStore = new InMemorySparseMap<string, any>();

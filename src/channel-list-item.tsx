@@ -49,7 +49,17 @@ export class ChannelViewModel extends Model {
 
     when(this, x => x.model)
       .filter(c => isDM(c))
-      .switchMap(c => this.store.users.listen(c.user_id, c.api))
+      .switchMap(c => {
+        // XXX: This is a crime
+        let u = this.store.users.listen(c.user_id, c.api);
+        return u.do(x => {
+          if (x && !x.profile) {
+            console.log(`No profile! ${JSON.stringify(x)}`);
+            u.invalidate();
+          }
+        });
+      })
+      .filter(x => x && !!x.profile)
       .map((user) => {
         if (!user) return defaultAvatar;
         return user.profile.image_48;
@@ -77,7 +87,9 @@ export class ChannelViewModel extends Model {
         .startWith(c.name);
     }
 
-    return ret.map(x => x.length < 25 ? x : `${x.substr(0, 25)}...`);
+    return ret
+      .filter(x => !!x)
+      .map(x => x.length < 25 ? x : `${x.substr(0, 25)}...`);
   }
 }
 
