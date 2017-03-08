@@ -2,7 +2,6 @@ import { Observable } from 'rxjs/Observable';
 import { AsyncSubject } from 'rxjs/AsyncSubject';
 import { Subscription } from 'rxjs/Subscription';
 import { Subject } from 'rxjs/Subject';
-import { asap } from 'rxjs/scheduler/asap';
 
 import * as React from 'react';
 

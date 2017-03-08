@@ -112,11 +112,6 @@ export class Updatable<T> extends Subject<T> {
     if ('then' in source) {
       source.then(this._nextFunc, this._errFunc);
     } else {
-      console.log("source is Observable!");
-      if (source === this) {
-        debugger;
-      }
-
       source.take(1).subscribe(this._nextFunc, this._errFunc);
     }
   }
