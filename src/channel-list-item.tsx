@@ -10,9 +10,9 @@ import { Action } from './lib/action';
 import { ChannelBase } from './lib/models/api-shapes';
 import { ChannelListViewModel } from './channel-list';
 import { fromObservable, Model } from './lib/model';
-import { isDM } from './channel-utils';
+import { isDM } from './lib/models/slack-api';
 import { SimpleView } from './lib/view';
-import { Store } from './store';
+import { Store } from './lib/store';
 import { Updatable } from './lib/updatable';
 
 import { when } from './lib/when';
@@ -49,7 +49,17 @@ export class ChannelViewModel extends Model {
 
     when(this, x => x.model)
       .filter(c => isDM(c))
-      .switchMap(c => this.store.users.listen(c.user_id, c.api))
+      .switchMap(c => {
+        // XXX: This is a crime
+        let u = this.store.users.listen(c.user_id, c.api);
+        return u.do(x => {
+          if (x && !x.profile) {
+            console.log(`No profile! ${JSON.stringify(x)}`);
+            u.invalidate();
+          }
+        });
+      })
+      .filter(x => x && !!x.profile)
       .map((user) => {
         if (!user) return defaultAvatar;
         return user.profile.image_48;
@@ -77,7 +87,9 @@ export class ChannelViewModel extends Model {
         .startWith(c.name);
     }
 
-    return ret.map(x => x.length < 25 ? x : `${x.substr(0, 25)}...`);
+    return ret
+      .filter(x => !!x)
+      .map(x => x.length < 25 ? x : `${x.substr(0, 25)}...`);
   }
 }
 

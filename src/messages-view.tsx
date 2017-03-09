@@ -2,13 +2,12 @@
 import * as React from 'react';
 import { AutoSizer, List, CellMeasurer, CellMeasurerCache } from 'react-virtualized';
 
-import { Api } from './lib/models/api-call';
+import { Api, isChannel } from './lib/models/slack-api';
 import { ChannelBase, Message } from './lib/models/api-shapes';
 import { CollectionView } from './lib/collection-view';
 import { fromObservable, notify, Model } from './lib/model';
-import { isChannel } from './channel-utils';
 import { MessageViewModel, MessageListItem } from './message-list-item';
-import { Store } from './store';
+import { Store } from './lib/store';
 import { when } from './lib/when';
 
 export interface MessageCollection {

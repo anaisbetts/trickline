@@ -12,7 +12,7 @@ import getMuiTheme from 'material-ui/styles/getMuiTheme';
 import { Action } from './lib/action';
 import { SimpleView } from './lib/view';
 import { fromObservable, Model } from './lib/model';
-import { Store } from './store';
+import { BrokenOldStoreThatDoesntWorkRight, Store, NaiveStore, handleRtmMessagesForStore, connectToRtm } from './lib/store';
 
 import { ChannelBase } from './lib/models/api-shapes';
 import { ChannelHeaderViewModel, ChannelHeaderView } from './channel-header';
@@ -23,6 +23,7 @@ import { when } from './lib/when';
 //import { takeHeapSnapshot } from './profiler';
 
 import './lib/standard-operators';
+import { SerialSubscription } from './lib/serial-subscription';
 
 export const DrawerWidth = 300;
 
@@ -61,7 +62,7 @@ export class SlackAppModel extends Model {
     const tokenSource = process.env.SLACK_API_TOKEN || window.localStorage.getItem('token') || '';
     const tokens = tokenSource.indexOf(',') >= 0 ? tokenSource.split(',') : [tokenSource];
 
-    this.store = new Store(tokens);
+    this.store = new NaiveStore(tokens);
     this.channelList = new ChannelListViewModel(this.store);
     this.channelHeader = new ChannelHeaderViewModel(this.store, this.channelList);
 
@@ -73,7 +74,11 @@ export class SlackAppModel extends Model {
       .map(channel => new MessagesViewModel(this.store, channel))
       .toProperty(this, 'messagesViewModel');
 
-    this.loadInitialState = new Action<void>(() => this.store.fetchInitialChannelList(), undefined);
+    const rtmSub = new SerialSubscription();
+    this.loadInitialState = new Action<void>(() => {
+      rtmSub.set(handleRtmMessagesForStore(connectToRtm(this.store.api), this.store));
+      return this.store.fetchInitialChannelList();
+    }, undefined);
   }
 }
 

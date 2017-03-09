@@ -5,10 +5,11 @@ import Chip from 'material-ui/Chip';
 import Paper from 'material-ui/Paper';
 import { Observable } from 'rxjs/Observable';
 
+import { Api } from './lib/models/slack-api';
 import { Message } from './lib/models/api-shapes';
 import { Model, fromObservable } from './lib/model';
 import { SimpleView } from './lib/view';
-import { Store } from './store';
+import { Store } from './lib/store';
 import { UserViewModel } from './user-list-item';
 import { when } from './lib/when';
 

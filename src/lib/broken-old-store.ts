@@ -3,18 +3,17 @@ import { AsyncSubject } from 'rxjs/AsyncSubject';
 
 import Dexie from 'dexie';
 
-import { InMemorySparseMap, LRUSparseMap, Pair, SparseMap } from './lib/sparse-map';
-import { Updatable } from './lib/updatable';
-import { Api, createApi } from './lib/models/api-call';
-import { ChannelBase, Message, UsersCounts, User } from './lib/models/api-shapes';
-import { EventType } from './lib/models/event-type';
-import { asyncMap } from './lib/promise-extras';
-import { isChannel, isGroup, isDM } from './channel-utils';
+import { User, ChannelBase, Message, UsersCounts } from './models/api-shapes';
+import { Pair } from './utils';
+import { Store, ChannelList } from './store';
+import { Api, createApi, infoApiForChannel } from './models/slack-api';
+import { SparseMap, LRUSparseMap, InMemorySparseMap } from './sparse-map';
+import { EventType } from './models/event-type';
+import { Updatable } from './updatable';
+import { asyncMap } from './promise-extras';
 
 import './lib/standard-operators';
 import 'rxjs/add/observable/dom/webSocket';
-
-export type ChannelList = Array<Updatable<ChannelBase|null>>;
 
 const VERSION = 1;
 
@@ -79,14 +78,13 @@ export class DataModel extends Dexie  {
   }
 }
 
-export class Store {
+export class BrokenOldStoreThatDoesntWorkRight implements Store {
   api: Api[];
   database: DataModel;
 
   channels: SparseMap<string, ChannelBase>;
   users: SparseMap<string, User>;
   joinedChannels: Updatable<ChannelList>;
-  messages: SparseMap<string, Array<Message>>;
   events: SparseMap<EventType, Message>;
   keyValueStore: SparseMap<string, any>;
 
@@ -96,7 +94,7 @@ export class Store {
     this.database.open();
 
     this.channels = new LRUSparseMap<ChannelBase>((channel, api: Api) => {
-      let apiCall = this.infoApiForModel(channel, api)();
+      let apiCall = infoApiForChannel(channel, api);
 
       return Observable.fromPromise(this.database.users.get(channel))
         .flatMap(x => x ? Observable.of(x) : apiCall);
@@ -135,13 +133,6 @@ export class Store {
         .subscribe();
     });
 
-    this.messages = new InMemorySparseMap<string, Array<Message>>((channel, api: Api) => {
-      return api.channels.history({ channel }).map(({ messages }: { messages: Array<Message> }) => {
-        messages.api = api;
-        return messages;
-      });
-    }, 'merge');
-
     this.keyValueStore = new LRUSparseMap<string>((key) =>
       this.database.keyValues.get(key).then(x => x ? JSON.parse(x.Value) : null));
 
@@ -170,17 +161,8 @@ export class Store {
 
     this.connectToRtm()
       .groupBy(x => x.type)
-      .publish().refCount()
       .retry()
       .subscribe(x => x.multicast(this.events.listen(x.key)).connect());
-  }
-
-  connectToRtm(): Observable<Message> {
-    return Observable.merge(
-      ...this.api.map(x => this.createRtmConnection(x).retry(5).catch(e => {
-        console.log(`Failed to connect via token ${x} - ${e.message}`);
-        return Observable.empty();
-      })));
   }
 
   async fetchInitialChannelList(): Promise<void> {
@@ -193,7 +175,15 @@ export class Store {
   }
 
   updateChannelToLatest(id: string, api: Api) {
-    this.channels.listen(id).nextAsync(this.infoApiForModel(id, api)());
+    this.channels.listen(id).nextAsync(infoApiForChannel(id, api));
+  }
+
+  connectToRtm(): Observable<Message> {
+    return Observable.merge(
+      ...this.api.map(x => this.createRtmConnection(x).retry(5).catch(e => {
+        console.log(`Failed to connect via token ${x} - ${e.message}`);
+        return Observable.empty();
+      })));
   }
 
   private async fetchSingleInitialChannelList(api: Api): Promise<ChannelList> {
@@ -222,20 +212,6 @@ export class Store {
     const updater = this.channels.listen(model.id, api);
     updater.next(model);
     return updater;
-  }
-
-  private infoApiForModel(id: string, api: Api): () => Observable<ChannelBase|null> {
-    if (isChannel(id)) {
-      return () => api.channels.info({ channel: id })
-        .map((response: any) => Object.assign(response.channel, { api }));
-    } else if (isGroup(id)) {
-      return () => api.groups.info({ channel: id })
-        .map((response: any) => Object.assign(response.group, { api }));
-    } else if (isDM(id)) {
-      return () => Observable.of(null);
-    } else {
-      throw new Error(`Unsupported model: ${id}`);
-    }
   }
 
   private createRtmConnection(api: Api): Observable<Message> {
