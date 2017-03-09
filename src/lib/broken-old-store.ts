@@ -84,8 +84,8 @@ export class BrokenOldStoreThatDoesntWorkRight implements Store {
 
   channels: SparseMap<string, ChannelBase>;
   users: SparseMap<string, User>;
-  joinedChannels: Updatable<ChannelList>;
   events: SparseMap<EventType, Message>;
+  joinedChannels: Updatable<ChannelList>;
   keyValueStore: SparseMap<string, any>;
 
   constructor(tokenList: string[] = []) {
