@@ -126,7 +126,7 @@ export function handleRtmMessagesForStore(rtm: Observable<Message>, store: Store
 export function connectToRtm(apis: Api[]): Observable<Message> {
   return Observable.merge(
     ...apis.map(x => createRtmConnection(x).retry(5).catch(e => {
-      console.log(`Failed to connect via token ${x} - ${e.message}`);
+      console.log(`Failed to connect via token ${x.token()} - ${e.message}`);
       return Observable.empty();
     })));
 }
@@ -134,6 +134,10 @@ export function connectToRtm(apis: Api[]): Observable<Message> {
 function createRtmConnection(api: Api): Observable<Message> {
   return api.rtm.connect()
     .flatMap(({url}) => {
+      url = url + (url.indexOf('?') > 0) ?
+        `&flannel=1&token=${api.token()}` :
+        `?flannel=1&token=${api.token()}`;
+
       let ret = Observable.webSocket(url);
       api.setSocket(ret);
       return ret;
