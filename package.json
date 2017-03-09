@@ -42,6 +42,7 @@
     "lodash.pick": "4.4.0",
     "lru-cache": "^4.0.2",
     "material-ui": "^0.16.7",
+    "moment": "2.17.1",
     "react": "^15.4.2",
     "react-dom": "^15.4.2",
     "react-hot-loader": "^3.0.0-beta.6",

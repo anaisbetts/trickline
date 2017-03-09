@@ -33,7 +33,7 @@ export class UserViewModel extends Model {
     when(this, x => x.model)
       .map(user => {
         if (!user) return defaultAvatar;
-        return user.profile.image_48;
+        return user.profile.image_72;
       })
       .toProperty(this, 'profileImage');
   }

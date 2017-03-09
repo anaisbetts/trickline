@@ -47,7 +47,7 @@ export class MessagesViewModel extends Model {
 export class MessagesView extends CollectionView<MessagesViewModel, MessageViewModel> {
   private readonly cache: CellMeasurerCache = new CellMeasurerCache({
     fixedWidth: true,
-    minHeight: 60
+    minHeight: 43
   });
 
   rowCount() {
