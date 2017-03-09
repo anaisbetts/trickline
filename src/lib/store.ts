@@ -31,6 +31,7 @@ export class NaiveStore implements Store {
 
   channels: SparseMap<string, ChannelBase>;
   users: SparseMap<string, User>;
+  messages: SparseMap<string, Array<Message>>;
   events: SparseMap<EventType, Message>;
   joinedChannels: Updatable<ChannelList>;
   keyValueStore: SparseMap<string, any>;
@@ -42,6 +43,12 @@ export class NaiveStore implements Store {
     this.users = new InMemorySparseMap<string, User>(
       (user: string, api: Api) => api.users.info({user}).map((x: any) => x.user! as User).toPromise(),
       'merge');
+    this.messages = new InMemorySparseMap<string, Array<Message>>((channel, api: Api) => {
+      return api.channels.history({ channel }).map(({ messages }: { messages: Array<Message> }) => {
+        messages.api = api;
+        return messages;
+      });
+    }, 'merge');
     this.events = new InMemorySparseMap<EventType, Message>();
     this.joinedChannels = new Updatable<ChannelList>();
     this.keyValueStore = new InMemorySparseMap<string, any>();
