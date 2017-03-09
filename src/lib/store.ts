@@ -134,11 +134,12 @@ export function connectToRtm(apis: Api[]): Observable<Message> {
 function createRtmConnection(api: Api): Observable<Message> {
   return api.rtm.connect()
     .flatMap(({url}) => {
-      url = url + (url.indexOf('?') > 0) ?
+
+      const flannelizer = (url.indexOf('?') > 0) ?
         `&flannel=1&token=${api.token()}` :
         `?flannel=1&token=${api.token()}`;
 
-      let ret = Observable.webSocket(url);
+      let ret = Observable.webSocket(`${url}${flannelizer}`);
       api.setSocket(ret);
       return ret;
     })
