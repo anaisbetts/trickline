@@ -5,8 +5,8 @@ import * as React from 'react';
 import { Observable } from 'rxjs/Observable';
 import { createProxyForRemote } from 'electron-remote';
 
-import { default as Drawer } from 'material-ui/Drawer';
-import { default as MuiThemeProvider } from 'material-ui/styles/MuiThemeProvider';
+import Drawer from 'material-ui/Drawer';
+import  MuiThemeProvider from 'material-ui/styles/MuiThemeProvider';
 import getMuiTheme from 'material-ui/styles/getMuiTheme';
 
 import { Action } from './lib/action';
@@ -14,9 +14,11 @@ import { SimpleView } from './lib/view';
 import { fromObservable, Model } from './lib/model';
 import { BrokenOldStoreThatDoesntWorkRight, Store, NaiveStore, handleRtmMessagesForStore, connectToRtm } from './lib/store';
 
+import { ChannelBase } from './lib/models/api-shapes';
 import { ChannelHeaderViewModel, ChannelHeaderView } from './channel-header';
 import { ChannelListViewModel, ChannelListView } from './channel-list';
 import { MemoryPopover } from './memory-popover';
+import { MessagesViewModel, MessagesView } from './messages-view';
 import { when } from './lib/when';
 //import { takeHeapSnapshot } from './profiler';
 
@@ -49,6 +51,7 @@ export class SlackAppModel extends Model {
   channelHeader: ChannelHeaderViewModel;
   loadInitialState: Action<void>;
   @fromObservable isDrawerOpen: boolean;
+  @fromObservable messagesViewModel: MessagesViewModel;
 
   constructor() {
     super();
@@ -65,6 +68,11 @@ export class SlackAppModel extends Model {
 
     when(this, x => x.channelHeader.isDrawerOpen)
       .toProperty(this, 'isDrawerOpen');
+
+    when(this, x => x.channelList.selectedChannel)
+      .filter(channel => !!channel)
+      .map(channel => new MessagesViewModel(this.store, channel))
+      .toProperty(this, 'messagesViewModel');
 
     const rtmSub = new SerialSubscription();
     this.loadInitialState = new Action<void>(() => {
@@ -103,12 +111,20 @@ export class SlackApp extends SimpleView<SlackAppModel> {
     const vm = this.viewModel;
     const shouldShift = vm.isDrawerOpen && window.outerWidth > window.outerHeight;
     const containerStyle = {
+      height: '100%',
       marginLeft: shouldShift ? `${DrawerWidth}px` : '0px',
       transition: 'margin-left: 450ms cubic-bezier(0.23, 1, 0.32, 1) 0ms'
     };
 
     const channelListView = vm.isDrawerOpen ? (
       <ChannelListView viewModel={vm.channelList} />
+    ) : null;
+
+    const messagesView = vm.messagesViewModel ? (
+      <MessagesView
+        key={vm.messagesViewModel.channel.id}
+        viewModel={vm.messagesViewModel}
+      />
     ) : null;
 
     return (
@@ -120,6 +136,7 @@ export class SlackApp extends SimpleView<SlackAppModel> {
             {channelListView}
           </Drawer>
 
+          {messagesView}
           <MemoryPopover />
         </div>
       </MuiThemeProvider>
