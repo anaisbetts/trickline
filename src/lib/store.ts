@@ -137,7 +137,7 @@ export function connectToRtm(apis: Api[]): Observable<Message> {
     ...apis.map(x => createRtmConnection(x).retry(5).catch(e => {
       console.log(`Failed to connect via token ${x.token()} - ${e.message}`);
       return Observable.empty();
-    }))).publish().refCount();
+    })));
 }
 
 function createRtmConnection(api: Api): Observable<Message> {
