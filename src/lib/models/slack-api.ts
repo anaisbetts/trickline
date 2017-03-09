@@ -42,7 +42,8 @@ export function createApi(token?: string): Api {
         .publishLast();
 
       ret.connect();
-      socket.next(Object.assign({ id: nextSendId } , toSend));
+
+      socket.next(JSON.stringify(Object.assign({ id: nextSendId } , toSend)));
       return ret;
     }
 
