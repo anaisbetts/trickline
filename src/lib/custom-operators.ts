@@ -1,4 +1,5 @@
 import { Observable } from 'rxjs/Observable';
+import { Scheduler } from 'rxjs/Scheduler';
 
 export function createCollection<T>(this: Observable<T>): Array<T> {
   let ret: Array<T> = [];
@@ -16,12 +17,20 @@ export function breakOn<T>(this: Observable<T>, selector: ((x: T) => boolean)): 
   });
 }
 
-Observable.prototype['createCollection'] = createCollection;
+export function guaranteedThrottle<T>(this: Observable<T>, time: number, scheduler?: Scheduler) {
+    return this
+      .map((x: any) => Observable.timer(time, scheduler).map(() => x))
+      .switch();
+}
+
 Observable.prototype['breakOn'] = breakOn;
+Observable.prototype['createCollection'] = createCollection;
+Observable.prototype['guaranteedThrottle'] = guaranteedThrottle;
 
 declare module 'rxjs/Observable' {
   interface Observable<T> {
-    createCollection: typeof createCollection;
     breakOn: typeof breakOn;
+    createCollection: typeof createCollection;
+    guaranteedThrottle: typeof guaranteedThrottle;
   }
 }

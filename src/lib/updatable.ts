@@ -8,7 +8,6 @@ import { Subject } from 'rxjs/Subject';
 
 import './standard-operators';
 
-export type Pair<K, V> = { Key: K, Value: V };
 export type MergeStrategy = 'overwrite' | 'merge';
 
 const d = debug('trickline:updatable');
