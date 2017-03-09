@@ -107,8 +107,8 @@ export function handleRtmMessagesForStore(rtm: Observable<Message>, store: Store
 
   // Play user updates onto the user store
   ret.add(store.events.listen('user_change')
-      .skip(1)
-      .subscribe(msg => store.users.listen((msg.user! as User).id, msg.api).next(msg.user as User)));
+    .skip(1)
+    .subscribe(msg => store.users.listen((msg.user! as User).id, msg.api).next(msg.user as User)));
 
   return ret;
 }
