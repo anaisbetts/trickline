@@ -47,7 +47,7 @@ export function createApi(token?: string): Api {
       return ret;
     }
 
-    if (names.length === 2 && names[1] === 'recieve') {
+    if (names.length === 2 && names[1] === 'receive') {
       return socket;
     }
 
