@@ -13,6 +13,14 @@ import { Store } from './lib/store';
 import { UserViewModel } from './user-list-item';
 import { when } from './lib/when';
 
+const styles = {
+  message: {
+    width: '100%',
+    margin: '4px 8px',
+    padding: '8px'
+  }
+};
+
 export class MessageViewModel extends Model {
   @fromObservable model: Message;
   @fromObservable user: UserViewModel;
@@ -48,9 +56,11 @@ export class MessageListItem extends SimpleView<MessageViewModel> {
     }
 
     return (
-      <Paper style={{ width: '100%', padding: '8px' }}>
+      <Paper style={styles.message}>
         {userProfile}
-        {viewModel.text}
+        <span>
+          {viewModel.text}
+        </span>
       </Paper>
     );
   }
