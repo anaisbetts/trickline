@@ -113,7 +113,6 @@ export function handleRtmMessagesForStore(rtm: Observable<Message>, store: Store
   // Play RTM events onto store.events, grouped by type
   ret.add(rtm
     .groupBy(x => x.type)
-    .retry()
     .subscribe(x => x.multicast(store.events.listen(x.key)).connect()));
 
   // Play user updates onto the user store
