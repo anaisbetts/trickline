@@ -1,5 +1,6 @@
 import { RecursiveProxyHandler } from 'electron-remote';
 import { Observable } from 'rxjs/Observable';
+import { Subject } from 'rxjs/Subject';
 
 import { ChannelBase } from './api-shapes';
 
@@ -16,10 +17,38 @@ export type Api = any;
 
 export function createApi(token?: string): Api {
   const defaultParams: {token?: string} = token ? {token} : {};
+  let socket: Subject<any>;
+  let nextSendId = 1;
 
   return RecursiveProxyHandler.create('api', (names: Array<string>, params: Array<any>) => {
     if (names.length === 2 && names[1] === 'duplicate') return createApi(defaultParams.token);
     if (names.length === 2 && names[1] === 'token') return defaultParams.token;
+    if (names.length === 2 && names[1] === 'setSocket') {
+      socket = params[0];
+      return null;
+    }
+    if (names.length === 2 && names[1] === 'send') {
+      let toSend = params[0];
+      nextSendId++;
+
+      let currentId = nextSendId;
+      let ret = socket
+        .filter(x => x.reply_to === currentId)
+        .flatMap(x => {
+          if (x.ok) return Observable.of(x);
+          return Observable.throw(new Error(`Error ${x.error.code} - ${x.error.message}`));
+        })
+        .take(1)
+        .publishLast();
+
+      ret.connect();
+      socket.next(Object.assign({ id: nextSendId } , toSend));
+      return ret;
+    }
+
+    if (names.length === 2 && names[1] === 'recieve') {
+      return socket;
+    }
 
     const p = Object.assign({}, params[0], defaultParams);
 
