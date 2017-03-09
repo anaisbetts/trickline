@@ -101,6 +101,10 @@ export class NaiveStore implements Store {
 
     return joinedChannels;
   }
+
+  updateChannelToLatest(id: string, api: Api) {
+    this.channels.listen(id).nextAsync(infoApiForChannel(id, api));
+  }
 }
 
 export function handleRtmMessagesForStore(rtm: Observable<Message>, store: Store): Subscription {

@@ -174,10 +174,6 @@ export class BrokenOldStoreThatDoesntWorkRight implements Store {
     this.joinedChannels.next(allJoinedChannels);
   }
 
-  updateChannelToLatest(id: string, api: Api) {
-    this.channels.listen(id).nextAsync(infoApiForChannel(id, api));
-  }
-
   connectToRtm(): Observable<Message> {
     return Observable.merge(
       ...this.api.map(x => this.createRtmConnection(x).retry(5).catch(e => {
