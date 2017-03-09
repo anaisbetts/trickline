@@ -138,7 +138,6 @@ export function handleRtmMessagesForStore(rtm: Observable<Message>, store: Store
   // Play RTM events onto store.events, grouped by type
   ret.add(rtm
     .groupBy(x => x.type)
-    .retry()
     .subscribe(x => x.multicast(store.events.listen(x.key)).connect()));
 
   // Play user updates onto the user store
@@ -146,19 +145,37 @@ export function handleRtmMessagesForStore(rtm: Observable<Message>, store: Store
     .skip(1)
     .subscribe(msg => store.users.listen((msg.user! as User).id, msg.api).next(msg.user as User)));
 
+  // Subscribe to Flannel annotations
+  ret.add(store.events.listen('message')
+    .filter(x => x && x.annotations)
+    .subscribe(msg => {
+      Object.keys(msg.annotations).forEach(id => {
+        store.users.listen(id, msg.api).next(msg.annotations[id]);
+      });
+    }));
+
   return ret;
 }
 
 export function connectToRtm(apis: Api[]): Observable<Message> {
   return Observable.merge(
     ...apis.map(x => createRtmConnection(x).retry(5).catch(e => {
-      console.log(`Failed to connect via token ${x} - ${e.message}`);
+      console.log(`Failed to connect via token ${x.token()} - ${e.message}`);
       return Observable.empty();
     })));
 }
 
 function createRtmConnection(api: Api): Observable<Message> {
   return api.rtm.connect()
-    .flatMap(({ url }: { url: string }) => Observable.webSocket(url))
-    .map((msg: Message) => { msg.api = api; return msg; });
+    .flatMap(({url}) => {
+
+      const flannelizer = (url.indexOf('?') > 0) ?
+        `&flannel=1&token=${api.token()}` :
+        `?flannel=1&token=${api.token()}`;
+
+      let ret = Observable.webSocket(`${url}${flannelizer}`);
+      api.setSocket(ret);
+      return ret;
+    })
+    .map(msg => { msg.api = api; return msg; });
 }
