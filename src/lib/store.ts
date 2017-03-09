@@ -123,6 +123,10 @@ export function connectToRtm(apis: Api[]): Observable<Message> {
 
 function createRtmConnection(api: Api): Observable<Message> {
   return api.rtm.connect()
-    .flatMap(({url}) => Observable.webSocket(url))
+    .flatMap(({url}) => {
+      let ret = Observable.webSocket(url);
+      api.setSocket(ret);
+      return ret;
+    })
     .map(msg => { msg.api = api; return msg; });
 }
