@@ -135,6 +135,8 @@ export interface Message {
 
   is_ephemeral: boolean;
 
+  annotations: any;
+
   api: Api;
 }
 

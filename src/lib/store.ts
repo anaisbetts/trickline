@@ -120,6 +120,15 @@ export function handleRtmMessagesForStore(rtm: Observable<Message>, store: Store
     .skip(1)
     .subscribe(msg => store.users.listen((msg.user! as User).id, msg.api).next(msg.user as User)));
 
+  // Subscribe to Flannel annotations
+  ret.add(store.events.listen('message')
+    .filter(x => x && x.annotations)
+    .subscribe(msg => {
+      Object.keys(msg.annotations).forEach(id => {
+        store.users.listen(id, msg.api).next(msg.annotations[id]);
+      });
+    }));
+
   return ret;
 }
 
