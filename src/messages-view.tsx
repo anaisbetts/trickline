@@ -25,7 +25,6 @@ export interface RowRendererArgs {
 export class MessagesViewModel extends Model {
   readonly api: Api;
   @fromObservable messages: Array<Message>;
-  @fromObservable messagesCount: number;
 
   constructor(public readonly store: Store, public readonly channel: ChannelBase) {
     super();
@@ -34,13 +33,9 @@ export class MessagesViewModel extends Model {
     when(this, x => x.channel)
       .filter(channel => channel && isChannel(channel))
       .switchMap(channel => store.messages.listen(channel.id, channel.api))
+      .map(x => x || [])
+      .startWith([])
       .toProperty(this, 'messages');
-
-    when(this, x => x.messages)
-      .filter(messages => !!messages)
-      .map(messages => messages.length)
-      .startWith(0)
-      .toProperty(this, 'messagesCount');
   }
 }
 
@@ -50,11 +45,7 @@ export class MessagesView extends CollectionView<MessagesViewModel, MessageViewM
     minHeight: 43
   });
 
-  rowCount() {
-    return this.viewModel.messagesCount;
-  }
-
-  viewModelFactory(index: number) {
+  viewModelFactory(_item: any, index: number) {
     const message = this.viewModel.messages[index];
     return new MessageViewModel(this.viewModel.store, this.viewModel.api, message);
   }
@@ -90,7 +81,7 @@ export class MessagesView extends CollectionView<MessagesViewModel, MessageViewM
         height={height}
         deferredMeasurementCache={this.cache}
         rowHeight={this.cache.rowHeight}
-        rowCount={this.viewModel.messagesCount}
+        rowCount={this.viewModel.messages.length}
         rowRenderer={this.rowRenderer.bind(this)}
       />
     );

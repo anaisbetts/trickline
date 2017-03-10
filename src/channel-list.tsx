@@ -31,16 +31,12 @@ export class ChannelListViewModel extends Model {
 }
 
 export class ChannelListView extends CollectionView<ChannelListViewModel, ChannelViewModel> {
-  viewModelFactory(index: number) {
+  viewModelFactory(_item: any, index: number) {
     const channel = this.viewModel.orderedChannels[index];
     return new ChannelViewModel(this.viewModel, channel);
   }
 
   renderItem(viewModel: ChannelViewModel) {
     return <ChannelListItem viewModel={viewModel} />;
-  }
-
-  rowCount() {
-    return this.viewModel.orderedChannels.length;
   }
 }

@@ -116,13 +116,14 @@ export class SlackApp extends SimpleView<SlackAppModel> {
     };
 
     const channelListView = vm.isDrawerOpen ? (
-      <ChannelListView viewModel={vm.channelList} />
+      <ChannelListView viewModel={vm.channelList} arrayProperty='orderedChannels' />
     ) : null;
 
     const messagesView = vm.messagesViewModel ? (
       <MessagesView
         key={vm.messagesViewModel.channel.id}
         viewModel={vm.messagesViewModel}
+        arrayProperty='messages'
       />
     ) : null;
 
