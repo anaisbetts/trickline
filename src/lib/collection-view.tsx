@@ -25,7 +25,7 @@ export abstract class CollectionView<T extends Model, TChild extends Model>
 
   readonly lifecycle: Lifecycle<CollectionViewProps<T>, null>;
 
-  abstract viewModelFactory(item: T, index: number): TChild;
+  abstract viewModelFactory(item: any, index: number): TChild;
   abstract renderItem(viewModel: TChild): JSX.Element;
 
   static defaultProps = {
@@ -36,16 +36,26 @@ export abstract class CollectionView<T extends Model, TChild extends Model>
 
   constructor(props?: CollectionViewProps<T>, context?: any) {
     super(props, context);
-    this.lifecycle = Lifecycle.attach(this);
     this.arraySub = new SerialSubscription();
 
     this.lifecycle.willReceiveProps
+      .startWith(props)
+      .do(() => console.log("RECEIVING PROPS"))
       .switchMap(x => when(x.viewModel, x.arrayProperty))
+      .do(() => console.log("GOT AN ARRAY COOL"))
       .takeUntil(this.lifecycle.willUnmount)
       .subscribe((p: Array<any>) => {
+        if (!p) {
+          this.arraySub.set(() => {});
+          return;
+        }
+
         const observer = new ArrayObserver(p);
 
+        console.log("OPENING AN OBSERVER");
         observer.open((splices) => {
+          console.log("NOTIFY OF CHANGE");
+          /*
           splices.forEach(splice => {
             // Invalidate items in our ViewModel cache that match
             let len = Math.max(splice.addedCount, splice.removed ? splice.removed.length : 0);
@@ -54,16 +64,21 @@ export abstract class CollectionView<T extends Model, TChild extends Model>
               let item = this.viewModelCache[idx];
               if (!item) continue;
 
+              console.log("THRASHING VIEWMODEL");
               item.unsubscribe();
               delete this.viewModelCache[idx];
             }
           });
+          */
+          Object.keys(this.viewModelCache).forEach(x => this.viewModelCache[x].unsubscribe());
+          this.viewModelCache = {};
 
+          console.log("FORCING UPDATE");
           this.forceUpdate();
         });
 
         this.arraySub.set(() => observer.close());
-      });
+      }, (e) => setTimeout(() => { throw e; }, 10));
 
     this.lifecycle.willUnmount.subscribe(() => {
       this.viewModelCache = {};
