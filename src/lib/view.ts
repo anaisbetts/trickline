@@ -50,16 +50,25 @@ class AttachedReactLifecycle<P, S> extends Lifecycle<P, S> {
 
     for (const name of ['willMount', 'didMount', 'willUnmount']) {
       const subj = this[name + 'Subj'] = new AsyncSubject();
-      target[AttachedReactLifecycle.reactMethodName(name)] = () => { subj.next(true); subj.complete(); };
+
+      if (name === 'willUnmount') {
+        target[AttachedReactLifecycle.reactMethodName(name)] = function() { subj.next(true); subj.complete(); };
+
+        for (const unsubName of ['willUpdate', 'didUpdate', 'willReceiveProps']) {
+          target[unsubName].complete();
+        }
+      } else {
+        target[AttachedReactLifecycle.reactMethodName(name)] = function() { subj.next(true); subj.complete(); };
+      }
     }
 
     for (const name of ['willUpdate', 'didUpdate']) {
       const subj = this[name + 'Subj'] = Subject.create();
-      target[AttachedReactLifecycle.reactMethodName(name)] = (p: P, s: S) => subj.next({props: p, state: s});
+      target[AttachedReactLifecycle.reactMethodName(name)] = function(p: P, s: S) { subj.next({props: p, state: s}); };
     }
 
     const ps = this.willReceivePropsSubj = Subject.create();
-    target['componentWillReceiveProps'] = (props: P) => ps.next(props);
+    target['componentWillReceiveProps'] = function(props: P) { ps.next(props); }
   }
 }
 
@@ -134,6 +143,10 @@ export abstract class View<T extends Model, P extends HasViewModel<T>>
     if (!this.lifecycle.willUnmountSubj) return;
     this.lifecycle.willUnmountSubj.next(true);
     this.lifecycle.willUnmountSubj.complete();
+
+    this.lifecycle.willReceivePropsSubj.complete();
+    this.lifecycle.willUpdateSubj.complete();
+    this.lifecycle.didUpdateSubj.complete();
   }
 
   static toUpdate: View<any, any>[];
