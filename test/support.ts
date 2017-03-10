@@ -9,7 +9,6 @@ let chaiAsPromised = require("chai-as-promised");
 chai.should();
 chai.use(chaiAsPromised);
 
-
 @notify('foo', 'bar')
 export class TestClass extends Model {
   someSubject: Subject<number>;
