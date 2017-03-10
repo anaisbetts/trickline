@@ -166,7 +166,7 @@ export abstract class View<T extends Model, P extends HasViewModel<T>>
     try {
       for (let i = 0; i < ourViews.length; i++) {
         const current = ourViews[i];
-        if (!current.viewModel || current.hasBeenRendered) continue;
+        if (!current.viewModel) continue;
 
         current.forceUpdate();
         current.hasBeenRendered = true;
