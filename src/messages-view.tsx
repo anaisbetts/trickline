@@ -1,13 +1,14 @@
 // tslint:disable-next-line:no-unused-variable
 import * as React from 'react';
-import { AutoSizer, List, CellMeasurer, CellMeasurerCache } from 'react-virtualized';
+import { AutoSizer, CellMeasurer, CellMeasurerCache, InfiniteLoader, List } from 'react-virtualized';
 
 import { Api, isChannel } from './lib/models/slack-api';
 import { ChannelBase, Message } from './lib/models/api-shapes';
 import { CollectionView } from './lib/collection-view';
-import { fromObservable, notify, Model } from './lib/model';
+import { fromObservable, Model } from './lib/model';
 import { MessageViewModel, MessageListItem } from './message-list-item';
 import { Store } from './lib/store';
+import { Subject } from 'rxjs/Subject';
 import { when } from './lib/when';
 
 export interface MessageCollection {
@@ -21,21 +22,39 @@ export interface RowRendererArgs {
   parent: List;
 }
 
-@notify('selectedChannel')
 export class MessagesViewModel extends Model {
   readonly api: Api;
+  readonly fetchMore: Subject<string>;
   @fromObservable messages: Array<Message>;
+  @fromObservable messagesCount: number;
 
   constructor(public readonly store: Store, public readonly channel: ChannelBase) {
     super();
     this.api = this.channel.api;
+    this.fetchMore = new Subject<string>();
 
     when(this, x => x.channel)
-      .filter(channel => channel && isChannel(channel))
-      .switchMap(channel => store.messages.listen(channel.id, channel.api))
-      .map(x => x || [])
-      .startWith([])
+      .filter(channel => isChannel(channel))
+      .switchMap(() => {
+        return this.fetchMore.flatMap((latest) =>
+          this.store.messages.listen({ channel: this.channel.id, latest }, this.api));
+      })
+      .map(({ messages }) => (this.messages || []).concat(messages))
       .toProperty(this, 'messages');
+
+    when(this, x => x.messages)
+      .map(messages => messages ? messages.length : 0)
+      .toProperty(this, 'messagesCount');
+
+    this.fetchMore.next(this.channel.latest);
+  }
+
+  async fetchMessageHistory(latest: string) {
+    this.fetchMore.next(latest);
+
+    await this.changed
+      .filter(({ property }) => property === 'messages')
+      .toPromise();
   }
 }
 
@@ -48,6 +67,15 @@ export class MessagesView extends CollectionView<MessagesViewModel, MessageViewM
   viewModelFactory(_item: any, index: number) {
     const message = this.viewModel.messages[index];
     return new MessageViewModel(this.viewModel.store, this.viewModel.api, message);
+  }
+
+  isRowLoaded({ index }: { index: number }) {
+    return !!this.viewModel.messages[index];
+  }
+
+  async loadMoreRows({ startIndex }: { startIndex: number }) {
+    const latest = this.viewModel.messages[startIndex - 1].ts;
+    await this.viewModel.fetchMessageHistory(latest);
   }
 
   renderItem(viewModel: MessageViewModel) {
@@ -72,27 +100,34 @@ export class MessagesView extends CollectionView<MessagesViewModel, MessageViewM
     );
   }
 
-  renderList({ width, height }: { width: number, height: number }) {
-    const key = this.viewModel.channel ? this.viewModel.channel.id : null;
-    return (
-      <List
-        key={key}
-        width={width}
-        height={height}
-        deferredMeasurementCache={this.cache}
-        rowHeight={this.cache.rowHeight}
-        rowCount={this.viewModel.messages.length}
-        rowRenderer={this.rowRenderer.bind(this)}
-      />
-    );
-  }
-
   render() {
+    const key = this.viewModel.channel ? this.viewModel.channel.id : null;
+
     return (
       <div style={{ width: '100%', height: '100%' }}>
-        <AutoSizer disableWidth>
-          {this.renderList.bind(this)}
-        </AutoSizer>
+        <InfiniteLoader
+          isRowLoaded={this.isRowLoaded.bind(this)}
+          loadMoreRows={this.loadMoreRows.bind(this)}
+          rowCount={this.viewModel.messagesCount * 2}
+        >
+          {({ onRowsRendered, registerChild }: any) => (
+            <AutoSizer disableWidth>
+              {({ width, height }: { width: number, height: number }) => (
+                <List
+                  key={key}
+                  width={width}
+                  height={height}
+                  onRowsRendered={onRowsRendered}
+                  registerChild={registerChild}
+                  deferredMeasurementCache={this.cache}
+                  rowHeight={this.cache.rowHeight}
+                  rowCount={this.viewModel.messagesCount}
+                  rowRenderer={this.rowRenderer.bind(this)}
+                />
+              )}
+            </AutoSizer>
+          )}
+        </InfiniteLoader>
       </div>
     );
   }

@@ -14,11 +14,27 @@ import './custom-operators';
 
 export type ChannelList = Array<Updatable<ChannelBase|null>>;
 
+export interface Range<T> {
+  oldest: T;
+  latest: T;
+}
+
+export interface MessagesKey {
+  channel: string;
+  latest?: string;
+}
+
+export type MessageCollection = Range<string> & {
+  messages: Array<Message>;
+  api: Api;
+};
+
 export interface Store {
   api: Api[];
 
   channels: SparseMap<string, ChannelBase>;
   users: SparseMap<string, User>;
+  messages: SparseMap<MessagesKey, MessageCollection>;
   events: SparseMap<EventType, Message>;
   joinedChannels: Updatable<ChannelList>;
   keyValueStore: SparseMap<string, any>;
@@ -31,7 +47,7 @@ export class NaiveStore implements Store {
 
   channels: SparseMap<string, ChannelBase>;
   users: SparseMap<string, User>;
-  messages: SparseMap<string, Array<Message>>;
+  messages: SparseMap<MessagesKey, MessageCollection>;
   events: SparseMap<EventType, Message>;
   joinedChannels: Updatable<ChannelList>;
   keyValueStore: SparseMap<string, any>;
@@ -43,12 +59,21 @@ export class NaiveStore implements Store {
     this.users = new InMemorySparseMap<string, User>(
       (user: string, api: Api) => api.users.info({user}).map((x: any) => x.user! as User).toPromise(),
       'merge');
-    this.messages = new InMemorySparseMap<string, Array<Message>>((channel, api: Api) => {
-      return api.channels.history({ channel }).map(({ messages }: { messages: Array<Message> }) => {
-        messages.api = api;
-        return messages;
+
+    this.messages = new InMemorySparseMap<MessagesKey, MessageCollection>((key: MessagesKey, api: Api) => {
+      return api.channels.history(key).map(({ messages }: { messages: Array<Message> }) => {
+        console.log(`latest: ${messages[0].ts}`);
+        console.log(`oldest: ${messages[messages.length - 1].ts}`);
+
+        return {
+          latest: messages[0].ts,
+          oldest: messages[messages.length - 1].ts,
+          messages,
+          api
+        };
       });
     }, 'merge');
+
     this.events = new InMemorySparseMap<EventType, Message>();
     this.joinedChannels = new Updatable<ChannelList>();
     this.keyValueStore = new InMemorySparseMap<string, any>();
