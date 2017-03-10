@@ -144,9 +144,9 @@ export abstract class View<T extends Model, P extends HasViewModel<T>>
     this.lifecycle.willUnmountSubj.next(true);
     this.lifecycle.willUnmountSubj.complete();
 
-    this.lifecycle.willReceivePropsSubj.complete();
-    this.lifecycle.willUpdateSubj.complete();
-    this.lifecycle.didUpdateSubj.complete();
+    if (this.lifecycle.willReceivePropsSubj) this.lifecycle.willReceivePropsSubj.complete();
+    if (this.lifecycle.willUpdateSubj) this.lifecycle.willUpdateSubj.complete();
+    if (this.lifecycle.didUpdateSubj) this.lifecycle.didUpdateSubj.complete();
   }
 
   static toUpdate: View<any, any>[];
@@ -177,7 +177,7 @@ export abstract class View<T extends Model, P extends HasViewModel<T>>
     }
   }
 
-  private queueUpdate() {
+  protected queueUpdate() {
     View.toUpdate = View.toUpdate || [];
     View.toUpdate.push(this);
 
