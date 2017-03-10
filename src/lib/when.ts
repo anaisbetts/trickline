@@ -214,6 +214,17 @@ export function when<TSource, TProp1, TProp2, TProp3, TProp4, TRet>(
     sel: ((p1: TProp1, p2: TProp2, p3: TProp3, p4: TProp4) => TRet)):
   Observable<TRet>;
 
+export function when<TSource, TRet>(
+    target: TSource,
+    prop: string): Observable<TRet>;
+
+export function when<TSource, TProp1, TProp2, TRet>(
+    target: TSource,
+    prop1: string,
+    prop2: string,
+    sel: ((p1: TProp1, p2: TProp2) => TRet)):
+  Observable<TRet>;
+
 export function when(target: any, ...propsAndSelector: Array<string|Function|string[]>): Observable<any> {
   return whenPropertyInternal(target, true, ...propsAndSelector);
 }
