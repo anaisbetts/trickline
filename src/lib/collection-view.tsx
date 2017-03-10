@@ -4,11 +4,13 @@ import { AutoSizer, List } from 'react-virtualized';
 import { ArrayObserver } from 'observe-js';
 
 import { Model } from './model';
-import { AttachedLifecycle, Lifecycle } from './view';
+import { Lifecycle, View } from './view';
 import { SerialSubscription } from './serial-subscription';
+import { when } from "./when";
 
 export interface CollectionViewProps<T> {
-  listItems: T[];
+  viewModel: T;
+  arrayProperty: string;
   rowHeight?: number;
   width?: number;
   height?: number;
@@ -16,10 +18,8 @@ export interface CollectionViewProps<T> {
   disableHeight?: boolean;
 }
 
-export abstract class CollectionView<T, TChild extends Model>
-    extends React.Component<CollectionViewProps<T>, null>
-    implements AttachedLifecycle<CollectionViewProps<T>, null> {
-
+export abstract class CollectionView<T extends Model, TChild extends Model>
+    extends View<T, CollectionViewProps<T>> {
   private viewModelCache: { [key: number]: TChild } = {};
   private readonly arraySub: SerialSubscription;
 
@@ -39,28 +39,31 @@ export abstract class CollectionView<T, TChild extends Model>
     this.lifecycle = Lifecycle.attach(this);
     this.arraySub = new SerialSubscription();
 
-    this.lifecycle.willReceiveProps.subscribe(p => {
-      const observer = new ArrayObserver(p.listItems);
+    this.lifecycle.willReceiveProps
+      .switchMap(x => when(x.viewModel, x.arrayProperty))
+      .takeUntil(this.lifecycle.willUnmount)
+      .subscribe((p: Array<any>) => {
+        const observer = new ArrayObserver(p);
 
-      observer.open((splices) => {
-        splices.forEach(splice => {
-          // Invalidate items in our ViewModel cache that match
-          let len = Math.max(splice.addedCount, splice.removed ? splice.removed.length : 0);
-          for (let i = 0; i < len; i++) {
-            let idx = splice.index + i;
-            let item = this.viewModelCache[idx];
-            if (!item) continue;
+        observer.open((splices) => {
+          splices.forEach(splice => {
+            // Invalidate items in our ViewModel cache that match
+            let len = Math.max(splice.addedCount, splice.removed ? splice.removed.length : 0);
+            for (let i = 0; i < len; i++) {
+              let idx = splice.index + i;
+              let item = this.viewModelCache[idx];
+              if (!item) continue;
 
-            item.unsubscribe();
-            delete this.viewModelCache[idx];
-          }
+              item.unsubscribe();
+              delete this.viewModelCache[idx];
+            }
+          });
+
+          this.forceUpdate();
         });
 
-        this.forceUpdate();
+        this.arraySub.set(() => observer.close());
       });
-
-      this.arraySub.set(() => observer.close());
-    });
 
     this.lifecycle.willUnmount.subscribe(() => {
       this.viewModelCache = {};
@@ -70,7 +73,9 @@ export abstract class CollectionView<T, TChild extends Model>
 
   getOrCreateViewModel(index: number): TChild {
     if (!this.viewModelCache[index]) {
-      const itemViewModel = this.viewModelFactory(this.props.listItems[index], index);
+      const arr: Array<any> = this.props.viewModel[this.props.arrayProperty];
+      const itemViewModel = this.viewModelFactory(arr[index], index);
+
       itemViewModel.addTeardown(() => delete this.viewModelCache[index]);
       this.viewModelCache[index] = itemViewModel;
     }
@@ -87,7 +92,8 @@ export abstract class CollectionView<T, TChild extends Model>
   }
 
   rowCount() {
-    return this.props.listItems.length;
+    const arr: Array<any> = this.props.viewModel[this.props.arrayProperty];
+    return arr.length;
   }
 
   render() {
