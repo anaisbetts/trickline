@@ -43,6 +43,7 @@
     "lru-cache": "^4.0.2",
     "material-ui": "^0.16.7",
     "moment": "2.17.1",
+    "observe-js": "0.5.7",
     "react": "^15.4.2",
     "react-dom": "^15.4.2",
     "react-hot-loader": "^3.0.0-beta.6",
@@ -54,6 +55,7 @@
   "devDependencies": {
     "@types/chai": "^3.4.34",
     "@types/mocha": "^2.2.35",
+    "@types/observe-js": "0.5.28",
     "babel-cli": "^6.18.0",
     "babel-eslint": "^7.1.1",
     "babel-plugin-transform-async-to-generator": "^6.16.0",
