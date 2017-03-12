@@ -12,8 +12,6 @@ import 'rxjs/add/observable/dom/webSocket';
 import './standard-operators';
 import './custom-operators';
 
-export type ChannelList = Array<Updatable<ChannelBase|null>>;
-
 export interface Range<T> {
   oldest: T;
   latest: T;
@@ -36,7 +34,7 @@ export interface Store {
   users: SparseMap<string, User>;
   messages: SparseMap<MessagesKey, MessageCollection>;
   events: SparseMap<EventType, Message>;
-  joinedChannels: Updatable<ChannelList>;
+  readonly joinedChannels: string[];
   keyValueStore: SparseMap<string, any>;
 
   fetchInitialChannelList(): Promise<void>;
@@ -45,11 +43,11 @@ export interface Store {
 export class NaiveStore implements Store {
   api: Api[];
 
+  readonly joinedChannels: string[];
   channels: SparseMap<string, ChannelBase>;
   users: SparseMap<string, User>;
   messages: SparseMap<MessagesKey, MessageCollection>;
   events: SparseMap<EventType, Message>;
-  joinedChannels: Updatable<ChannelList>;
   keyValueStore: SparseMap<string, any>;
 
   constructor(tokenList: string[] = []) {
@@ -75,7 +73,7 @@ export class NaiveStore implements Store {
     }, 'merge');
 
     this.events = new InMemorySparseMap<EventType, Message>();
-    this.joinedChannels = new Updatable<ChannelList>();
+    this.joinedChannels = [];
     this.keyValueStore = new InMemorySparseMap<string, any>();
 
     // NB: This is the lulzy way to update channel counts when marks
@@ -93,10 +91,11 @@ export class NaiveStore implements Store {
   async fetchInitialChannelList(): Promise<void> {
     const results = await asyncMap(this.api, (api) => this.fetchSingleInitialChannelList(api));
 
-    const allJoinedChannels = Array.from(results.values())
-      .reduce((acc, x) => acc.concat(x), []);
+    this.joinedChannels.length = 0;
+    Array.from(results.values()).forEach(x => this.joinedChannels.push(...x));
 
-    this.joinedChannels.next(allJoinedChannels);
+    // XXX: We have to make a less horrendous way to do this
+    Platform.performMicrotaskCheckpoint();
   }
 
   private makeUpdatableForModel(model: ChannelBase & Api, api: Api) {
@@ -107,21 +106,24 @@ export class NaiveStore implements Store {
     return updater;
   }
 
-  private async fetchSingleInitialChannelList(api: Api): Promise<ChannelList> {
-    const joinedChannels: ChannelList = [];
+  private async fetchSingleInitialChannelList(api: Api): Promise<string[]> {
+    const joinedChannels: string[] = [];
 
     const result: UsersCounts = await api.users.counts({ simple_unreads: true }).toPromise();
 
     result.channels.forEach((c) => {
-      joinedChannels.push(this.makeUpdatableForModel(c, api));
+      this.channels.setDirect(c.id, this.makeUpdatableForModel(c, api));
+      joinedChannels.push(c.id);
     });
 
     result.groups.forEach((g) => {
-      joinedChannels.push(this.makeUpdatableForModel(g, api));
+      this.channels.setDirect(g.id, this.makeUpdatableForModel(g, api));
+      joinedChannels.push(g.id);
     });
 
     result.ims.forEach((dm) => {
-      joinedChannels.push(this.makeUpdatableForModel(dm, api));
+      this.channels.setDirect(dm.id, this.makeUpdatableForModel(dm, api));
+      joinedChannels.push(dm.id);
     });
 
     return joinedChannels;
