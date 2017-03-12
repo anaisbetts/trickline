@@ -1,4 +1,7 @@
 import { Observable } from 'rxjs/Observable';
+import { Subscription } from 'rxjs/Subscription';
+
+import { ArrayObserver, splice } from 'observe-js';
 import { ChangeNotification, Model, TypedChangeNotification } from './model';
 import * as isFunction from 'lodash.isfunction';
 import * as isObject from 'lodash.isobject';
@@ -34,6 +37,32 @@ export function whenPropertyInternal(target: any, valueOnly: boolean, ...propsAn
       observableForPropertyChain(target, p));
 
   return Observable.combineLatest(...propWatchers, selector).distinctUntilChanged();
+}
+
+export type ArrayChange<T> = { value: T[], splices: splice[] };
+export function whenArray<TSource, TProp>(
+    target: TSource,
+    prop: (t: TSource) => TProp[]): Observable<ArrayChange<TProp>> {
+  return when(target, prop).switchMap(observeArray);
+}
+
+export function observeArray<T>(arr: T[]): Observable<ArrayChange<T>> {
+  if (!arr || !Array.isArray(arr)) return Observable.empty();
+
+  return Observable.create((subj) => {
+    let ao: ArrayObserver;
+
+    try {
+      ao = new ArrayObserver(arr);
+      ao.open((s) => {
+        subj.next({value: arr, splices: s});
+      });
+    } catch (e) {
+      subj.error(e);
+    }
+
+    return new Subscription(() => ao.close());
+  });
 }
 
 export function observableForPropertyChain(target: any, chain: (Array<string> | string | Function), before = false): Observable<ChangeNotification> {
