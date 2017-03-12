@@ -156,6 +156,28 @@ export function handleRtmMessagesForStore(rtm: Observable<Message>, store: Store
       });
     }));
 
+  // Here, msg.channel is a channel object
+  let channelChange: EventType[] = ['channel_joined', 'channel_rename', 'group_joined', 'group_rename'];
+  ret.add(Observable.merge(...channelChange.map(x => store.events.listen(x).skip(1)))
+    .subscribe(x => {
+      store.channels.listen(x.channel.id, x.api).next(x.channel);
+
+      // NB: This is slow and dumb
+      let idx = store.joinedChannels.indexOf(x.channel.id);
+      if (idx < 0) store.joinedChannels.push(x.channel.id);
+      Platform.performMicrotaskCheckpoint();
+    }));
+
+  // ...but here, msg.channel is an ID. Ha Ha.
+  let channelRemove: EventType[] = ['channel_left', 'channel_deleted', 'group_left', 'im_close'];
+  ret.add(Observable.merge(...channelRemove.map(x => store.events.listen(x).skip(1)))
+    .subscribe(x => {
+      // NB: This is slow and dumb
+      let idx = store.joinedChannels.indexOf(x.channel);
+      if (idx >= 0) store.joinedChannels.splice(idx, 1);
+      Platform.performMicrotaskCheckpoint();
+    }));
+
   return ret;
 }
 
