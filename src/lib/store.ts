@@ -5,7 +5,8 @@ import { SparseMap, InMemorySparseMap } from './sparse-map';
 import { Api, createApi, infoApiForChannel } from './models/slack-api';
 import { ChannelBase, Message, User, UsersCounts } from './models/api-shapes';
 import { EventType } from './models/event-type';
-import { asyncMap } from './promise-extras';
+import { asyncReduce } from './promise-extras';
+import { ArrayUpdatable } from './updatable';
 
 import 'rxjs/add/observable/dom/webSocket';
 import './standard-operators';
@@ -33,7 +34,7 @@ export interface Store {
   users: SparseMap<string, User>;
   messages: SparseMap<MessagesKey, MessageCollection>;
   events: SparseMap<EventType, Message>;
-  readonly joinedChannels: string[];
+  joinedChannels: ArrayUpdatable<string>;
   keyValueStore: SparseMap<string, any>;
 
   fetchInitialChannelList(): Promise<void>;
@@ -42,7 +43,7 @@ export interface Store {
 export class NaiveStore implements Store {
   api: Api[];
 
-  readonly joinedChannels: string[];
+  joinedChannels: ArrayUpdatable<string>;
   channels: SparseMap<string, ChannelBase>;
   users: SparseMap<string, User>;
   messages: SparseMap<MessagesKey, MessageCollection>;
@@ -72,7 +73,7 @@ export class NaiveStore implements Store {
     }, 'merge');
 
     this.events = new InMemorySparseMap<EventType, Message>();
-    this.joinedChannels = [];
+    this.joinedChannels = new ArrayUpdatable<string>();
     this.keyValueStore = new InMemorySparseMap<string, any>();
 
     // NB: This is the lulzy way to update channel counts when marks
@@ -88,13 +89,12 @@ export class NaiveStore implements Store {
   }
 
   async fetchInitialChannelList(): Promise<void> {
-    const results = await asyncMap(this.api, (api) => this.fetchSingleInitialChannelList(api));
+    let channelList = await Observable.from(this.api)
+      .flatMap(x => this.fetchSingleInitialChannelList(x))
+      .reduce((acc, x) => { acc.push(...x); return acc; }, [])
+      .toPromise();
 
-    this.joinedChannels.length = 0;
-    Array.from(results.values()).forEach(x => this.joinedChannels.push(...x));
-
-    // XXX: We have to make a less horrendous way to do this
-    Platform.performMicrotaskCheckpoint();
+    this.joinedChannels.next(channelList);
   }
 
   private makeUpdatableForModel(model: ChannelBase & Api, api: Api) {
@@ -162,8 +162,8 @@ export function handleRtmMessagesForStore(rtm: Observable<Message>, store: Store
       store.channels.listen(x.channel.id, x.api).next(x.channel);
 
       // NB: This is slow and dumb
-      let idx = store.joinedChannels.indexOf(x.channel.id);
-      if (idx < 0) store.joinedChannels.push(x.channel.id);
+      let idx = store.joinedChannels.value.indexOf(x.channel.id);
+      if (idx < 0) store.joinedChannels.value.push(x.channel.id);
       Platform.performMicrotaskCheckpoint();
     }));
 
@@ -172,8 +172,8 @@ export function handleRtmMessagesForStore(rtm: Observable<Message>, store: Store
   ret.add(Observable.merge(...channelRemove.map(x => store.events.listen(x).skip(1)))
     .subscribe(x => {
       // NB: This is slow and dumb
-      let idx = store.joinedChannels.indexOf(x.channel);
-      if (idx >= 0) store.joinedChannels.splice(idx, 1);
+      let idx = store.joinedChannels.value.indexOf(x.channel);
+      if (idx >= 0) store.joinedChannels.value.splice(idx, 1);
       Platform.performMicrotaskCheckpoint();
     }));
 
