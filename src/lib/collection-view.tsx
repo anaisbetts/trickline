@@ -7,6 +7,7 @@ import { Model } from './model';
 import { Lifecycle, View } from './view';
 import { SerialSubscription } from './serial-subscription';
 import { when } from "./when";
+import { ArrayUpdatable } from "./updatable";
 
 export interface CollectionViewProps<T> {
   viewModel: T;
@@ -21,7 +22,6 @@ export interface CollectionViewProps<T> {
 export abstract class CollectionView<T extends Model, TChild extends Model>
     extends View<T, CollectionViewProps<T>> {
   private viewModelCache: { [key: number]: TChild } = {};
-  private readonly arraySub: SerialSubscription;
   private listRef: List;
 
   readonly lifecycle: Lifecycle<CollectionViewProps<T>, null>;
@@ -37,55 +37,24 @@ export abstract class CollectionView<T extends Model, TChild extends Model>
 
   constructor(props?: CollectionViewProps<T>, context?: any) {
     super(props, context);
-    this.arraySub = new SerialSubscription();
 
     this.lifecycle.willReceiveProps
       .startWith(props)
-      .do(() => console.log("RECEIVING PROPS"))
       .switchMap(x => when(x.viewModel, x.arrayProperty))
-      .do(() => console.log("GOT AN ARRAY COOL"))
       .takeUntil(this.lifecycle.willUnmount)
-      .subscribe((p: Array<any>) => {
-        if (!p) {
-          this.arraySub.set(() => {});
-          return;
-        }
-
-        const observer = new ArrayObserver(p);
-
-        console.log("OPENING AN OBSERVER");
+      .subscribe(() => {
+        this.clearViewModelCache();
         if (this.listRef) this.listRef.forceUpdateGrid();
-        observer.open((splices) => {
-          console.log("NOTIFY OF CHANGE");
-          /*
-          splices.forEach(splice => {
-            // Invalidate items in our ViewModel cache that match
-            let len = Math.max(splice.addedCount, splice.removed ? splice.removed.length : 0);
-            for (let i = 0; i < len; i++) {
-              let idx = splice.index + i;
-              let item = this.viewModelCache[idx];
-              if (!item) continue;
-
-              console.log("THRASHING VIEWMODEL");
-              item.unsubscribe();
-              delete this.viewModelCache[idx];
-            }
-          });
-          */
-          Object.keys(this.viewModelCache).forEach(x => this.viewModelCache[x].unsubscribe());
-          this.viewModelCache = {};
-
-          console.log("FORCING UPDATE");
-          if (this.listRef) this.listRef.forceUpdateGrid();
-        });
-
-        this.arraySub.set(() => observer.close());
       }, (e) => setTimeout(() => { throw e; }, 10));
 
     this.lifecycle.willUnmount.subscribe(() => {
-      this.viewModelCache = {};
-      this.arraySub.unsubscribe();
+      this.clearViewModelCache();
     });
+  }
+
+  clearViewModelCache() {
+    Object.keys(this.viewModelCache).forEach(x => this.viewModelCache[x].unsubscribe());
+    this.viewModelCache = {};
   }
 
   getOrCreateViewModel(index: number): TChild {
