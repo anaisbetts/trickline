@@ -46,7 +46,10 @@ export abstract class CollectionView<T extends Model, TChild extends Model>
         this.clearViewModelCache();
 
         this.queueUpdate(() => {
-          if (!this.viewModel || !this.listRef) return;
+          if (!this.viewModel) return;
+          this.forceUpdate();
+
+          if (!this.listRef) return;
           this.listRef.forceUpdateGrid();
         });
       }, (e) => setTimeout(() => { throw e; }, 10));
