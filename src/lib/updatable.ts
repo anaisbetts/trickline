@@ -130,10 +130,10 @@ export class ArrayUpdatable<T> extends Updatable<T[]> {
 
   nextOverwrite(value: T[]): void {
     this._hasPendingValue = true;
-    super.next(this._value = value);
+    super.next(Array.from(this._value = value));
 
     this.arraySub.set(
-      observeArray(value).subscribe(() => this.next(Array.from(value))));
+      observeArray(value).subscribe(() => super.next(Array.from(value))));
   }
 
   unsubscribe() {
