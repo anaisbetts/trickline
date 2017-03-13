@@ -5,6 +5,7 @@ import { ArrayObserver, splice } from 'observe-js';
 import { ChangeNotification, Model, TypedChangeNotification } from './model';
 import * as isFunction from 'lodash.isfunction';
 import * as isObject from 'lodash.isobject';
+import * as isEqual from 'lodash.isequal';
 
 import * as LRU from 'lru-cache';
 import { Updatable } from './updatable';
@@ -36,7 +37,7 @@ export function whenPropertyInternal(target: any, valueOnly: boolean, ...propsAn
       observableForPropertyChain(target, p).map(x => x.value) :
       observableForPropertyChain(target, p));
 
-  return Observable.combineLatest(...propWatchers, selector).distinctUntilChanged();
+  return Observable.combineLatest(...propWatchers, selector).distinctUntilChanged((x, y) => isEqual(x, y));
 }
 
 export type ArrayChange<T> = { value: T[], splices: splice[] };
@@ -94,7 +95,7 @@ export function observableForPropertyChain(target: any, chain: (Array<string> | 
   }
 
   if (props.length === 1) {
-    return start.distinctUntilChanged((x, y) => x.value === y.value);
+    return start.distinctUntilChanged((x, y) => isEqual(x.value, y.value));
   }
 
   return start    // target.foo
@@ -107,7 +108,7 @@ export function observableForPropertyChain(target: any, chain: (Array<string> | 
         });
     })
     .switch()
-    .distinctUntilChanged((x, y) => x.value === y.value);
+    .distinctUntilChanged((x, y) => isEqual(x.value, y.value));
 }
 
 export function notificationForProperty(target: any, prop: string, before = false): Observable<ChangeNotification> {
