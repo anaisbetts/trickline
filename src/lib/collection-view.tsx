@@ -120,3 +120,4 @@ export abstract class CollectionView<T extends Model, TChild extends Model>
       </AutoSizer>
     );
   }
+}
