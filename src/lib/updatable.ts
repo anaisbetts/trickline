@@ -87,7 +87,7 @@ export class Updatable<T> extends Subject<T> {
     this._hasPendingValue = true;
 
     if (this._value) {
-      this._value = Object.assign(this._value || {}, value || {});
+      this._value = Object.assign({}, this._value || {}, value || {});
     } else {
       this._value = value;
     }
