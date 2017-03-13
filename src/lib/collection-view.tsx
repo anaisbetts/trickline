@@ -57,6 +57,7 @@ export abstract class CollectionView<T extends Model, TChild extends Model>
   }
 
   clearViewModelCache() {
+    // TODO: It would be rull cool if we could reuse these in some sane way
     Object.keys(this.viewModelCache).forEach(x => this.viewModelCache[x].unsubscribe());
     this.viewModelCache = {};
   }
