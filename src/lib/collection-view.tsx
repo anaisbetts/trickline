@@ -22,6 +22,7 @@ export abstract class CollectionView<T extends Model, TChild extends Model>
     extends View<T, CollectionViewProps<T>> {
   private viewModelCache: { [key: number]: TChild } = {};
   private readonly arraySub: SerialSubscription;
+  private listRef: List;
 
   readonly lifecycle: Lifecycle<CollectionViewProps<T>, null>;
 
@@ -53,6 +54,7 @@ export abstract class CollectionView<T extends Model, TChild extends Model>
         const observer = new ArrayObserver(p);
 
         console.log("OPENING AN OBSERVER");
+        if (this.listRef) this.listRef.forceUpdateGrid();
         observer.open((splices) => {
           console.log("NOTIFY OF CHANGE");
           /*
@@ -74,7 +76,7 @@ export abstract class CollectionView<T extends Model, TChild extends Model>
           this.viewModelCache = {};
 
           console.log("FORCING UPDATE");
-          this.forceUpdate();
+          if (this.listRef) this.listRef.forceUpdateGrid();
         });
 
         this.arraySub.set(() => observer.close());
@@ -125,10 +127,12 @@ export abstract class CollectionView<T extends Model, TChild extends Model>
       );
     }
 
+    let refBind = ((l: List) => this.listRef = l).bind(this);
     return (
       <AutoSizer {...autoSizerProps}>
         {({ width, height }: { width: number, height: number }) => (
           <List
+            ref={refBind}
             width={width}
             height={height}
             {...listProps}
