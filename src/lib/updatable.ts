@@ -1,5 +1,9 @@
+import { Observable } from 'rxjs/Observable';
 import { Subscriber } from 'rxjs/Subscriber';
 import { Subscription, ISubscription } from 'rxjs/Subscription';
+
+import { SerialSubscription } from './serial-subscription';
+import { observeArray } from './when';
 import * as debug from 'debug';
 
 import { captureStack } from './utils';
@@ -13,11 +17,11 @@ export type MergeStrategy = 'overwrite' | 'merge';
 const d = debug('trickline:updatable');
 
 export class Updatable<T> extends Subject<T> {
-  private _value: T;
-  private _hasPendingValue: boolean;
-  private _factory?: () => (Promise<T>|Observable<T>);
-  private _errFunc: ((e: Error) => void);
-  private _nextFunc: ((x: T) => void);
+  protected _value: T;
+  protected _hasPendingValue: boolean;
+  protected _factory?: () => (Promise<T>|Observable<T>);
+  protected _errFunc: ((e: Error) => void);
+  protected _nextFunc: ((x: T) => void);
 
   pinned: boolean;
 
@@ -69,12 +73,12 @@ export class Updatable<T> extends Subject<T> {
     return subscription;
   }
 
-  nextOverwrite(value: T): void {
+  protected nextOverwrite(value: T): void {
     this._hasPendingValue = true;
     super.next(this._value = value);
   }
 
-  nextMerge(value: T): void {
+  protected nextMerge(value: T): void {
     if (value === undefined) {
       d(`Updatable with merge strategy received undefined, this is probably a bug\n${captureStack()}`);
       return;
@@ -109,9 +113,31 @@ export class Updatable<T> extends Subject<T> {
     this._hasPendingValue = true;
 
     if ('then' in source) {
-      source.then(this._nextFunc, this._errFunc);
+      (source as Promise<T>).then(this._nextFunc, this._errFunc);
     } else {
-      source.take(1).subscribe(this._nextFunc, this._errFunc);
+      (source as Observable<T>).take(1).subscribe(this._nextFunc, this._errFunc);
     }
+  }
+}
+
+export class ArrayUpdatable<T> extends Updatable<T[]> {
+  readonly arraySub: SerialSubscription;
+
+  constructor(factory?: () => (Promise<T[]>|Observable<T[]>)) {
+    super(factory);
+    this.arraySub = new SerialSubscription();
+  }
+
+  nextOverwrite(value: T[]): void {
+    this._hasPendingValue = true;
+    super.next(this._value = value);
+
+    this.arraySub.set(
+      observeArray(value).subscribe(() => this.next(value)));
+  }
+
+  unsubscribe() {
+    super.unsubscribe();
+    this.arraySub.unsubscribe();
   }
 }
