@@ -133,7 +133,7 @@ export class ArrayUpdatable<T> extends Updatable<T[]> {
     super.next(this._value = value);
 
     this.arraySub.set(
-      observeArray(value).subscribe(() => this.next(value)));
+      observeArray(value).subscribe(() => this.next(Array.from(value))));
   }
 
   unsubscribe() {

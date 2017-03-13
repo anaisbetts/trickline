@@ -20,6 +20,7 @@ export class ChannelListViewModel extends Model {
     super();
 
     store.joinedChannels.toProperty(this, 'channels');
+    this.changed.subscribe((v) => console.log(v.property));
 
     when(this, x => x.channels)
       .map(list => {
