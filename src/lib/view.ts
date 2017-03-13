@@ -68,7 +68,7 @@ class AttachedReactLifecycle<P, S> extends Lifecycle<P, S> {
     }
 
     const ps = this.willReceivePropsSubj = Subject.create();
-    target['componentWillReceiveProps'] = function(props: P) { ps.next(props); }
+    target['componentWillReceiveProps'] = function(props: P) { ps.next(props); };
   }
 }
 

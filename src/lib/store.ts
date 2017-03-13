@@ -2,7 +2,6 @@ import { Subscription } from 'rxjs/Subscription';
 import { Observable } from 'rxjs/Observable';
 
 import { SparseMap, InMemorySparseMap } from './sparse-map';
-import { Updatable } from './updatable';
 import { Api, createApi, infoApiForChannel } from './models/slack-api';
 import { ChannelBase, Message, User, UsersCounts } from './models/api-shapes';
 import { EventType } from './models/event-type';
