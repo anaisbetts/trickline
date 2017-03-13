@@ -6,29 +6,29 @@ import { ChannelViewModel, ChannelListItem } from './channel-list-item';
 import { channelSort, isDM } from './lib/models/slack-api';
 import { CollectionView } from './lib/collection-view';
 import { fromObservable, notify, Model } from './lib/model';
-import { Store, ChannelList } from './lib/store';
-import { when, whenArray } from './lib/when';
-
-import './lib/standard-operators';
+import { Store } from './lib/store';
+import { when } from './lib/when';
+import { Updatable } from './lib/updatable';
 
 @notify('selectedChannel')
 export class ChannelListViewModel extends Model {
   selectedChannel: ChannelBase;
-  @fromObservable orderedChannels: ChannelList;
+  @fromObservable channels: string[];
+  @fromObservable orderedChannels: Updatable<ChannelBase>[];
 
   constructor(public store: Store) {
     super();
 
-    whenArray(store, x => x.joinedChannels)
-      .map(({value}) => {
-        if (!value) return [];
-        let updatableChannels = store.channels.listenMany(value);
+    store.joinedChannels.toProperty(this, 'channels');
 
-        return Array.from(updatableChannels.values())
+    when(this, x => x.channels)
+      .map(list => {
+        let ret = Array.from(store.channels.listenMany(list || []).values());
+
+        return ret
           .filter(c => !c.value.is_archived || (isDM(c.value) && c.value.is_open))
           .sort(channelSort);
       })
-      .startWith([])
       .toProperty(this, 'orderedChannels');
   }
 }
