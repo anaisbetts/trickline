@@ -94,7 +94,7 @@ export function observableForPropertyChain(target: any, chain: (Array<string> | 
   }
 
   if (props.length === 1) {
-    return start;//.distinctUntilChanged((x, y) => x.value === y.value);
+    return start.distinctUntilChanged((x, y) => x.value === y.value);
   }
 
   return start    // target.foo
