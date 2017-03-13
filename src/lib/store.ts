@@ -5,7 +5,6 @@ import { SparseMap, InMemorySparseMap } from './sparse-map';
 import { Api, createApi, infoApiForChannel } from './models/slack-api';
 import { ChannelBase, Message, User, UsersCounts } from './models/api-shapes';
 import { EventType } from './models/event-type';
-import { asyncReduce } from './promise-extras';
 import { ArrayUpdatable } from './updatable';
 
 import 'rxjs/add/observable/dom/webSocket';
