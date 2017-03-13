@@ -3,6 +3,7 @@ import { AsyncSubject } from 'rxjs/AsyncSubject';
 import { Subscription } from 'rxjs/Subscription';
 import { Subject } from 'rxjs/Subject';
 
+import * as isFunction from 'lodash.isfunction';
 import * as React from 'react';
 
 import { Model } from './model';
@@ -149,7 +150,7 @@ export abstract class View<T extends Model, P extends HasViewModel<T>>
     if (this.lifecycle.didUpdateSubj) this.lifecycle.didUpdateSubj.complete();
   }
 
-  static toUpdate: View<any, any>[];
+  static toUpdate: (View<any, any> | Function)[];
   static currentRafToken: number;
   static isInFocus: boolean;
   static isInFocusSub: Subscription;
@@ -165,11 +166,16 @@ export abstract class View<T extends Model, P extends HasViewModel<T>>
 
     try {
       for (let i = 0; i < ourViews.length; i++) {
-        const current = ourViews[i];
-        if (!current.viewModel) continue;
+        if (isFunction(ourViews[i])) {
+          (ourViews[i] as Function)();
+          continue;
+        } else {
+          const current = ourViews[i] as View<any, any>;
+          if (!current.viewModel) continue;
 
-        current.forceUpdate();
-        current.hasBeenRendered = true;
+          current.forceUpdate();
+          current.hasBeenRendered = true;
+        }
       }
     } finally {
       for (let i = 0; i < ourViews.length; i++) { ourViews[i].hasBeenRendered = false; }
@@ -177,9 +183,9 @@ export abstract class View<T extends Model, P extends HasViewModel<T>>
     }
   }
 
-  protected queueUpdate() {
+  protected queueUpdate(updater?: Function) {
     View.toUpdate = View.toUpdate || [];
-    View.toUpdate.push(this);
+    View.toUpdate.push(updater || this);
 
     if (!View.isInFocusSub) {
       View.isInFocusSub = Observable.merge(

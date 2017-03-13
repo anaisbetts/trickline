@@ -44,7 +44,11 @@ export abstract class CollectionView<T extends Model, TChild extends Model>
       .takeUntil(this.lifecycle.willUnmount)
       .subscribe(() => {
         this.clearViewModelCache();
-        if (this.listRef) this.listRef.forceUpdateGrid();
+
+        this.queueUpdate(() => {
+          if (!this.viewModel || !this.listRef) return;
+          this.listRef.forceUpdateGrid();
+        });
       }, (e) => setTimeout(() => { throw e; }, 10));
 
     this.lifecycle.willUnmount.subscribe(() => {
@@ -112,4 +116,3 @@ export abstract class CollectionView<T extends Model, TChild extends Model>
       </AutoSizer>
     );
   }
-}
