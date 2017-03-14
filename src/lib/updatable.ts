@@ -22,15 +22,14 @@ export class Updatable<T> extends Subject<T> {
   protected _factory?: () => (Promise<T>|Observable<T>);
   protected _errFunc: ((e: Error) => void);
   protected _nextFunc: ((x: T) => void);
-
-  pinned: boolean;
+  protected _innerSub: Subscription;
 
   constructor(factory?: () => (Promise<T>|Observable<T>), strategy?: MergeStrategy) {
     super();
 
     this._hasPendingValue = false;
     this._factory = factory;
-    this.pinned = false;
+    this._innerSub = new Subscription();
 
     switch (strategy || 'overwrite') {
     case 'overwrite':
@@ -118,6 +117,15 @@ export class Updatable<T> extends Subject<T> {
       (source as Observable<T>).take(1).subscribe(this._nextFunc, this._errFunc);
     }
   }
+
+  addTeardown(teardown: ISubscription | Function) {
+    this._innerSub.add(teardown);
+  }
+
+  unsubscribe() {
+    super.unsubscribe();
+    this._innerSub.unsubscribe();
+  }
 }
 
 export class ArrayUpdatable<T> extends Updatable<T[]> {
@@ -126,6 +134,7 @@ export class ArrayUpdatable<T> extends Updatable<T[]> {
   constructor(factory?: () => (Promise<T[]>|Observable<T[]>)) {
     super(factory);
     this.arraySub = new SerialSubscription();
+    this._innerSub.add(this.arraySub);
   }
 
   nextOverwrite(value: T[]): void {
@@ -134,10 +143,5 @@ export class ArrayUpdatable<T> extends Updatable<T[]> {
 
     this.arraySub.set(
       observeArray(value).subscribe(() => super.next(Array.from(value))));
-  }
-
-  unsubscribe() {
-    super.unsubscribe();
-    this.arraySub.unsubscribe();
   }
 }
