@@ -24,17 +24,17 @@ export type MessageCollection = Range<string> & {
 };
 
 export interface StoreAsWritable {
-  api: Api[];
-
   channels: SparseMap<string, ChannelBase>;
   users: SparseMap<string, User>;
   messages: SparseMap<MessagesKey, MessageCollection>;
-  events: SparseMap<EventType, Message>;
-  joinedChannels: ArrayUpdatable<string>;
   keyValueStore: SparseMap<string, any>;
 }
 
 export interface Store extends StoreAsWritable {
+  api: Api[];
+  events: SparseMap<EventType, Message>;
+  joinedChannels: ArrayUpdatable<string>;
+
   readonly write: StoreAsWritable;
 }
 
