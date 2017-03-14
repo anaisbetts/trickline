@@ -24,6 +24,7 @@ declare module 'dexie' {
       deferredPut: ((item: T) => Promise<void>);
       idleHandle: number | null;
       deferredItems: DeferredPutItem<T>[];
+      getOrEmpty: ((key: Key) => Observable<T>);
     }
   }
 }
@@ -56,6 +57,11 @@ function deferredPut<T, Key>(this: Dexie.Table<T, Key>, item: T): Promise<void> 
   return newItem.completion.toPromise();
 }
 
+function getOrEmpty<T, Key>(this: Dexie.Table<T, Key>, key: Key): Observable<T> {
+  return Observable.fromPromise(this.get(key))
+    .flatMap(x => x ? Observable.of(x) : Observable.empty());
+}
+
 export class DataModel extends Dexie {
   users: Dexie.Table<User, string>;
   channels: Dexie.Table<ChannelBase, string>;
@@ -82,11 +88,14 @@ class DexieWritableStore implements StoreAsWritable {
 
   private database: DataModel;
 
-  constructor(database: DataModel) {
+  constructor(database: DataModel, parent: Store) {
     this.database = database;
 
-    this.channels = new LRUSparseMap<ChannelBase>((k) => this.database.channels.get(k), 'merge', { max: 256 });
-    this.users = new LRUSparseMap<User>((k) => this.database.users.get(k), 'merge', { max: 256 });
+    this.channels = new LRUSparseMap<ChannelBase>((k) => this.database.channels.getOrEmpty(k), 'merge', { max: 1256 });
+    this.users = new LRUSparseMap<User>((k) => this.database.users.getOrEmpty(k), 'merge', { max: 1256 });
+
+    // XXX: This is nopped out atm
+    this.messages = new InMemorySparseMap<MessagesKey, MessageCollection>();
 
     this.keyValueStore = new LRUSparseMap<string>((k) => {
       return this.database.keyValues.get(k).then(x => x ? JSON.parse(x.Value) : null);
@@ -94,12 +103,20 @@ class DexieWritableStore implements StoreAsWritable {
 
     this.channels.created.subscribe(kvp => {
       kvp.Value.skip(1)
+        .do(v => {
+          let u = parent.channels.listen(kvp.Key, null, true);
+          if (u) u.next(v);
+        })
         .flatMap(v => this.database.channels.deferredPut(v))
         .subscribe();
     });
 
     this.users.created.subscribe(kvp => {
       kvp.Value.skip(1)
+        .do(v => {
+          let u = parent.users.listen(kvp.Key, null, true);
+          if (u) u.next(v);
+        })
         .flatMap(v => this.database.users.deferredPut(v))
         .subscribe();
     });
@@ -135,14 +152,18 @@ export class DexieStore implements Store {
 
     this.database = new DataModel();
     this.database.open();
-    this.write = new DexieWritableStore(this.database);
+    this.write = new DexieWritableStore(this.database, this);
 
     this.channels = new InMemorySparseMap((id: string, api: Api) => {
-      return infoApiForChannel(id, api).toPromise();
+      let u = this.write.channels.listen(id);
+      u.nextAsync(infoApiForChannel(id, api));
+      return u.get();
     }, 'merge');
 
     this.users = new InMemorySparseMap<string, User>((user: string, api: Api) => {
-      return api.users.info({user}).map((x: any) => x.user! as User).toPromise();
+      let u = this.write.users.listen(user);
+      u.nextAsync(api.users.info({user}).map((x: any) => x.user! as User));
+      return u.get();
     }, 'merge');
 
     this.messages = new InMemorySparseMap<MessagesKey, MessageCollection>((key: MessagesKey, api: Api) => {
@@ -157,18 +178,10 @@ export class DexieStore implements Store {
     }, 'merge');
 
     this.channels.created
-      .flatMap(async x => {
-        let dbVal = await this.write.channels.get(x.Key);
-        if (dbVal) x.Value.next(dbVal);
-      })
-      .subscribe();
+      .subscribe(x => x.Value.nextAsync(this.write.channels.listen(x.Key)));
 
     this.users.created
-      .flatMap(async x => {
-        let dbVal = await this.write.users.get(x.Key);
-        if (dbVal) x.Value.next(dbVal);
-      })
-      .subscribe();
+      .subscribe(x => x.Value.nextAsync(this.write.users.listen(x.Key)));
 
     this.events = new InMemorySparseMap<EventType, Message>();
     this.joinedChannels = new ArrayUpdatable<string>();
