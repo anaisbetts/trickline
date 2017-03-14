@@ -23,6 +23,7 @@
   },
   "homepage": "https://github.com/paulcbetts/trickline#readme",
   "dependencies": {
+    "@paulcbetts/electron-rxdb": "0.8.3-alpha.1",
     "@types/chai": "^3.4.34",
     "@types/debug": "0.0.29",
     "@types/electron": "^1.4.31",
