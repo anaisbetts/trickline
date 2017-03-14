@@ -4,7 +4,7 @@ import { Subscription } from 'rxjs/Subscription';
 import { Api, infoApiForChannel } from './models/slack-api';
 import { ChannelBase, User, UsersCounts, Message } from './models/api-shapes';
 import { EventType } from './models/event-type';
-import { Store } from './store';
+import { StoreAsWritable } from './store';
 
 import 'rxjs/add/observable/dom/webSocket';
 import './standard-operators';
@@ -14,7 +14,7 @@ import './custom-operators';
  * users.counts
  */
 
-export async function fetchInitialChannelList(store: Store): Promise<void> {
+export async function fetchInitialChannelList(store: StoreAsWritable): Promise<void> {
   let channelList = await Observable.from(store.api)
     .flatMap(x => fetchSingleInitialChannelList(store, x))
     .reduce((acc, x) => { acc.push(...x); return acc; }, [])
@@ -23,7 +23,7 @@ export async function fetchInitialChannelList(store: Store): Promise<void> {
   store.joinedChannels.next(channelList);
 }
 
-async function fetchSingleInitialChannelList(store: Store, api: Api): Promise<string[]> {
+async function fetchSingleInitialChannelList(store: StoreAsWritable, api: Api): Promise<string[]> {
   const joinedChannels: string[] = [];
 
   const result: UsersCounts = await api.users.counts({ simple_unreads: true }).toPromise();
@@ -46,7 +46,7 @@ async function fetchSingleInitialChannelList(store: Store, api: Api): Promise<st
   return joinedChannels;
 }
 
-function makeUpdatableForModel(store: Store, model: ChannelBase & Api, api: Api) {
+function makeUpdatableForModel(store: StoreAsWritable, model: ChannelBase & Api, api: Api) {
   model.api = api;
 
   const updater = store.channels.listen(model.id, api);
@@ -54,7 +54,7 @@ function makeUpdatableForModel(store: Store, model: ChannelBase & Api, api: Api)
   return updater;
 }
 
-export function updateChannelToLatest(store: Store, id: string, api: Api) {
+export function updateChannelToLatest(store: StoreAsWritable, id: string, api: Api) {
   store.channels.listen(id).nextAsync(infoApiForChannel(id, api));
 }
 
@@ -62,7 +62,7 @@ export function updateChannelToLatest(store: Store, id: string, api: Api) {
  * rtm handling
  */
 
-export function handleRtmMessagesForStore(rtm: Observable<Message>, store: Store): Subscription {
+export function handleRtmMessagesForStore(rtm: Observable<Message>, store: StoreAsWritable): Subscription {
   const ret = new Subscription();
 
   // Play RTM events onto store.events, grouped by type

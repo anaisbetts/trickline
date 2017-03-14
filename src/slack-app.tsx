@@ -75,9 +75,9 @@ export class SlackAppModel extends Model {
       .toProperty(this, 'messagesViewModel');
 
     const rtmSub = new SerialSubscription();
-    rtmSub.set(handleRtmMessagesForStore(connectToRtm(this.store.api), this.store));
+    rtmSub.set(handleRtmMessagesForStore(connectToRtm(this.store.api), this.store.write));
 
-    this.loadInitialState = new Action<void>(() => fetchInitialChannelList(this.store), undefined);
+    this.loadInitialState = new Action<void>(() => fetchInitialChannelList(this.store.write), undefined);
   }
 }
 

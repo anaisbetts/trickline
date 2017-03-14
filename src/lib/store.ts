@@ -23,7 +23,7 @@ export type MessageCollection = Range<string> & {
   api: Api;
 };
 
-export interface Store {
+export interface StoreAsWritable {
   api: Api[];
 
   channels: SparseMap<string, ChannelBase>;
@@ -32,6 +32,10 @@ export interface Store {
   events: SparseMap<EventType, Message>;
   joinedChannels: ArrayUpdatable<string>;
   keyValueStore: SparseMap<string, any>;
+}
+
+export interface Store extends StoreAsWritable {
+  readonly write: StoreAsWritable;
 }
 
 export class NaiveStore implements Store {
@@ -67,4 +71,6 @@ export class NaiveStore implements Store {
     this.joinedChannels = new ArrayUpdatable<string>();
     this.keyValueStore = new InMemorySparseMap<string, any>();
   }
+
+  get write() { return this; }
 }
