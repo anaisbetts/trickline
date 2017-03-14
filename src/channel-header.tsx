@@ -13,6 +13,7 @@ import { isDM } from './lib/models/slack-api';
 import { Model, fromObservable } from './lib/model';
 import { SimpleView } from './lib/view';
 import { Store } from './lib/store';
+import { updateChannelToLatest } from './lib/store-network';
 import { when } from './lib/when';
 import { Observable } from 'rxjs/Observable';
 
@@ -50,7 +51,7 @@ export class ChannelHeaderViewModel extends Model {
     // NB: This works but it's too damn clever
     this.innerDisp.add(when(this, x => x.channelInfo)
       .filter(x => !!x)
-      .subscribe(x => this.store.updateChannelToLatest(x.id, x.api)));
+      .subscribe(x => updateChannelToLatest(this.store, x.id, x.api)));
 
     when(this, x => x.channelInfo.members)
       .startWith([])

@@ -12,9 +12,9 @@ import getMuiTheme from 'material-ui/styles/getMuiTheme';
 import { Action } from './lib/action';
 import { SimpleView } from './lib/view';
 import { fromObservable, Model } from './lib/model';
-import { BrokenOldStoreThatDoesntWorkRight, Store, NaiveStore, handleRtmMessagesForStore, connectToRtm } from './lib/store';
+import { Store, NaiveStore } from './lib/store';
+import { handleRtmMessagesForStore, connectToRtm, fetchInitialChannelList } from './lib/store-network';
 
-import { ChannelBase } from './lib/models/api-shapes';
 import { ChannelHeaderViewModel, ChannelHeaderView } from './channel-header';
 import { ChannelListViewModel, ChannelListView } from './channel-list';
 import { MemoryPopover } from './memory-popover';
@@ -77,7 +77,7 @@ export class SlackAppModel extends Model {
     const rtmSub = new SerialSubscription();
     rtmSub.set(handleRtmMessagesForStore(connectToRtm(this.store.api), this.store));
 
-    this.loadInitialState = new Action<void>(() => this.store.fetchInitialChannelList(), undefined);
+    this.loadInitialState = new Action<void>(() => fetchInitialChannelList(this.store), undefined);
   }
 }
 
