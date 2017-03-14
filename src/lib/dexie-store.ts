@@ -137,6 +137,39 @@ export class DexieStore implements Store {
     this.database.open();
     this.write = new DexieWritableStore(this.database);
 
+    this.channels = new InMemorySparseMap((id: string, api: Api) => {
+      return infoApiForChannel(id, api).toPromise();
+    }, 'merge');
+
+    this.users = new InMemorySparseMap<string, User>((user: string, api: Api) => {
+      return api.users.info({user}).map((x: any) => x.user! as User).toPromise();
+    }, 'merge');
+
+    this.messages = new InMemorySparseMap<MessagesKey, MessageCollection>((key: MessagesKey, api: Api) => {
+      return api.channels.history(key).map(({ messages }: { messages: Array<Message> }) => {
+        return {
+          latest: messages[0].ts,
+          oldest: messages[messages.length - 1].ts,
+          messages,
+          api
+        };
+      });
+    }, 'merge');
+
+    this.channels.created
+      .flatMap(async x => {
+        let dbVal = await this.write.channels.get(x.Key);
+        if (dbVal) x.Value.next(dbVal);
+      })
+      .subscribe();
+
+    this.users.created
+      .flatMap(async x => {
+        let dbVal = await this.write.users.get(x.Key);
+        if (dbVal) x.Value.next(dbVal);
+      })
+      .subscribe();
+
     this.events = new InMemorySparseMap<EventType, Message>();
     this.joinedChannels = new ArrayUpdatable<string>();
   }
