@@ -47,11 +47,15 @@ export class MessageViewModel extends Model {
   @fromObservable text: string;
   @fromObservable formattedTime: string;
 
+  @fromObservable profileImage: string;
+  @fromObservable displayName: string;
+
   constructor(public readonly store: Store, public readonly api: Api, message: Message) {
     super();
 
     Observable.of(message).toProperty(this, 'model');
 
+    // XXX: This is a memory leak! UserViewModel binds to Store but never gets freed
     when(this, x => x.model)
       .map(model => new UserViewModel(this.store, model.user as string, api))
       .toProperty(this, 'user');
@@ -63,6 +67,12 @@ export class MessageViewModel extends Model {
     when(this, x => x.model)
       .map(model => moment(parseFloat(model.ts) * 1000).calendar())
       .toProperty(this, 'formattedTime');
+
+    when(this, x => x.user.profileImage)
+      .toProperty(this, 'profileImage');
+
+    when(this, x => x.user.displayName)
+      .toProperty(this, 'displayName');
   }
 }
 

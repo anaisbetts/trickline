@@ -1,6 +1,7 @@
 import { Observable } from 'rxjs/Observable';
 import { ISubscription, Subscription } from 'rxjs/Subscription';
 import { Subject } from 'rxjs/Subject';
+import * as isEqual from 'lodash.isequal';
 
 import * as debug from 'debug';
 
@@ -82,6 +83,8 @@ export function fromObservable(target: Model, propertyKey: string): void {
 
         this[subPropertyKey].add(observableForProperty.subscribe(
           (x) => {
+            if (isEqual(this[valPropertyKey], x)) return;
+
             this.changing.next({sender: target, property: propertyKey, value: this[valPropertyKey]});
             this[valPropertyKey] = x;
             this.changed.next({sender: target, property: propertyKey, value: this[valPropertyKey]});

@@ -2,17 +2,14 @@ import { Subscription } from 'rxjs/Subscription';
 import { Observable } from 'rxjs/Observable';
 
 import { SparseMap, InMemorySparseMap } from './sparse-map';
-import { Updatable } from './updatable';
 import { Api, createApi, infoApiForChannel } from './models/slack-api';
 import { ChannelBase, Message, User, UsersCounts } from './models/api-shapes';
 import { EventType } from './models/event-type';
-import { asyncMap } from './promise-extras';
+import { ArrayUpdatable } from './updatable';
 
 import 'rxjs/add/observable/dom/webSocket';
 import './standard-operators';
 import './custom-operators';
-
-export type ChannelList = Array<Updatable<ChannelBase|null>>;
 
 export interface Range<T> {
   oldest: T;
@@ -36,7 +33,7 @@ export interface Store {
   users: SparseMap<string, User>;
   messages: SparseMap<MessagesKey, MessageCollection>;
   events: SparseMap<EventType, Message>;
-  joinedChannels: Updatable<ChannelList>;
+  joinedChannels: ArrayUpdatable<string>;
   keyValueStore: SparseMap<string, any>;
 
   fetchInitialChannelList(): Promise<void>;
@@ -45,11 +42,11 @@ export interface Store {
 export class NaiveStore implements Store {
   api: Api[];
 
+  joinedChannels: ArrayUpdatable<string>;
   channels: SparseMap<string, ChannelBase>;
   users: SparseMap<string, User>;
   messages: SparseMap<MessagesKey, MessageCollection>;
   events: SparseMap<EventType, Message>;
-  joinedChannels: Updatable<ChannelList>;
   keyValueStore: SparseMap<string, any>;
 
   constructor(tokenList: string[] = []) {
@@ -75,7 +72,7 @@ export class NaiveStore implements Store {
     }, 'merge');
 
     this.events = new InMemorySparseMap<EventType, Message>();
-    this.joinedChannels = new Updatable<ChannelList>();
+    this.joinedChannels = new ArrayUpdatable<string>();
     this.keyValueStore = new InMemorySparseMap<string, any>();
 
     // NB: This is the lulzy way to update channel counts when marks
@@ -91,12 +88,12 @@ export class NaiveStore implements Store {
   }
 
   async fetchInitialChannelList(): Promise<void> {
-    const results = await asyncMap(this.api, (api) => this.fetchSingleInitialChannelList(api));
+    let channelList = await Observable.from(this.api)
+      .flatMap(x => this.fetchSingleInitialChannelList(x))
+      .reduce((acc, x) => { acc.push(...x); return acc; }, [])
+      .toPromise();
 
-    const allJoinedChannels = Array.from(results.values())
-      .reduce((acc, x) => acc.concat(x), []);
-
-    this.joinedChannels.next(allJoinedChannels);
+    this.joinedChannels.next(channelList);
   }
 
   private makeUpdatableForModel(model: ChannelBase & Api, api: Api) {
@@ -107,21 +104,24 @@ export class NaiveStore implements Store {
     return updater;
   }
 
-  private async fetchSingleInitialChannelList(api: Api): Promise<ChannelList> {
-    const joinedChannels: ChannelList = [];
+  private async fetchSingleInitialChannelList(api: Api): Promise<string[]> {
+    const joinedChannels: string[] = [];
 
     const result: UsersCounts = await api.users.counts({ simple_unreads: true }).toPromise();
 
     result.channels.forEach((c) => {
-      joinedChannels.push(this.makeUpdatableForModel(c, api));
+      this.channels.setDirect(c.id, this.makeUpdatableForModel(c, api));
+      joinedChannels.push(c.id);
     });
 
     result.groups.forEach((g) => {
-      joinedChannels.push(this.makeUpdatableForModel(g, api));
+      this.channels.setDirect(g.id, this.makeUpdatableForModel(g, api));
+      joinedChannels.push(g.id);
     });
 
     result.ims.forEach((dm) => {
-      joinedChannels.push(this.makeUpdatableForModel(dm, api));
+      this.channels.setDirect(dm.id, this.makeUpdatableForModel(dm, api));
+      joinedChannels.push(dm.id);
     });
 
     return joinedChannels;
@@ -152,6 +152,28 @@ export function handleRtmMessagesForStore(rtm: Observable<Message>, store: Store
       Object.keys(msg.annotations).forEach(id => {
         store.users.listen(id, msg.api).next(msg.annotations[id]);
       });
+    }));
+
+  // Here, msg.channel is a channel object
+  let channelChange: EventType[] = ['channel_joined', 'channel_rename', 'group_joined', 'group_rename'];
+  ret.add(Observable.merge(...channelChange.map(x => store.events.listen(x).skip(1)))
+    .subscribe(x => {
+      store.channels.listen(x.channel.id, x.api).next(x.channel);
+
+      // NB: This is slow and dumb
+      let idx = store.joinedChannels.value.indexOf(x.channel.id);
+      if (idx < 0) store.joinedChannels.value.push(x.channel.id);
+      Platform.performMicrotaskCheckpoint();
+    }));
+
+  // ...but here, msg.channel is an ID. Ha Ha.
+  let channelRemove: EventType[] = ['channel_left', 'channel_deleted', 'group_left', 'im_close'];
+  ret.add(Observable.merge(...channelRemove.map(x => store.events.listen(x).skip(1)))
+    .subscribe(x => {
+      // NB: This is slow and dumb
+      let idx = store.joinedChannels.value.indexOf(x.channel);
+      if (idx >= 0) store.joinedChannels.value.splice(idx, 1);
+      Platform.performMicrotaskCheckpoint();
     }));
 
   return ret;

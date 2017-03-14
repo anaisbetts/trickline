@@ -18,7 +18,7 @@ export class ChannelMembersViewModel extends Model {
 }
 
 export class ChannelMembersView extends CollectionView<ChannelMembersViewModel, UserViewModel> {
-  viewModelFactory(index: number) {
+  viewModelFactory(_item: any, index: number) {
     return new UserViewModel(
       this.viewModel.store,
       this.viewModel.members[index],
@@ -28,9 +28,5 @@ export class ChannelMembersView extends CollectionView<ChannelMembersViewModel, 
 
   renderItem(viewModel: UserViewModel) {
     return <UserListItem viewModel={viewModel} />;
-  }
-
-  rowCount() {
-    return this.viewModel.members.length;
   }
 }

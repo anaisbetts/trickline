@@ -1,7 +1,11 @@
 import { Observable } from 'rxjs/Observable';
+import { Subscription } from 'rxjs/Subscription';
+
+import { ArrayObserver, splice } from 'observe-js';
 import { ChangeNotification, Model, TypedChangeNotification } from './model';
 import * as isFunction from 'lodash.isfunction';
 import * as isObject from 'lodash.isobject';
+import * as isEqual from 'lodash.isequal';
 
 import * as LRU from 'lru-cache';
 import { Updatable } from './updatable';
@@ -33,7 +37,33 @@ export function whenPropertyInternal(target: any, valueOnly: boolean, ...propsAn
       observableForPropertyChain(target, p).map(x => x.value) :
       observableForPropertyChain(target, p));
 
-  return Observable.combineLatest(...propWatchers, selector).distinctUntilChanged();
+  return Observable.combineLatest(...propWatchers, selector).distinctUntilChanged((x, y) => isEqual(x, y));
+}
+
+export type ArrayChange<T> = { value: T[], splices: splice[] };
+export function whenArray<TSource, TProp>(
+    target: TSource,
+    prop: (t: TSource) => TProp[]): Observable<ArrayChange<TProp>> {
+  return when(target, prop).switchMap(observeArray);
+}
+
+export function observeArray<T>(arr: T[]): Observable<ArrayChange<T>> {
+  if (!arr || !Array.isArray(arr)) return Observable.empty();
+
+  return Observable.create((subj) => {
+    let ao: ArrayObserver;
+
+    try {
+      ao = new ArrayObserver(arr);
+      ao.open((s) => {
+        subj.next({value: arr, splices: s});
+      });
+    } catch (e) {
+      subj.error(e);
+    }
+
+    return new Subscription(() => ao.close());
+  });
 }
 
 export function observableForPropertyChain(target: any, chain: (Array<string> | string | Function), before = false): Observable<ChangeNotification> {
@@ -65,7 +95,7 @@ export function observableForPropertyChain(target: any, chain: (Array<string> | 
   }
 
   if (props.length === 1) {
-    return start.distinctUntilChanged((x, y) => x.value === y.value);
+    return start.distinctUntilChanged((x, y) => isEqual(x.value, y.value));
   }
 
   return start    // target.foo
@@ -78,7 +108,7 @@ export function observableForPropertyChain(target: any, chain: (Array<string> | 
         });
     })
     .switch()
-    .distinctUntilChanged((x, y) => x.value === y.value);
+    .distinctUntilChanged((x, y) => isEqual(x.value, y.value));
 }
 
 export function notificationForProperty(target: any, prop: string, before = false): Observable<ChangeNotification> {
@@ -212,6 +242,17 @@ export function when<TSource, TProp1, TProp2, TProp3, TProp4, TRet>(
     prop3: PropSelector<TSource, TProp3>,
     prop4: PropSelector<TSource, TProp4>,
     sel: ((p1: TProp1, p2: TProp2, p3: TProp3, p4: TProp4) => TRet)):
+  Observable<TRet>;
+
+export function when<TSource, TRet>(
+    target: TSource,
+    prop: string): Observable<TRet>;
+
+export function when<TSource, TProp1, TProp2, TRet>(
+    target: TSource,
+    prop1: string,
+    prop2: string,
+    sel: ((p1: TProp1, p2: TProp2) => TRet)):
   Observable<TRet>;
 
 export function when(target: any, ...propsAndSelector: Array<string|Function|string[]>): Observable<any> {

@@ -6,23 +6,25 @@ import { ChannelViewModel, ChannelListItem } from './channel-list-item';
 import { channelSort, isDM } from './lib/models/slack-api';
 import { CollectionView } from './lib/collection-view';
 import { fromObservable, notify, Model } from './lib/model';
-import { Store, ChannelList } from './lib/store';
+import { Store } from './lib/store';
 import { when } from './lib/when';
+import { Updatable } from './lib/updatable';
 
 @notify('selectedChannel')
 export class ChannelListViewModel extends Model {
   selectedChannel: ChannelBase;
-  @fromObservable channels: ChannelList;
-  @fromObservable orderedChannels: ChannelList;
+  @fromObservable channels: string[];
+  @fromObservable orderedChannels: Updatable<ChannelBase>[];
 
   constructor(public store: Store) {
     super();
 
     store.joinedChannels.toProperty(this, 'channels');
-
     when(this, x => x.channels)
       .map(list => {
-        return (list || [])
+        let ret = Array.from(store.channels.listenMany(list || []).values());
+
+        return ret
           .filter(c => !c.value.is_archived || (isDM(c.value) && c.value.is_open))
           .sort(channelSort);
       })
@@ -31,16 +33,12 @@ export class ChannelListViewModel extends Model {
 }
 
 export class ChannelListView extends CollectionView<ChannelListViewModel, ChannelViewModel> {
-  viewModelFactory(index: number) {
+  viewModelFactory(_item: any, index: number) {
     const channel = this.viewModel.orderedChannels[index];
     return new ChannelViewModel(this.viewModel, channel);
   }
 
   renderItem(viewModel: ChannelViewModel) {
     return <ChannelListItem viewModel={viewModel} />;
-  }
-
-  rowCount() {
-    return this.viewModel.orderedChannels.length;
   }
 }

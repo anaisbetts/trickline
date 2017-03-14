@@ -64,11 +64,7 @@ export class MessagesView extends CollectionView<MessagesViewModel, MessageViewM
     minHeight: 43
   });
 
-  rowCount() {
-    return this.viewModel.messagesCount;
-  }
-
-  viewModelFactory(index: number) {
+  viewModelFactory(_item: any, index: number) {
     const message = this.viewModel.messages[index];
     return new MessageViewModel(this.viewModel.store, this.viewModel.api, message);
   }
