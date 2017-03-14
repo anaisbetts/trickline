@@ -12,7 +12,8 @@ import getMuiTheme from 'material-ui/styles/getMuiTheme';
 import { Action } from './lib/action';
 import { SimpleView } from './lib/view';
 import { fromObservable, Model } from './lib/model';
-import { Store, NaiveStore } from './lib/store';
+import { Store } from './lib/store';
+import { DexieStore } from './lib/dexie-store';
 import { handleRtmMessagesForStore, connectToRtm, fetchInitialChannelList } from './lib/store-network';
 
 import { ChannelHeaderViewModel, ChannelHeaderView } from './channel-header';
@@ -62,7 +63,7 @@ export class SlackAppModel extends Model {
     const tokenSource = process.env.SLACK_API_TOKEN || window.localStorage.getItem('token') || '';
     const tokens = tokenSource.indexOf(',') >= 0 ? tokenSource.split(',') : [tokenSource];
 
-    this.store = new NaiveStore(tokens);
+    this.store = new DexieStore(tokens);
     this.channelList = new ChannelListViewModel(this.store);
     this.channelHeader = new ChannelHeaderViewModel(this.store, this.channelList);
 
@@ -75,9 +76,9 @@ export class SlackAppModel extends Model {
       .toProperty(this, 'messagesViewModel');
 
     const rtmSub = new SerialSubscription();
-    rtmSub.set(handleRtmMessagesForStore(connectToRtm(this.store.api), this.store.write));
+    //rtmSub.set(handleRtmMessagesForStore(connectToRtm(this.store.api), this.store));
 
-    this.loadInitialState = new Action<void>(() => fetchInitialChannelList(this.store.write), undefined);
+    this.loadInitialState = new Action<void>(() => fetchInitialChannelList(this.store), undefined);
   }
 }
 
