@@ -23,20 +23,28 @@ export type MessageCollection = Range<string> & {
   api: Api;
 };
 
-export interface StoreAsWritable {
-  channels: SparseMap<string, ChannelBase>;
-  users: SparseMap<string, User>;
-  messages: SparseMap<MessagesKey, MessageCollection>;
-  keyValueStore: SparseMap<string, any>;
-}
+export type ModelType =
+  'user' | 'channel' | 'event';
 
-export interface Store extends StoreAsWritable {
+
+export interface Store {
   api: Api[];
   events: SparseMap<EventType, Message>;
   joinedChannels: ArrayUpdatable<string>;
 
-  readonly write: StoreAsWritable;
+  channels: SparseMap<string, ChannelBase>;
+  users: SparseMap<string, User>;
+  messages: SparseMap<MessagesKey, MessageCollection>;
+  keyValueStore: SparseMap<string, any>;
+
+  saveModelToStore(type: ModelType, value: any, api: Api): void;
+  setKeyInStore(key: string, value: any): void;
 }
+
+const modelTypeToSparseMap = {
+  'channel': 'channels',
+  'user': 'users',
+};
 
 export class NaiveStore implements Store {
   api: Api[];
@@ -72,5 +80,11 @@ export class NaiveStore implements Store {
     this.keyValueStore = new InMemorySparseMap<string, any>();
   }
 
-  get write() { return this; }
+  saveModelToStore(type: ModelType, value: any, api: Api): void {
+    this[modelTypeToSparseMap[type]].listen(value.id, api).next(value);
+  }
+
+  setKeyInStore(key: string, value: any): void {
+    this.keyValueStore.listen(key).next(value);
+  }
 }

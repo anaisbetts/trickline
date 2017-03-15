@@ -2,9 +2,9 @@ import { Observable } from 'rxjs/Observable';
 import { Subscription } from 'rxjs/Subscription';
 
 import { Api, infoApiForChannel } from './models/slack-api';
-import { ChannelBase, User, UsersCounts, Message } from './models/api-shapes';
+import { UsersCounts, Message } from './models/api-shapes';
 import { EventType } from './models/event-type';
-import { StoreAsWritable, Store } from './store';
+import { Store } from './store';
 
 import 'rxjs/add/observable/dom/webSocket';
 import './standard-operators';
@@ -16,46 +16,44 @@ import './custom-operators';
 
 export async function fetchInitialChannelList(store: Store): Promise<void> {
   let channelList = await Observable.from(store.api)
-    .flatMap(x => fetchSingleInitialChannelList(store.write, x))
+    .flatMap(x => fetchSingleInitialChannelList(store, x))
     .reduce((acc, x) => { acc.push(...x); return acc; }, [])
     .toPromise();
 
   store.joinedChannels.next(channelList);
 }
 
-async function fetchSingleInitialChannelList(store: StoreAsWritable, api: Api): Promise<string[]> {
+async function fetchSingleInitialChannelList(store: Store, api: Api): Promise<string[]> {
   const joinedChannels: string[] = [];
 
   const result: UsersCounts = await api.users.counts({ simple_unreads: true }).toPromise();
 
   result.channels.forEach((c) => {
-    store.channels.setDirect(c.id, makeUpdatableForModel(store, c, api));
+    c.api = api;
+
+    store.saveModelToStore('channel', c, api);
     joinedChannels.push(c.id);
   });
 
   result.groups.forEach((g) => {
-    store.channels.setDirect(g.id, makeUpdatableForModel(store, g, api));
+    g.api = api;
+
+    store.saveModelToStore('channel', g, api);
     joinedChannels.push(g.id);
   });
 
   result.ims.forEach((dm) => {
-    store.channels.setDirect(dm.id, makeUpdatableForModel(store, dm, api));
+    dm.api = api;
+
+    store.saveModelToStore('channel', dm, api);
     joinedChannels.push(dm.id);
   });
 
   return joinedChannels;
 }
 
-function makeUpdatableForModel(store: StoreAsWritable, model: ChannelBase & Api, api: Api) {
-  model.api = api;
-
-  const updater = store.channels.listen(model.id, api);
-  updater.next(model);
-  return updater;
-}
-
-export function updateChannelToLatest(store: StoreAsWritable, id: string, api: Api) {
-  store.channels.listen(id).nextAsync(infoApiForChannel(id, api));
+export async function updateChannelToLatest(store: Store, id: string, api: Api) {
+  store.saveModelToStore('channel', await infoApiForChannel(id, api), api);
 }
 
 /*
@@ -73,14 +71,17 @@ export function handleRtmMessagesForStore(rtm: Observable<Message>, store: Store
   // Play user updates onto the user store
   ret.add(store.events.listen('user_change')
     .skip(1)
-    .subscribe(msg => store.write.users.listen((msg.user! as User).id, msg.api).next(msg.user as User)));
+    .subscribe(msg => store.saveModelToStore('user', msg.user, msg.api)));
 
   // Subscribe to Flannel annotations
   ret.add(store.events.listen('message')
     .filter(x => x && x.annotations)
     .subscribe(msg => {
       Object.keys(msg.annotations).forEach(id => {
-        store.write.users.listen(id, msg.api).next(msg.annotations[id]);
+        let u = msg.annotations[id];
+        u.id = id; u.api = msg.api;
+
+        store.saveModelToStore('user', u, msg.api);
       });
     }));
 
@@ -93,13 +94,14 @@ export function handleRtmMessagesForStore(rtm: Observable<Message>, store: Store
   ).skip(3);
 
   ret.add(somethingMarked.guaranteedThrottle(3000)
-    .subscribe(x => fetchSingleInitialChannelList(store.write, x.api)));
+    .subscribe(x => fetchSingleInitialChannelList(store, x.api)));
 
   // Here, msg.channel is a channel object
   let channelChange: EventType[] = ['channel_joined', 'channel_rename', 'group_joined', 'group_rename'];
   ret.add(Observable.merge(...channelChange.map(x => store.events.listen(x).skip(1)))
     .subscribe(x => {
-      store.write.channels.listen(x.channel.id, x.api).next(x.channel);
+      x.channel.api = msg.api;
+      store.saveModelToStore('channel', x.channel, msg.api);
 
       // NB: This is slow and dumb
       let idx = store.joinedChannels.value.indexOf(x.channel.id);
