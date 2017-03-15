@@ -10,6 +10,7 @@ import { SparseMap, InMemorySparseMap } from './sparse-map';
 import { ChannelBase, User, Message } from './models/api-shapes';
 import { EventType } from './models/event-type';
 import { Pair } from './utils';
+import { asyncMap } from "./promise-extras";
 
 const VERSION = 1;
 
@@ -18,13 +19,20 @@ export interface DeferredPutItem<T> {
   completion: AsyncSubject<void>;
 }
 
+export interface DeferredGetItem<T, TKey> {
+  key: TKey;
+  completion: AsyncSubject<T>;
+}
+
 declare module 'dexie' {
   module Dexie {
     interface Table<T, Key> {
       deferredPut: ((item: T) => Promise<void>);
-      idleHandle: number | null;
-      deferredItems: DeferredPutItem<T>[];
-      getOrEmpty: ((key: Key) => Observable<T>);
+      deferredGet: ((key: Key, database: Dexie) => Promise<T>);
+      idlePutHandle: number | null;
+      idleGetHandle: number | null;
+      deferredPuts: DeferredPutItem<T>[];
+      deferredGets: DeferredGetItem<T, Key>[];
     }
   }
 }
@@ -34,8 +42,11 @@ function deferredPut<T, Key>(this: Dexie.Table<T, Key>, item: T): Promise<void> 
 
   let createIdle = () => window.requestIdleCallback(deadline => {
     while (deadline.timeRemaining() > 5/*ms*/) {
-      let itemsToAdd = this.deferredItems;
-      this.deferredItems = itemsToAdd.splice(128);
+      // TODO: This would be cooler if it recognized duplicate IDs and threw out the older
+      // one (i.e. you update channel.topic and channel.name in the same batch, so we really
+      // only need to write the newer one)
+      let itemsToAdd = this.deferredPuts;
+      this.deferredPuts = itemsToAdd.splice(128);
 
       let toPut = itemsToAdd.map(x => {
         let ret = Object.assign({}, x.item);
@@ -47,21 +58,53 @@ function deferredPut<T, Key>(this: Dexie.Table<T, Key>, item: T): Promise<void> 
         return ret;
       });
 
+      // XXX: This is unbounded concurrency!
       this.bulkPut(toPut);
       itemsToAdd.forEach(x => { x.completion.next(undefined); x.completion.complete(); });
     }
 
-    if (this.deferredItems.length) {
-      this.idleHandle = createIdle();
+    if (this.deferredPuts.length) {
+      this.idlePutHandle = createIdle();
     } else {
-      this.idleHandle = null;
+      this.idlePutHandle = null;
     }
   });
 
-  this.deferredItems = this.deferredItems || [];
-  this.deferredItems.push(newItem);
-  if (!this.idleHandle) {
-    this.idleHandle = createIdle();
+  this.deferredPuts = this.deferredPuts || [];
+  this.deferredPuts.push(newItem);
+  if (!this.idlePutHandle) {
+    this.idlePutHandle = createIdle();
+  }
+
+  return newItem.completion.toPromise();
+}
+
+function deferredGet<T, Key>(this: Dexie.Table<T, Key>, key: Key, database: Dexie): Promise<T> {
+  let newItem = { key, completion: new AsyncSubject<T>() };
+
+  let createIdle = () => window.requestAnimationFrame(async () => {
+    let itemsToGet = this.deferredGets;
+    this.deferredGets = [];
+
+    try {
+      await database.transaction('r', this, () => {
+        return asyncMap(itemsToGet, (x) => {
+          return this.get(x.key).then(result => {
+            x.completion.next(result!);
+            x.completion.complete();
+          }, (e: Error) => x.completion.error(e));
+        }, 32);
+      });
+    } finally {
+      this.idleGetHandle = null;
+    }
+  });
+
+  this.deferredGets = this.deferredGets || [];
+  this.deferredGets.push(newItem);
+
+  if (!this.idleGetHandle) {
+    this.idleGetHandle = createIdle();
   }
 
   return newItem.completion.toPromise();
@@ -82,6 +125,7 @@ export class DataModel extends Dexie {
     });
 
     Object.getPrototypeOf(this.users).deferredPut = deferredPut;
+    Object.getPrototypeOf(this.users).deferredGet = deferredGet;
   }
 }
 
@@ -110,7 +154,7 @@ export class DexieStore implements Store {
     this.database.open();
 
     this.channels = new InMemorySparseMap<string, ChannelBase>(async (id, api) => {
-      let ret = await this.database.channels.get(id);
+      let ret = await this.database.channels.deferredGet(id, this.database);
       if (ret) {
         if (ret.token) {
           ret.api = this.apiTokenMap.get(ret.api);
@@ -127,7 +171,7 @@ export class DexieStore implements Store {
     }, 'merge');
 
     this.users = new InMemorySparseMap<string, User>(async (id, api) => {
-      let ret = await this.database.users.get(id);
+      let ret = await this.database.users.deferredGet(id, this.database);
       if (ret) {
         if (ret.token) {
           ret.api = this.apiTokenMap.get(ret.api);
@@ -154,6 +198,11 @@ export class DexieStore implements Store {
         };
       });
     }, 'merge');
+
+    this.keyValueStore = new InMemorySparseMap<string, any>(async (key: string) => {
+      let ret = await this.database.keyValues.deferredGet(key, this.database);
+      return ret ? JSON.parse(ret.Value) : null;
+    });
 
     this.events = new InMemorySparseMap<EventType, Message>();
     this.joinedChannels = new ArrayUpdatable<string>();
