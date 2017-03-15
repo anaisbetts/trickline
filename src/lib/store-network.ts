@@ -53,7 +53,7 @@ async function fetchSingleInitialChannelList(store: Store, api: Api): Promise<st
 }
 
 export async function updateChannelToLatest(store: Store, id: string, api: Api) {
-  store.saveModelToStore('channel', await infoApiForChannel(id, api), api);
+  store.saveModelToStore('channel', await (infoApiForChannel(id, api).toPromise()), api);
 }
 
 /*
