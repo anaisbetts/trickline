@@ -22,8 +22,10 @@ export class ChannelListViewModel extends Model {
     store.joinedChannels.toProperty(this, 'channels');
     when(this, x => x.channels)
       .flatMap(async list => {
-        let updatables = await store.channels.getMany(list || []);
-        return Array.from(updatables.values());
+        let updatables = Array.from(store.channels.listenMany(list || []).values());
+        await Promise.all(updatables.map(x => x.get()));
+
+        return updatables;
       })
       .map(list => {
         return list

@@ -126,6 +126,10 @@ export class Updatable<T> extends Subject<T> {
     super.unsubscribe();
     this._innerSub.unsubscribe();
   }
+
+  get(): Promise<T> {
+    return this.take(1).toPromise();
+  }
 }
 
 export class ArrayUpdatable<T> extends Updatable<T[]> {

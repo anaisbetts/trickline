@@ -51,7 +51,7 @@ export class ChannelHeaderViewModel extends Model {
     // NB: This works but it's too damn clever
     this.innerDisp.add(when(this, x => x.channelInfo)
       .filter(x => !!x)
-      .subscribe(x => updateChannelToLatest(this.store.write, x.id, x.api)));
+      .subscribe(x => updateChannelToLatest(this.store, x.id, x.api)));
 
     when(this, x => x.channelInfo.members)
       .startWith([])

@@ -12,7 +12,7 @@ import getMuiTheme from 'material-ui/styles/getMuiTheme';
 import { Action } from './lib/action';
 import { SimpleView } from './lib/view';
 import { fromObservable, Model } from './lib/model';
-import { Store } from './lib/store';
+import { Store, NaiveStore } from './lib/store';
 import { DexieStore } from './lib/dexie-store';
 import { handleRtmMessagesForStore, connectToRtm, fetchInitialChannelList } from './lib/store-network';
 
@@ -63,7 +63,7 @@ export class SlackAppModel extends Model {
     const tokenSource = process.env.SLACK_API_TOKEN || window.localStorage.getItem('token') || '';
     const tokens = tokenSource.indexOf(',') >= 0 ? tokenSource.split(',') : [tokenSource];
 
-    this.store = new DexieStore(tokens);
+    this.store = new NaiveStore(tokens);
     this.channelList = new ChannelListViewModel(this.store);
     this.channelHeader = new ChannelHeaderViewModel(this.store, this.channelList);
 
