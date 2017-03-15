@@ -6,7 +6,7 @@ import Dexie from 'dexie';
 import { Store, MessagesKey, MessageCollection, ModelType } from './store';
 import { Api, createApi, infoApiForChannel } from './models/slack-api';
 import { ArrayUpdatable } from './updatable';
-import { SparseMap, InMemorySparseMap, LRUSparseMap } from './sparse-map';
+import { SparseMap, InMemorySparseMap } from './sparse-map';
 import { ChannelBase, User, Message } from './models/api-shapes';
 import { EventType } from './models/event-type';
 import { Pair } from './utils';

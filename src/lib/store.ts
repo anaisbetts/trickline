@@ -26,7 +26,6 @@ export type MessageCollection = Range<string> & {
 export type ModelType =
   'user' | 'channel' | 'event';
 
-
 export interface Store {
   api: Api[];
   events: SparseMap<EventType, Message>;
