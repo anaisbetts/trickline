@@ -15,6 +15,12 @@ import './custom-operators';
  */
 
 export async function fetchInitialChannelList(store: Store): Promise<void> {
+  let storedChannels = await store.keyValueStore.get('joinedChannels') as string[];
+
+  if (storedChannels) {
+    store.joinedChannels.next(storedChannels);
+  }
+
   let channelList = await Observable.from(store.api)
     .flatMap(x => fetchSingleInitialChannelList(store, x))
     .reduce((acc, x) => { acc.push(...x); return acc; }, [])
@@ -49,6 +55,7 @@ async function fetchSingleInitialChannelList(store: Store, api: Api): Promise<st
     joinedChannels.push(dm.id);
   });
 
+  store.setKeyInStore('joinedChannels', joinedChannels);
   return joinedChannels;
 }
 
