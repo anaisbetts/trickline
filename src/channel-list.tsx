@@ -21,10 +21,14 @@ export class ChannelListViewModel extends Model {
 
     store.joinedChannels.toProperty(this, 'channels');
     when(this, x => x.channels)
-      .map(list => {
-        let ret = Array.from(store.channels.listenMany(list || []).values());
+      .flatMap(async list => {
+        let updatables = Array.from(store.channels.listenMany(list || []).values());
+        await Promise.all(updatables.map(x => x.get()));
 
-        return ret
+        return updatables;
+      })
+      .map(list => {
+        return list
           .filter(c => !c.value.is_archived || (isDM(c.value) && c.value.is_open))
           .sort(channelSort);
       })

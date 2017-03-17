@@ -55,7 +55,6 @@ export class MessageViewModel extends Model {
 
     Observable.of(message).toProperty(this, 'model');
 
-    // XXX: This is a memory leak! UserViewModel binds to Store but never gets freed
     when(this, x => x.model)
       .map(model => new UserViewModel(this.store, model.user as string, api))
       .toProperty(this, 'user');

@@ -13,6 +13,7 @@ import { Action } from './lib/action';
 import { SimpleView } from './lib/view';
 import { fromObservable, Model } from './lib/model';
 import { Store, NaiveStore } from './lib/store';
+import { DexieStore } from './lib/dexie-store';
 import { handleRtmMessagesForStore, connectToRtm, fetchInitialChannelList } from './lib/store-network';
 
 import { ChannelHeaderViewModel, ChannelHeaderView } from './channel-header';
@@ -62,7 +63,7 @@ export class SlackAppModel extends Model {
     const tokenSource = process.env.SLACK_API_TOKEN || window.localStorage.getItem('token') || '';
     const tokens = tokenSource.indexOf(',') >= 0 ? tokenSource.split(',') : [tokenSource];
 
-    this.store = new NaiveStore(tokens);
+    this.store = new DexieStore(tokens);
     this.channelList = new ChannelListViewModel(this.store);
     this.channelHeader = new ChannelHeaderViewModel(this.store, this.channelList);
 
@@ -91,6 +92,11 @@ export class SlackApp extends SimpleView<SlackAppModel> {
       const mainProcess = createProxyForRemote(null);
       this.takeHeapshot().then(() => mainProcess.tracingControl.stopTracing(true));
     }
+
+    when(this, x => x.viewModel.channelList.selectedChannel)
+      .skip(1)
+      .filter(() => this.viewModel.isDrawerOpen && window.outerWidth < window.outerHeight)
+      .subscribe(() => this.viewModel.channelHeader.toggleDrawer.execute());
   }
 
   async takeHeapshot() {
