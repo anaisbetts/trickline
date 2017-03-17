@@ -118,9 +118,10 @@ export class DataModel extends Dexie {
     super('SparseMap');
 
     this.version(VERSION).stores({
-      users: 'id,name,real_name,color,profile',
-      channels: 'id,name,is_starred,unread_count_display,mention_count,dm_count,user,topic,purpose',
-      keyValues: 'Key,Value'
+      users: 'id',
+      channels: 'id',
+      keyValues: 'Key',
+      messages: '++,channel,ts'
     });
 
     Object.getPrototypeOf(this.users).deferredPut = deferredPut;
