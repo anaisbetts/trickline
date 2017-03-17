@@ -92,6 +92,11 @@ export class SlackApp extends SimpleView<SlackAppModel> {
       const mainProcess = createProxyForRemote(null);
       this.takeHeapshot().then(() => mainProcess.tracingControl.stopTracing(true));
     }
+
+    when(this, x => x.viewModel.channelList.selectedChannel)
+      .skip(1)
+      .filter(() => this.viewModel.isDrawerOpen && window.outerWidth < window.outerHeight)
+      .subscribe(() => this.viewModel.channelHeader.toggleDrawer.execute());
   }
 
   async takeHeapshot() {
