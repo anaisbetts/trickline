@@ -1,4 +1,3 @@
-import { Observable } from 'rxjs/Observable';
 import { AsyncSubject } from 'rxjs/AsyncSubject';
 
 import Dexie from 'dexie';
@@ -10,7 +9,7 @@ import { SparseMap, InMemorySparseMap } from './sparse-map';
 import { ChannelBase, User, Message } from './models/api-shapes';
 import { EventType } from './models/event-type';
 import { Pair } from './utils';
-import { asyncMap } from "./promise-extras";
+import { asyncMap } from './promise-extras';
 
 const VERSION = 1;
 
