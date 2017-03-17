@@ -95,7 +95,12 @@ export function fromObservable(target: Model, propertyKey: string): void {
             d(`Observable for ${propertyKey} completed!`);
           }));
 
-        this[subPropertyKey].add(() => this[obsPropertyKey] = null);
+        this[subPropertyKey].add(() => {
+          if (this[valPropertyKey] instanceof Model) this[valPropertyKey].unsubscribe();
+          this[obsPropertyKey] = null;
+          this[valPropertyKey] = null;
+        });
+
         this.innerDisp.add(this[subPropertyKey]);
       }
 
