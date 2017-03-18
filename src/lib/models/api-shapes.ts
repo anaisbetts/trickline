@@ -1,6 +1,8 @@
 import { EventType, EventSubType } from './event-type';
 import { Api } from './slack-api';
 
+export type MsgTimestamp = number;
+
 export interface ChannelBase {
   id: string;
   name: string;
@@ -71,7 +73,7 @@ export interface Message {
   type: EventType;
   subtype: EventSubType;
   hidden: boolean;
-  ts: string;
+  ts: MsgTimestamp;
   channel: string;
 
   /**
