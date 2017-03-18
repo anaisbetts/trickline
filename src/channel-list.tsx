@@ -3,7 +3,7 @@ import * as React from 'react';
 
 import { ChannelBase } from './lib/models/api-shapes';
 import { ChannelViewModel, ChannelListItem } from './channel-list-item';
-import { channelSort, isDM } from './lib/models/slack-api';
+import { channelSort, isChannel, isDM } from './lib/models/slack-api';
 import { CollectionView } from './lib/collection-view';
 import { fromObservable, notify, Model } from './lib/model';
 import { Store } from './lib/store';
@@ -29,7 +29,13 @@ export class ChannelListViewModel extends Model {
       })
       .map(list => {
         return list
-          .filter(c => !c.value.is_archived || (isDM(c.value) && c.value.is_open))
+          .filter(c => {
+            if (isChannel(c.value)) {
+              return !c.value.is_archived;
+            } else if (isDM(c.value)) {
+              return c.value.is_open;
+            }
+          })
           .sort(channelSort);
       })
       .toProperty(this, 'orderedChannels');
