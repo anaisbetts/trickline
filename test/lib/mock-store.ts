@@ -3,7 +3,7 @@ import { ArrayUpdatable } from '../../src/lib/updatable';
 import { ChannelBase, Message, User } from '../../src/lib/models/api-shapes';
 import { EventType } from '../../src/lib/models/event-type';
 import { SparseMap, InMemorySparseMap } from '../../src/lib/sparse-map';
-import { Store, MessagesKey, MessageCollection } from '../../src/lib/store';
+import { Store, ModelType, MessagesKey, MessageCollection } from '../../src/lib/store';
 
 export interface MockStoreSeedData {
   channels?: { [key: string]: ChannelBase };
@@ -40,4 +40,7 @@ export class MockStore implements Store {
         Promise.reject(`Missing joined channels`);
     });
   }
+
+  saveModelToStore(_type: ModelType, _value: any, _api: Api): void { } // tslint:disable-line
+  setKeyInStore(_key: string, _value: any): void { } // tslint:disable-line
 }
