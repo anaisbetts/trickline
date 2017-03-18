@@ -1,10 +1,10 @@
 import { expect } from './support';
-import { createMockStore } from './lib/mock-store';
+import { MockStore } from './lib/mock-store';
 import { Store } from '../src/lib/store';
 import { User, Profile } from '../src/lib/models/api-shapes';
 import { UserViewModel } from '../src/user-list-item';
 
-const storeData: { [key: string]: User } = {
+const users: { [key: string]: User } = {
   jamesFranco: {
     id: 'jamesFranco',
     name: 'franco',
@@ -16,11 +16,11 @@ const storeData: { [key: string]: User } = {
 };
 
 describe('the UserViewModel', () => {
-  let store: Store, userKey: string, fixture: UserViewModel;
+  let store: Store, fixture: UserViewModel;
 
   beforeEach(() => {
-    store = createMockStore(storeData);
-    userKey = Object.keys(storeData)[0];
+    const userKey = Object.keys(users)[0];
+    store = new MockStore({ users });
     fixture = new UserViewModel(store, userKey, null);
   });
 
