@@ -1,21 +1,43 @@
-import { RecursiveProxyHandler } from 'electron-remote';
+import { Api } from '../../src/lib/models/slack-api';
+import { ArrayUpdatable } from '../../src/lib/updatable';
+import { ChannelBase, Message, User } from '../../src/lib/models/api-shapes';
+import { EventType } from '../../src/lib/models/event-type';
+import { SparseMap, InMemorySparseMap } from '../../src/lib/sparse-map';
+import { Store, MessagesKey, MessageCollection } from '../../src/lib/store';
 
-import { Store } from '../../src/lib/store';
-import { Updatable } from '../../src/lib/updatable';
-import { ChannelBase, User } from '../../src/lib/models/api-shapes';
+export interface MockStoreSeedData {
+  channels?: { [key: string]: ChannelBase };
+  users?: { [key: string]: User };
+  joinedChannels?: Array<string>;
+}
 
-export function createMockStore(seedData: any): Store {
-  return RecursiveProxyHandler.create('mockStore', (names: Array<string>, params: Array<any>) => {
-    const id = params[0];
-    const model = seedData[id];
+export class MockStore implements Store {
+  api: Api[];
 
-    switch (names[1]) {
-      case 'channels':
-        return new Updatable<ChannelBase>(() => Promise.resolve(model));
-      case 'users':
-        return new Updatable<User>(() => Promise.resolve(model));
-      default:
-        throw new Error(`${names[1]} not yet implemented in MockStore`);
-    }
-  });
+  channels: SparseMap<string, ChannelBase>;
+  users: SparseMap<string, User>;
+  messages: SparseMap<MessagesKey, MessageCollection>;
+  events: SparseMap<EventType, Message>;
+  joinedChannels: ArrayUpdatable<string>;
+  keyValueStore: SparseMap<string, any>;
+
+  constructor(seedData: MockStoreSeedData) {
+    this.channels = new InMemorySparseMap((id: string) => {
+      return seedData.channels ?
+        Promise.resolve(seedData.channels[id]) :
+        Promise.reject(`No channel for ${id}`);
+    });
+
+    this.users = new InMemorySparseMap((id: string) => {
+      return seedData.users ?
+        Promise.resolve(seedData.users[id]) :
+        Promise.reject(`No user for ${id}`);
+    });
+
+    this.joinedChannels = new ArrayUpdatable<string>(() => {
+      return seedData.joinedChannels ?
+        Promise.resolve(seedData.joinedChannels) :
+        Promise.reject(`Missing joined channels`);
+    });
+  }
 }
