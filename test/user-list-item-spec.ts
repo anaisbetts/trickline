@@ -3,6 +3,7 @@ import { MockStore } from './lib/mock-store';
 import { Store } from '../src/lib/store';
 import { User, Profile } from '../src/lib/models/api-shapes';
 import { UserViewModel } from '../src/user-list-item';
+import { waitForPropertyChange } from './support';
 
 const users: { [key: string]: User } = {
   jamesFranco: {
@@ -26,7 +27,7 @@ describe('the UserViewModel', () => {
 
   it('should use a default profile image until it retrieves the user', async () => {
     expect(fixture.profileImage.match(/default-avatar/)).to.be.ok;
-    await fixture.changed.take(1).toPromise();
+    await waitForPropertyChange(fixture);
     expect(fixture.profileImage.match(/james_franco/)).to.be.ok;
   });
 });

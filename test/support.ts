@@ -37,3 +37,10 @@ export class TestClass extends Model {
 }
 
 export const {expect, assert} = chai;
+
+export async function waitForPropertyChange(viewModel: Model, propName?: string) {
+  await viewModel.changed
+    .filter(({ property }) => propName ? property === propName : true)
+    .take(1)
+    .toPromise();
+}
