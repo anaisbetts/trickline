@@ -1,6 +1,7 @@
 import { SparseMap, InMemorySparseMap } from './sparse-map';
-import { Api, createApi, infoApiForChannel } from './models/slack-api';
-import { ChannelBase, Message, User } from './models/api-shapes';
+import { Api, createApi, infoApiForChannel, userForId, fetchSingleMessage } from './models/slack-api';
+import { ChannelBase, Message, User, MsgTimestamp } from './models/api-shapes';
+import { fetchMessagePageForChannel } from './store-network';
 import { EventType } from './models/event-type';
 import { ArrayUpdatable } from './updatable';
 
@@ -13,9 +14,14 @@ export interface Range<T> {
   latest: T;
 }
 
-export interface MessagesKey {
+export interface MessageKey {
   channel: string;
-  latest?: string;
+  timestamp: MsgTimestamp;
+}
+
+export interface MessagePageKey {
+  channel: string;
+  page: number;
 }
 
 export type MessageCollection = Range<string> & {
@@ -24,7 +30,7 @@ export type MessageCollection = Range<string> & {
 };
 
 export type ModelType =
-  'user' | 'channel' | 'event';
+  'user' | 'channel' | 'event' | 'message';
 
 export interface Store {
   api: Api[];
@@ -33,8 +39,9 @@ export interface Store {
 
   channels: SparseMap<string, ChannelBase>;
   users: SparseMap<string, User>;
-  messages: SparseMap<MessagesKey, MessageCollection>;
   keyValueStore: SparseMap<string, any>;
+  messages: SparseMap<MessageKey, Message>;
+  messagePages: SparseMap<MessagePageKey, MessageKey[]>;
 
   saveModelToStore(type: ModelType, value: any, api: Api): void;
   setKeyInStore(key: string, value: any): void;
@@ -43,6 +50,7 @@ export interface Store {
 const modelTypeToSparseMap = {
   'channel': 'channels',
   'user': 'users',
+  'message': 'messages',
 };
 
 export class NaiveStore implements Store {
@@ -51,7 +59,8 @@ export class NaiveStore implements Store {
   joinedChannels: ArrayUpdatable<string>;
   channels: SparseMap<string, ChannelBase>;
   users: SparseMap<string, User>;
-  messages: SparseMap<MessagesKey, MessageCollection>;
+  messages: SparseMap<MessageKey, Message>;
+  messagePages: SparseMap<MessagePageKey, MessageKey[]>;
   events: SparseMap<EventType, Message>;
   keyValueStore: SparseMap<string, any>;
 
@@ -60,19 +69,14 @@ export class NaiveStore implements Store {
 
     this.channels = new InMemorySparseMap((id: string, api: Api) => infoApiForChannel(id, api).toPromise(), 'merge');
     this.users = new InMemorySparseMap<string, User>(
-      (user: string, api: Api) => api.users.info({user}).map((x: any) => x.user! as User).toPromise(),
+      (user: string, api: Api) => userForId(user, api).toPromise(),
       'merge');
 
-    this.messages = new InMemorySparseMap<MessagesKey, MessageCollection>((key: MessagesKey, api: Api) => {
-      return api.channels.history(key).map(({ messages }: { messages: Array<Message> }) => {
-        return {
-          latest: messages[0].ts,
-          oldest: messages[messages.length - 1].ts,
-          messages,
-          api
-        };
-      });
-    }, 'merge');
+    this.messages = new InMemorySparseMap<MessageKey, Message>(
+      (key: MessageKey, api) => fetchSingleMessage(key.channel, key.timestamp, api).toPromise(), 'merge');
+
+    this.messagePages = new InMemorySparseMap<MessagePageKey, MessageKey[]>(
+      (k, api) => fetchMessagePageForChannel(this, k.channel, k.page, api));
 
     this.events = new InMemorySparseMap<EventType, Message>();
     this.joinedChannels = new ArrayUpdatable<string>();

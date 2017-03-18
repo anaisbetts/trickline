@@ -1,10 +1,10 @@
 import { Observable } from 'rxjs/Observable';
 import { Subscription } from 'rxjs/Subscription';
 
-import { Api, infoApiForChannel } from './models/slack-api';
+import { Api, infoApiForChannel, fetchMessagesForPage } from './models/slack-api';
 import { UsersCounts, Message } from './models/api-shapes';
 import { EventType } from './models/event-type';
-import { Store } from './store';
+import { Store, MessageKey } from './store';
 
 import 'rxjs/add/observable/dom/webSocket';
 import './standard-operators';
@@ -61,6 +61,13 @@ async function fetchSingleInitialChannelList(store: Store, api: Api): Promise<st
 
 export async function updateChannelToLatest(store: Store, id: string, api: Api) {
   store.saveModelToStore('channel', await (infoApiForChannel(id, api).toPromise()), api);
+}
+
+export async function fetchMessagePageForChannel(store: Store, channel: string, page: number, api: Api): Promise<MessageKey[]> {
+  let result = await fetchMessagesForPage(channel, page, api).toPromise();
+  result.forEach(msg => store.saveModelToStore('message', msg, api));
+
+  return result.map(x => ({ channel, timestamp: x.ts }));
 }
 
 /*

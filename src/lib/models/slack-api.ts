@@ -123,7 +123,6 @@ export function isDM(channel: ChannelBase|string): boolean {
     !!channel.id && channel.id[0] === 'D';
 }
 
-
 export function tsToTimestamp(ts: string): MsgTimestamp {
   return parseInt(ts.replace('.', ''));
 }
@@ -147,6 +146,7 @@ export function fetchSingleMessage(channel: string, timestamp: MsgTimestamp, api
     channel, latest: ts, inclusive: true, count: 1
   }).map((x: any) => {
     let m = x.messages[0] as Message;
+    m.channel = channel;
     m.api = api; m.ts = tsToTimestamp(ts);
     return m;
   });
@@ -164,6 +164,7 @@ async function fetchMessagesForPageAsync(channel: string, page: number, api: Api
 
     acc = acc.concat(result.messages.map(x => {
       x.api = api;
+      x.chanel = channel;
       x.ts = tsToTimestamp(x.ts);
       return x;
     }));
