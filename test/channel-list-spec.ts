@@ -8,26 +8,30 @@ import { waitForPropertyChange } from './support';
 const channels: { [key: string]: ChannelBase } = {
   C1971: {
     id: 'C1971',
-    name: 'A Clockwork Orange'
+    name: 'the-shining'
+  },
+  C1999: {
+    id: 'C1999',
+    name: 'eyes-wide-shut'
   },
   C1968: {
     id: 'C1968',
-    name: '2001: A Space Odyssey',
+    name: '2001-a-space-odyssey',
     is_archived: true
   },
   D1987: {
     id: 'D1987',
-    name: 'Full Metal Jacket',
+    name: 'full-metal-jacket',
     is_open: false
   },
   D1980: {
     id: 'D1980',
-    name: 'The Shining',
+    name: 'a-clockwork-orange',
     is_open: true
   }
 } as any;
 
-const joinedChannels: Array<string> = ['C1971', 'C1968', 'D1987', 'D1980'];
+const joinedChannels: Array<string> = ['C1971', 'C1999', 'C1968', 'D1987', 'D1980'];
 
 describe('the ChannelListViewModel', () => {
   let store: Store, fixture: ChannelListViewModel;
@@ -40,6 +44,20 @@ describe('the ChannelListViewModel', () => {
   it('should filter archived channels and closed DMs', async () => {
     expect(fixture.orderedChannels).to.be.empty;
     await waitForPropertyChange(fixture, 'orderedChannels');
-    expect(fixture.orderedChannels.length).to.equal(2);
+    expect(fixture.orderedChannels.length).to.equal(3);
+  });
+
+  it('should sort channels by name, and all DMs below channels', async () => {
+    await waitForPropertyChange(fixture, 'orderedChannels');
+    expect(fixture.orderedChannels[0].value.name).to.equal('eyes-wide-shut');
+    expect(fixture.orderedChannels[1].value.name).to.equal('the-shining');
+    expect(fixture.orderedChannels[2].value.name).to.equal('a-clockwork-orange');
+  });
+
+  it('should update based on joined channels', async () => {
+    await waitForPropertyChange(fixture, 'orderedChannels');
+    store.joinedChannels.next(joinedChannels.slice(2));
+    await waitForPropertyChange(fixture, 'orderedChannels');
+    expect(fixture.orderedChannels.length).to.equal(1);
   });
 });
