@@ -37,8 +37,9 @@ export class TestClass extends Model {
   }
 }
 
-before(() => {
+before(function() {
   // NB: We do this so that coverage is more accurate
+  this.timeout(30 * 1000);
   require('../src/slack-app');
 });
 
