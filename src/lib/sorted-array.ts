@@ -5,6 +5,8 @@ export interface SortedArrayOpts {
   resume?: boolean;
 }
 
+/* This code is based on https://github.com/shinout/SortedList, licenced under the MIT license */
+
 export class SortedArray<T> extends Array<T> {
   private readonly _filter: Function;
   private readonly _compare: Function;
@@ -62,7 +64,7 @@ export class SortedArray<T> extends Array<T> {
     return pos + 1;
   };
 
-  insert() {
+  insert(..._vals: T[]) {
     return Array.prototype.map.call(arguments, function(this: SortedArray<T>, val: any) {
       return this.insertOne(val);
     }, this);
