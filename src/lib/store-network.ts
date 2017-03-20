@@ -1,7 +1,7 @@
 import { Observable } from 'rxjs/Observable';
 import { Subscription } from 'rxjs/Subscription';
 
-import { Api, infoApiForChannel, fetchMessagesForPage } from './models/slack-api';
+import { Api, infoApiForChannel, fetchMessagesForPage, timestampToPage, fetchMessagesPastPage } from './models/slack-api';
 import { UsersCounts, Message } from './models/api-shapes';
 import { EventType } from './models/event-type';
 import { Store, MessageKey } from './store';
@@ -67,8 +67,22 @@ export async function fetchMessagePageForChannel(store: Store, channel: string, 
   let result = await fetchMessagesForPage(channel, page, api).toPromise();
   result.forEach(msg => store.saveModelToStore('message', msg, api));
 
-  return result.map(x => ({ channel, timestamp: x.ts }));
+  return result
+    .filter(x => timestampToPage(x.ts) === page)
+    .map(x => ({ channel, timestamp: x.ts }));
 }
+
+export async function getNextPageNumber(
+    store: Store,
+    channel: string, currentPage: number,
+    directionIsForward: boolean,
+    api: Api): Promise<number> {
+  let result = await fetchMessagesPastPage(channel, currentPage, directionIsForward, api).toPromise();
+  result.messages.forEach(msg => store.saveModelToStore('message', msg, api));
+
+  return result.page;
+}
+
 
 /*
  * rtm handling
@@ -87,16 +101,23 @@ export function handleRtmMessagesForStore(rtm: Observable<Message>, store: Store
     .skip(1)
     .subscribe(msg => store.saveModelToStore('user', msg.user, msg.api)));
 
-  // Subscribe to Flannel annotations
+  // Subscribe to Flannel messages
   ret.add(store.events.listen('message')
-    .filter(x => x && x.annotations)
     .subscribe(msg => {
-      Object.keys(msg.annotations).forEach(id => {
-        let u = msg.annotations[id];
-        u.id = id; u.api = msg.api;
+      if (!msg) return;
 
-        store.saveModelToStore('user', u, msg.api);
-      });
+      if (msg.annotations) {
+        Object.keys(msg.annotations).forEach(id => {
+          let u = msg.annotations[id];
+          u.id = id; u.api = msg.api;
+
+          store.saveModelToStore('user', u, msg.api);
+        });
+
+        delete msg.annotations;
+      }
+
+      store.saveModelToStore('message', msg, msg.api);
     }));
 
   // NB: This is the lulzy way to update channel counts when marks
