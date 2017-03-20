@@ -8,7 +8,7 @@ import { Observable } from 'rxjs/Observable';
 
 import { Action } from './lib/action';
 import { ChannelBase } from './lib/models/api-shapes';
-import { ChannelListViewModel } from './channel-list';
+import { IChannelList } from './channel-list';
 import { fromObservable, Model } from './lib/model';
 import { isDM } from './lib/models/slack-api';
 import { SimpleView } from './lib/view';
@@ -33,9 +33,8 @@ export class ChannelViewModel extends Model {
   @fromObservable highlighted: boolean;
   @fromObservable starred: boolean;
 
-  constructor(public readonly parent: ChannelListViewModel, model: Updatable<ChannelBase>) {
+  constructor(public readonly Store: Store, public readonly parent: IChannelList, model: Updatable<ChannelBase>) {
     super();
-    this.store = parent.store;
 
     model.toProperty(this, 'model');
 
@@ -71,7 +70,7 @@ export class ChannelViewModel extends Model {
       .toProperty(this, 'highlighted');
 
     this.selectChannel = Action.create(() => {
-      this.parent.selectedChannel = this.model;
+      this.parent.setSelectedChannel(this.model);
     }, undefined);
   }
 

@@ -10,8 +10,13 @@ import { Store } from './lib/store';
 import { when } from './lib/when';
 import { Updatable } from './lib/updatable';
 
+export interface IChannelList {
+  selectedChannel?: ChannelBase;
+  setSelectedChannel: (channel: ChannelBase) => void;
+}
+
 @notify('selectedChannel')
-export class ChannelListViewModel extends Model {
+export class ChannelListViewModel extends Model implements IChannelList {
   selectedChannel: ChannelBase;
   @fromObservable channels: string[];
   @fromObservable orderedChannels: Updatable<ChannelBase>[];
@@ -40,12 +45,16 @@ export class ChannelListViewModel extends Model {
       })
       .toProperty(this, 'orderedChannels');
   }
+
+  setSelectedChannel(channel: ChannelBase) {
+    this.selectedChannel = channel;
+  }
 }
 
 export class ChannelListView extends CollectionView<ChannelListViewModel, ChannelViewModel> {
   viewModelFactory(_item: any, index: number) {
     const channel = this.viewModel.orderedChannels[index];
-    return new ChannelViewModel(this.viewModel, channel);
+    return new ChannelViewModel(this.viewModel.store, this.viewModel, channel);
   }
 
   renderItem(viewModel: ChannelViewModel) {
