@@ -5,14 +5,16 @@ import { ChannelBase } from '../src/lib/models/api-shapes';
 import { ChannelListViewModel } from '../src/channel-list';
 import { waitForPropertyChange } from './support';
 
-const channels: { [key: string]: ChannelBase } = {
+export const channels: { [key: string]: ChannelBase } = {
   C1971: {
     id: 'C1971',
-    name: 'the-shining'
+    name: 'the-shining',
+    mention_count: 4
   },
   C1999: {
     id: 'C1999',
-    name: 'eyes-wide-shut'
+    name: 'eyes-wide-shut',
+    is_starred: true
   },
   C1968: {
     id: 'C1968',
@@ -31,7 +33,7 @@ const channels: { [key: string]: ChannelBase } = {
   }
 } as any;
 
-const joinedChannels: Array<string> = ['C1971', 'C1999', 'C1968', 'D1987', 'D1980'];
+export const joinedChannels: Array<string> = ['C1971', 'C1999', 'C1968', 'D1987', 'D1980'];
 
 describe('the ChannelListViewModel', () => {
   let store: Store, fixture: ChannelListViewModel;
