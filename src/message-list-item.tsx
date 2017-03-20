@@ -6,13 +6,14 @@ import Chip from 'material-ui/Chip';
 import Paper from 'material-ui/Paper';
 import { Observable } from 'rxjs/Observable';
 
-import { Api } from './lib/models/slack-api';
+import { Api, timestampToDate } from './lib/models/slack-api';
 import { Message } from './lib/models/api-shapes';
 import { Model, fromObservable } from './lib/model';
 import { SimpleView } from './lib/view';
 import { Store } from './lib/store';
 import { UserViewModel } from './user-list-item';
 import { when } from './lib/when';
+import { Updatable } from './lib/updatable';
 
 const styles: { [key: string]: React.CSSProperties } = {
   message: {
@@ -50,7 +51,7 @@ export class MessageViewModel extends Model {
   @fromObservable profileImage: string;
   @fromObservable displayName: string;
 
-  constructor(public readonly store: Store, public readonly api: Api, message: Message) {
+  constructor(public readonly store: Store, public readonly api: Api, message: Updatable<Message>) {
     super();
 
     Observable.of(message).toProperty(this, 'model');
@@ -64,7 +65,7 @@ export class MessageViewModel extends Model {
       .toProperty(this, 'text');
 
     when(this, x => x.model)
-      .map(model => moment(parseFloat(model.ts) * 1000).calendar())
+      .map(model => moment(timestampToDate(model.ts)).calendar())
       .toProperty(this, 'formattedTime');
 
     when(this, x => x.user.profileImage)
