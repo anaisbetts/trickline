@@ -30,6 +30,38 @@
         ]
       }
     },
+    "test": {
+      "application/javascript": {
+        "coverage": true,
+        "presets": [
+          ["env", { "targets": { "electron": "1.6.0" } }],
+          "react"
+        ],
+        "plugins": ["transform-async-to-generator", "transform-object-rest-spread"],
+        "sourceMaps": "inline"
+      },
+      "text/typescript": {
+        "coverage": true,
+        "experimentalDecorators": true,
+        "removeComments": false,
+        "preserveConstEnums": true,
+        "declaration": true,
+        "noImplicitAny": true,
+        "noImplicitReturns": true,
+        "suppressImplicitAnyIndexErrors": true,
+        "strictNullChecks": true,
+        "noUnusedLocals": true,
+        "noImplicitThis": true,
+        "inlineSourceMap": true,
+        "inlineSources": true,
+        "noUnusedParameters": true,
+        "target": "es5",
+        "jsx": "react",
+        "types": [
+          "node"
+        ]
+      }
+    },
     "production": {
       "application/javascript": {
         "presets": [

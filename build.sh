@@ -2,7 +2,7 @@
 
 set -ex
 npm install
-npm test
+npm run test-cov
 
 ROOT="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
