@@ -10,8 +10,12 @@ export class SortedArray<T> extends Array<T> {
   private readonly _compare: Function;
   private readonly _unique: boolean;
 
-  constructor() {
+  constructor(_optionsOrArray?: SortedArrayOpts | T[], _arrayIfWeGaveOptions?: T[]) {
     super();
+
+    // https://github.com/Microsoft/TypeScript/wiki/FAQ#why-doesnt-extending-built-ins-like-error-array-and-map-work
+    Object.setPrototypeOf(this, SortedArray.prototype);
+
     let arr: T[] | null = null;
     let options: SortedArrayOpts = {};
     let args = arguments;
