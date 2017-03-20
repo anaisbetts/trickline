@@ -43,11 +43,12 @@ export class ChannelViewModel extends Model {
     when(this, x => x.model.mention_count).toProperty(this, 'mentions');
 
     when(this, x => x.model)
-      .switchMap((n) => this.getDisplayName(n))
+      .filter(x => !!x)
+      .switchMap(x => this.getDisplayName(x))
       .toProperty(this, 'displayName');
 
     when(this, x => x.model)
-      .filter(c => isDM(c))
+      .filter(c => !!c && isDM(c))
       .switchMap(c => {
         // XXX: This is a crime
         let u = this.store.users.listen(c.user_id, c.api);
