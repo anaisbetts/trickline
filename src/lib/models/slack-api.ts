@@ -144,6 +144,11 @@ export function dateToTimestamp(date: Date) {
   return unixTime * 1000000;
 }
 
+export function timestampToDate(timestamp: MsgTimestamp): Date {
+  let unixTime = Math.floor(timestamp / 1000000);
+  return new Date(unixTime * 1000);
+}
+
 export function fetchSingleMessage(channel: string, timestamp: MsgTimestamp, api: Api): Observable<Message> {
   let ts = timestampToTs(timestamp);
 
