@@ -7,7 +7,7 @@
     "start": "cross-env DEBUG='trickline' electron-forge start",
     "clean-build": "ts-node -D ./docker/surf-build-current",
     "test-renderer": "xvfb-maybe electron-mocha --renderer --watch-extensions tsx,ts \"./test/**/*.{js,ts}\"",
-    "test-renderer-cov": "cross-env BABEL_ENV='test' xvfb-maybe electron-mocha --renderer --watch-extensions tsx,ts \"./test/**/*.{js,ts}\" && cat ./coverage/lcov.info | node ./node_modules/coveralls/bin/coveralls.js",
+    "test-renderer-cov": "cross-env NODE_ENV='test' npm run test-renderer && cat ./coverage/lcov.info | node ./node_modules/coveralls/bin/coveralls.js",
     "dtest": "electron-mocha --renderer --interactive --watch-extensions tsx,ts \"./test/**/*.{js,ts}\"",
     "test": "npm run lint && npm run test-renderer",
     "test-cov": "npm run lint && npm run test-renderer-cov",
