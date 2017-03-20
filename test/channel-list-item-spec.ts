@@ -7,12 +7,13 @@ import { ChannelViewModel } from '../src/channel-list-item';
 import { waitForPropertyChange } from './support';
 
 import { channels, joinedChannels } from './channel-list-spec';
+import { users } from './user-list-item-spec';
 
 describe('the ChannelViewModel', () => {
   let store: Store, parent: IChannelList, fixture: ChannelViewModel;
 
   beforeEach(() => {
-    store = new MockStore({ channels });
+    store = new MockStore({ channels, users });
     parent = new MockChannelList();
   });
 
@@ -38,6 +39,24 @@ describe('the ChannelViewModel', () => {
     await waitForPropertyChange(fixture);
     fixture.selectChannel.execute();
     expect(parent.selectedChannel!.id).to.equal(joinedChannels[0]);
+  });
+
+  it('should use the associated user for the display name in DMs', async () => {
+    fixture = makeViewModelForChannelId(joinedChannels[3]);
+    await waitForPropertyChange(fixture, 'displayName');
+    expect(fixture.displayName.match(/Stanley Kubrick/)).to.be.ok;
+  });
+
+  it('should truncate long channel names', async () => {
+    fixture = makeViewModelForChannelId('C1964');
+    await waitForPropertyChange(fixture, 'displayName');
+    expect(fixture.displayName).to.equal('dr-strangelove-or-how-i-l...');
+  });
+
+  it('should use the profile image from the associated user', async () => {
+    fixture = makeViewModelForChannelId(joinedChannels[4]);
+    await waitForPropertyChange(fixture, 'profileImage');
+    expect(fixture.profileImage.match(/Stanley-Kubrick/)).to.be.ok;
   });
 });
 

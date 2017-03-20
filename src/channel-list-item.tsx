@@ -22,7 +22,6 @@ import './lib/standard-operators';
 const defaultAvatar = require.resolve('./images/default-avatar.png');
 
 export class ChannelViewModel extends Model {
-  store: Store;
   selectChannel: Action<void>;
 
   @fromObservable model: ChannelBase;
@@ -33,7 +32,7 @@ export class ChannelViewModel extends Model {
   @fromObservable highlighted: boolean;
   @fromObservable starred: boolean;
 
-  constructor(public readonly Store: Store, public readonly parent: IChannelList, model: Updatable<ChannelBase>) {
+  constructor(public readonly store: Store, public readonly parent: IChannelList, model: Updatable<ChannelBase>) {
     super();
 
     model.toProperty(this, 'model');
@@ -53,16 +52,13 @@ export class ChannelViewModel extends Model {
         // XXX: This is a crime
         let u = this.store.users.listen(c.user_id, c.api);
         return u.do(x => {
-          if (x && !x.profile) {
-            console.log(`No profile! ${JSON.stringify(x)}`);
-            u.invalidate();
-          }
+          if (x && !x.profile) u.invalidate();
         });
       })
       .filter(x => x && !!x.profile)
       .map((user) => {
         if (!user) return defaultAvatar;
-        return user.profile.image_48;
+        return user.profile.image_72;
       })
       .toProperty(this, 'profileImage');
 

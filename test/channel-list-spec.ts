@@ -21,13 +21,19 @@ export const channels: { [key: string]: ChannelBase } = {
     name: '2001-a-space-odyssey',
     is_archived: true
   },
+  C1964: {
+    id: 'C1964',
+    name: 'dr-strangelove-or-how-i-learned-to-stop-worrying-and-love-the-bomb',
+  },
   D1987: {
     id: 'D1987',
+    user_id: 'stanleyKubrick',
     name: 'full-metal-jacket',
     is_open: false
   },
   D1980: {
     id: 'D1980',
+    user_id: 'stanleyKubrick',
     name: 'a-clockwork-orange',
     is_open: true
   }

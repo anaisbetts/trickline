@@ -5,7 +5,7 @@ import { User, Profile } from '../src/lib/models/api-shapes';
 import { UserViewModel } from '../src/user-list-item';
 import { waitForPropertyChange } from './support';
 
-const users: { [key: string]: User } = {
+export const users: { [key: string]: User } = {
   jamesFranco: {
     id: 'jamesFranco',
     name: 'franco',
@@ -13,6 +13,14 @@ const users: { [key: string]: User } = {
     profile: {
       image_72: 'http://screencomment.com/site/wp-content/uploads/2010/05/james_franco.jpg'
     } as Profile
+  } as User,
+  stanleyKubrick: {
+    id: 'stanleyKubrick',
+    name: 'kubrick',
+    real_name: 'Stanley Kubrick',
+    profile: {
+      image_72: 'http://sensesofcinema.com/assets/uploads/2002/05/Stanley-Kubrick.png'
+    } as Profile,
   } as User
 };
 
