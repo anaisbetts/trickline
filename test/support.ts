@@ -44,7 +44,13 @@ before(function() {
 });
 
 after(() => {
-  if (!('__coverage__' in window)) return;
+  if (!('__coverage__' in window)) {
+    if (process.env.BABEL_ENV === 'test') throw new Error("electron-compile didn't generate coverage info!");
+    return;
+  }
+
+  console.log('Writing coverage information...');
+
   const { Reporter, Collector } = require('istanbul');
 
   const coll = new Collector();
