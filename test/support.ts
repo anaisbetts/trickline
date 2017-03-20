@@ -1,3 +1,4 @@
+import * as path from 'path';
 import { fromObservable, Model, notify } from '../src/lib/model';
 import { Updatable } from '../src/lib/updatable';
 import { Observable } from 'rxjs/Observable';
@@ -8,7 +9,6 @@ let chaiAsPromised = require("chai-as-promised");
 
 chai.should();
 chai.use(chaiAsPromised);
-
 
 @notify('foo', 'bar')
 export class TestClass extends Model {
@@ -36,5 +36,25 @@ export class TestClass extends Model {
       .toProperty(this, 'subjectDerived');
   }
 }
+
+before(() => {
+  // NB: We do this so that coverage is more accurate
+  require('../src/slack-app');
+});
+
+after(() => {
+  if (!('__coverage__' in window)) return;
+  const { Reporter, Collector } = require('istanbul');
+
+  const coll = new Collector();
+  coll.add(window.__coverage__);
+
+  const reporter = new Reporter(null, path.join(__dirname, '..', 'coverage'));
+  reporter.addAll(['text-summary', 'lcovonly']);
+
+  return new Promise((res) => {
+    reporter.write(coll, true, res);
+  });
+});
 
 export const {expect, assert} = chai;
