@@ -12,7 +12,7 @@ import { Subject } from 'rxjs/Subject';
 
 import './standard-operators';
 
-export type MergeStrategy = 'overwrite' | 'merge';
+export type MergeStrategy = 'overwrite' | 'merge' | 'array';
 
 const d = debug('trickline:updatable');
 

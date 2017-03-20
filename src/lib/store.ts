@@ -84,7 +84,7 @@ export class NaiveStore implements Store {
     this.messagePages = new InMemorySparseMap<MessagePageKey, SortedArray<MessageKey>>(async (k, api) => {
       let result = await fetchMessagePageForChannel(this, k.channel, k.page, api);
       return new SortedArray({ unique: true, compare: messageCompare }, result);
-    });
+    }, 'array');
 
     this.events = new InMemorySparseMap<EventType, Message>();
     this.joinedChannels = new ArrayUpdatable<string>();
@@ -97,7 +97,7 @@ export class NaiveStore implements Store {
     if (type === 'message') {
       let msg = value as Message;
       let page = this.messagePages.listen({ channel: msg.channel, page: timestampToPage(msg.ts) }, msg.api, true);
-      if (!page) return;
+      if (!page || !page.value) return;
 
       page.value.insertOne({ channel: msg.channel, timestamp: msg.ts });
       Platform.performMicrotaskCheckpoint();
