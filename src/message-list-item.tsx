@@ -57,21 +57,26 @@ export class MessageViewModel extends Model {
     Observable.of(message).toProperty(this, 'model');
 
     when(this, x => x.model)
+      .filter(x => !!x)
       .map(model => new UserViewModel(this.store, model.user as string, api))
       .toProperty(this, 'user');
 
     when(this, x => x.model)
+      .filter(x => !!x)
       .map(model => model.text)
       .toProperty(this, 'text');
 
     when(this, x => x.model)
+      .filter(x => !!x)
       .map(model => moment(timestampToDate(model.ts)).calendar())
       .toProperty(this, 'formattedTime');
 
     when(this, x => x.user.profileImage)
+      .startWith('')
       .toProperty(this, 'profileImage');
 
     when(this, x => x.user.displayName)
+      .startWith('')
       .toProperty(this, 'displayName');
   }
 }
@@ -88,7 +93,7 @@ export class MessageListItem extends SimpleView<MessageViewModel> {
         <div style={styles.profileImage}>{userProfile}</div>
         <div style={styles.topContainer}>
           <span style={styles.displayName}>
-            {viewModel.user.displayName}
+            {viewModel.displayName}
           </span>
           <span style={styles.timestamp}>
             {viewModel.formattedTime}

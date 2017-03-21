@@ -7,12 +7,12 @@ import { ChannelBase, Message } from './lib/models/api-shapes';
 import { CollectionView } from './lib/collection-view';
 import { fromObservable, Model, notify } from './lib/model';
 import { MessageViewModel, MessageListItem } from './message-list-item';
-import { Store, MessageKey } from './lib/store';
+import { Store, MessageKey, messageCompare } from './lib/store';
 import { when, whenArray } from './lib/when';
 import { fetchMessagePageForChannel, getNextPageNumber } from './lib/store-network';
 import { SortedArray } from './lib/sorted-array';
 import { Action } from './lib/action';
-import { Observable } from "rxjs/Observable";
+import { Observable } from 'rxjs/Observable';
 
 export interface MessageCollection {
   [ts: string]: Message;
@@ -31,7 +31,6 @@ export class MessagesViewModel extends Model {
   readonly messages: SortedArray<MessageKey>;
 
   messagePage: number;
-  @fromObservable messagesCount: number;
 
   readonly scrollPreviousPage: Action<number>;
   readonly scrollNextPage: Action<number>;
@@ -40,27 +39,25 @@ export class MessagesViewModel extends Model {
     super();
 
     this.messagePage = timestampToPage(dateToTimestamp(new Date()));
+    this.messages = new SortedArray<MessageKey>({ unique: true, compare: messageCompare });
+    this.api = channel.api;
 
-    let messagesForUs = store.events.listen('message', channel.api)!
-      .filter(x => x.channel === channel.id);
+    let messagesForUs = store.events.listen('message', this.api)!
+      .filter(x => x && x.channel === channel.id);
 
     messagesForUs.subscribe(x => {
       this.messages.insertOne({ channel: channel.id, timestamp: x.ts});
       Platform.performMicrotaskCheckpoint();
     });
 
-    whenArray(this, x => x.messages)
-      .map(() => this.messages.length)
-      .toProperty(this, 'messagesCount');
-
     this.scrollPreviousPage = new Action(() => {
       let page = this.messages && this.messages.length > 0 ? this.messages[0].timestamp : this.messagePage;
-      return getNextPageNumber(store, channel.id, timestampToPage(page), false, channel.api);
+      return getNextPageNumber(store, channel.id, timestampToPage(page), false, this.api);
     }, this.messagePage);
 
     this.scrollNextPage = new Action(() => {
       let page = this.messages && this.messages.length > 0 ? this.messages[this.messages.length - 1].timestamp : this.messagePage;
-      return getNextPageNumber(store, channel.id, timestampToPage(page), true, channel.api);
+      return getNextPageNumber(store, channel.id, timestampToPage(page), true, this.api);
     }, this.messagePage);
 
     Observable.merge(
@@ -68,7 +65,7 @@ export class MessagesViewModel extends Model {
       this.scrollNextPage.result,
       messagesForUs.map(x => timestampToPage(x.ts))
     ).distinctUntilChanged()
-      .switchMap(page => store.messagePages.get({ channel: channel.id, page }))
+      .switchMap(page => store.messagePages.get({ channel: channel.id, page }, this.api))
       .subscribe((x: SortedArray<MessageKey>) => {
         this.messages.insert(...x);
         Platform.performMicrotaskCheckpoint();
@@ -84,7 +81,10 @@ export class MessagesView extends CollectionView<MessagesViewModel, MessageViewM
 
   viewModelFactory(_item: any, index: number) {
     const message = this.viewModel.messages[index];
-    return new MessageViewModel(this.viewModel.store, this.viewModel.api, this.viewModel.store.messages.listen(message)!);
+    return new MessageViewModel(
+      this.viewModel.store,
+      this.viewModel.api,
+      this.viewModel.store.messages.listen(message, this.viewModel.api)!);
   }
 
   isRowLoaded({ index }: { index: number }) {
@@ -138,7 +138,7 @@ export class MessagesView extends CollectionView<MessagesViewModel, MessageViewM
                   registerChild={registerChild}
                   deferredMeasurementCache={this.cache}
                   rowHeight={this.cache.rowHeight}
-                  rowCount={this.viewModel.messagesCount}
+                  rowCount={this.viewModel.messages.length}
                   rowRenderer={this.rowRenderer.bind(this)}
                 />
               )}

@@ -54,7 +54,7 @@ const modelTypeToSparseMap = {
   'message': 'messages',
 };
 
-function messageCompare(a: Message, b: Message) {
+export function messageCompare(a: Message, b: Message) {
   let c = a.ts - b.ts;
   return (c > 0) ? 1 : (c == 0)  ? 0 : -1;
 }
