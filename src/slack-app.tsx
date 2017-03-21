@@ -62,7 +62,7 @@ export class SlackAppModel extends Model {
     const tokenSource = process.env.SLACK_API_TOKEN || window.localStorage.getItem('token') || '';
     const tokens = tokenSource.indexOf(',') >= 0 ? tokenSource.split(',') : [tokenSource];
 
-    this.store = new DexieStore(tokens);
+    this.store = new NaiveStore(tokens);
     this.channelList = new ChannelListViewModel(this.store);
     this.channelHeader = new ChannelHeaderViewModel(this.store, this.channelList);
 
