@@ -150,36 +150,34 @@ export abstract class View<T extends Model, P extends HasViewModel<T>>
     if (this.lifecycle.didUpdateSubj) this.lifecycle.didUpdateSubj.complete();
   }
 
-  static toUpdate: (View<any, any> | Function)[];
-  static currentRafToken: number;
-  static isInFocus: boolean;
-  static isInFocusSub: Subscription;
-  static isForceUpdating: boolean;
-  hasBeenRendered: boolean;
+  private static toUpdate: (View<any, any> | Function)[];
+  private static currentRafToken: number;
+  private static isInFocus: boolean;
+  private static isInFocusSub: Subscription;
 
+  private static seenViews: Set<any>;
   static dispatchUpdates() {
-    const ourViews = View.toUpdate;
+    View.seenViews = View.seenViews || new Set();
+    View.seenViews.clear();
+
+    const ourViews = View.toUpdate.reduceRight((acc: any[], x) => {
+      if (!View.seenViews.has(x)) acc.push(x);
+      return acc;
+    }, []);
+
     View.toUpdate = [];
-
     View.currentRafToken = 0;
-    View.isForceUpdating = true;
 
-    try {
-      for (let i = 0; i < ourViews.length; i++) {
-        if (isFunction(ourViews[i])) {
-          (ourViews[i] as Function)();
-          continue;
-        } else {
-          const current = ourViews[i] as View<any, any>;
-          if (!current.viewModel) continue;
+    for (let i = 0; i < ourViews.length; i++) {
+      if (isFunction(ourViews[i])) {
+        (ourViews[i] as Function)();
+        continue;
+      } else {
+        const current = ourViews[i] as View<any, any>;
+        if (!current.viewModel) continue;
 
-          current.forceUpdate();
-          current.hasBeenRendered = true;
-        }
+        current.forceUpdate();
       }
-    } finally {
-      for (let i = 0; i < ourViews.length; i++) { ourViews[i].hasBeenRendered = false; }
-      View.isForceUpdating = false;
     }
   }
 
