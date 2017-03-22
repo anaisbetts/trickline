@@ -44,19 +44,21 @@ export class ViewModelListHelper<T extends Model, P extends HasViewModel<T>, S> 
       throw new Error("Don't set dispose, use the evicted observable");
     }
 
-    opts.dispose = (_k: string, v: Model) => { v.unsubscribe(); }
+    opts.dispose = (_k: string, v: Model) => { v.unsubscribe(); };
     this.viewModelCache = LRU<Model>(opts);
 
     let initialVm = props.viewModel;
-    lifecycle.didMount.map(() => ({ viewModel: initialVm })).concat(lifecycle.willReceiveProps)
-      .do(() => console.log("Got a VM!"))
+    let sub = lifecycle.didMount.map(() => ({ viewModel: initialVm })).concat(lifecycle.willReceiveProps)
       .switchMap(p => whenArray(p.viewModel, itemsSelector))
-      .do(() => console.log("Got an Array Change!"))
-      .takeUntil(lifecycle.willUnmount)
       .subscribe(v => {
         this.currentItems = v.value;
         this.shouldRender.next();
       });
+
+    lifecycle.willUnmount.subscribe(() => {
+      this.viewModelCache.reset();
+      sub.unsubscribe();
+    });
   }
 
   getViewModel(index: number) {
@@ -77,6 +79,7 @@ export class ViewModelListHelper<T extends Model, P extends HasViewModel<T>, S> 
   }
 }
 
+/*
 export abstract class CollectionView<T extends Model, TChild extends Model>
     extends View<T, CollectionViewProps<T>> {
   private viewModelCache: { [key: number]: TChild } = {};
@@ -180,3 +183,4 @@ export abstract class CollectionView<T extends Model, TChild extends Model>
     );
   }
 }
+*/
