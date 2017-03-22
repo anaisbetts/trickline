@@ -1,14 +1,13 @@
 import * as React from 'react';
 import * as pick from 'lodash.pick';
 import { AutoSizer, List } from 'react-virtualized';
-import { ArrayObserver } from 'observe-js';
+import { Observable } from 'rxjs/Observable';
+import { Subject } from 'rxjs/Subject';
 
 import { Model } from './model';
-import { Lifecycle, View } from './view';
-import { SerialSubscription } from './serial-subscription';
-import { when } from "./when";
-import { ArrayUpdatable } from "./updatable";
-import { Observable } from "rxjs/Observable";
+import { Lifecycle, View, HasViewModel } from './view';
+import { when, whenArray } from './when';
+import * as LRU from 'lru-cache';
 
 export interface CollectionViewProps<T> {
   viewModel: T;
@@ -18,6 +17,58 @@ export interface CollectionViewProps<T> {
   height?: number;
   disableWidth?: boolean;
   disableHeight?: boolean;
+}
+
+export class ViewModelListHelper<T extends Model, TItem, P extends HasViewModel<T>, S> {
+  readonly shouldRender: Subject<void>;
+
+  private readonly keySelector: ((item: TItem) => string);
+  private readonly viewModelCache: LRU.Cache<Model>;
+  private readonly createViewModel: ((x: TItem, i: number) => Model);
+  private currentItems: TItem[];
+
+  constructor(
+      lifecycle: Lifecycle<P, S>,
+      props: P,
+      itemsSelector: ((x: T) => TItem[]),
+      keySelector: ((x: TItem) => string),
+      createViewModel: ((x: TItem) => Model),
+      lruOpts?: LRU.Options<Model>) {
+    this.shouldRender = new Subject<void>();
+    this.keySelector = keySelector;
+    this.createViewModel = createViewModel;
+
+    let opts = lruOpts || {max: 100};
+
+    if (opts.dispose) {
+      throw new Error("Don't set dispose, use the evicted observable");
+    }
+
+    opts.dispose = (_k: string, v: Model) => { v.unsubscribe(); }
+    this.viewModelCache = LRU<Model>(opts);
+
+    lifecycle.didMount.map(() => props).concat(lifecycle.willReceiveProps)
+      .switchMap(p => whenArray(p.viewModel, itemsSelector))
+      .takeUntil(lifecycle.willUnmount)
+      .subscribe(v => {
+        this.currentItems = v.value;
+        this.shouldRender.next();
+      });
+  }
+
+  getViewModel(index: number) {
+    let key = this.keySelector(this.currentItems[index]);
+    let ret = this.viewModelCache.get(key);
+    if (ret) return ret;
+
+    ret = this.createViewModel(this.currentItems[index], index);
+    ret.addTeardown(() => this.viewModelCache.del(key));
+    this.viewModelCache.set(key, ret);
+
+    return ret;
+  }
+
+  getRowCount() { return this.currentItems.length; }
 }
 
 export abstract class CollectionView<T extends Model, TChild extends Model>
