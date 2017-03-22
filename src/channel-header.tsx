@@ -115,6 +115,7 @@ export class ChannelHeaderView extends SimpleView<ChannelHeaderViewModel> {
     return (
       <Popover
         open={this.viewModel.isMembersListOpen}
+        width={300} height={300}
         anchorEl={anchorElement}
         anchorOrigin={{ horizontal: 'middle', vertical: 'bottom' }}
         targetOrigin={{ horizontal: 'middle', vertical: 'top' }}
@@ -123,9 +124,6 @@ export class ChannelHeaderView extends SimpleView<ChannelHeaderViewModel> {
         <ChannelMembersView
           key={this.viewModel.channelInfo.name}
           viewModel={this.viewModel.channelMembers}
-          arrayProperty='members'
-          width={300}
-          height={300}
         />
       </Popover>
     );

@@ -5,7 +5,7 @@ import { AutoSizer, List } from 'react-virtualized';
 import { ChannelBase } from './lib/models/api-shapes';
 import { ChannelViewModel, ChannelListItem } from './channel-list-item';
 import { channelSort, isDM } from './lib/models/slack-api';
-import { CollectionView, ViewModelListHelper } from './lib/collection-view';
+import { ViewModelListHelper } from './lib/collection-view';
 import { fromObservable, notify, Model } from './lib/model';
 import { Store } from './lib/store';
 import { when } from './lib/when';
@@ -45,12 +45,18 @@ export class ChannelListView extends SimpleView<ChannelListViewModel> {
   constructor(props: { viewModel: ChannelListViewModel }, context?: any) {
     super(props, context);
 
-    this.lifecycle.didMount.subscribe(() => console.log("WAT"));
     this.viewModelCache = new ViewModelListHelper(
       this.lifecycle, props,
       (x: ChannelListViewModel) => x.orderedChannels,
       x => x.value.id,
       x => new ChannelViewModel(this.viewModel!, x));
+
+    const update = () => {
+      this.listRef.forceUpdateGrid();
+      this.forceUpdate();
+    };
+
+    this.viewModelCache.shouldRender.subscribe(() => this.queueUpdate(update));
   }
 
   rowRenderer({index, key, style}: {index: number, key: any, style: React.CSSProperties}) {
@@ -75,16 +81,5 @@ export class ChannelListView extends SimpleView<ChannelListViewModel> {
         />
       )}
     </AutoSizer>;
-  }
-}
-
-export class ChannelListViewOld extends CollectionView<ChannelListViewModel, ChannelViewModel> {
-  viewModelFactory(_item: any, index: number) {
-    const channel = this.viewModel.orderedChannels[index];
-    return new ChannelViewModel(this.viewModel, channel);
-  }
-
-  renderItem(viewModel: ChannelViewModel) {
-    return <ChannelListItem viewModel={viewModel} />;
   }
 }
