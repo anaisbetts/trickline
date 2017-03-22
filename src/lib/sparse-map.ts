@@ -72,9 +72,10 @@ class InMemorySparseMap<K, V> implements SparseMap<K, V> {
     this.evicted = new Subject();
   }
 
-  listen(key: K, hint?: any): Updatable<V> {
+  listen(key: K, hint?: any, dontCreate?: boolean): Updatable<V> {
     let ret = this._latest.get(key);
     if (ret) return ret;
+    if (!ret && dontCreate) return null;
 
     if (this._factory) {
       let fact = this._factory.bind(this);
@@ -115,6 +116,42 @@ class InMemorySparseMap<K, V> implements SparseMap<K, V> {
 
     return Promise.resolve();
   }
+
+  /*** BEGIN COPYPASTA ***/
+   listenMany(keys: Array<K>, hint?: any, dontCreate?: boolean): Map<K, Updatable<V>> {
+    return keys.reduce((acc, x) => {
+      acc.set(x, this.listen(x, hint, dontCreate));
+      return acc;
+    }, new Map<K, Updatable<V>>());
+  }
+
+  get(key: K, hint?: any, dontCreate?: boolean): Promise<V|null> {
+    let ret = this.listen(key, hint, dontCreate);
+    if (!ret) return Promise.resolve(null);
+
+    return this.listen(key).take(1).toPromise();
+  }
+
+  getMany(keys: Array<K>, hint?: any, dontCreate?: boolean): Promise<Map<K, V|null>> {
+    return Observable.of(...keys)
+      .flatMap(k => {
+        let ret = this.listen(k, hint, dontCreate);
+        if (!ret) return Observable.empty();
+
+        return ret.take(1).map(v => ({Key: k, Value: v}));
+      })
+      .reduce((acc, x) => {
+        acc.set(x.Key, x.Value);
+        return acc;
+      }, new Map<K, V>())
+      .toPromise();
+  }
+
+  setValue(key: K, value: V): Promise<void> {
+    this.listen(key).next(value);
+    return Promise.resolve();
+  }
+  /*** END COPYPASTA ***/
 }
 
 class LRUSparseMap<V> implements SparseMap<string, V> {
@@ -146,9 +183,10 @@ class LRUSparseMap<V> implements SparseMap<string, V> {
     this._strategy = strategy;
   }
 
-  listen(key: string, hint?: any): Updatable<V> {
+  listen(key: string, hint?: any, dontCreate?: boolean): Updatable<V> {
     let ret = this._latest.get(key);
     if (ret) return ret;
+    if (!ret && dontCreate) return null;
 
     if (this._factory) {
       let fact = this._factory.bind(this);
@@ -186,9 +224,42 @@ class LRUSparseMap<V> implements SparseMap<string, V> {
 
     return Promise.resolve();
   }
-}
 
-InMemorySparseMap.prototype = Object.assign(InMemorySparseMap.prototype, SparseMapMixins);
-LRUSparseMap.prototype = Object.assign(LRUSparseMap.prototype, SparseMapMixins);
+  /*** BEGIN COPYPASTA ***/
+   listenMany(keys: Array<string>, hint?: any, dontCreate?: boolean): Map<string, Updatable<V>> {
+    return keys.reduce((acc, x) => {
+      acc.set(x, this.listen(x, hint, dontCreate));
+      return acc;
+    }, new Map<string, Updatable<V>>());
+  }
+
+  get(key: string, hint?: any, dontCreate?: boolean): Promise<V|null> {
+    let ret = this.listen(key, hint, dontCreate);
+    if (!ret) return Promise.resolve(null);
+
+    return this.listen(key).take(1).toPromise();
+  }
+
+  getMany(keys: Array<string>, hint?: any, dontCreate?: boolean): Promise<Map<string, V|null>> {
+    return Observable.of(...keys)
+      .flatMap(k => {
+        let ret = this.listen(k, hint, dontCreate);
+        if (!ret) return Observable.empty();
+
+        return ret.take(1).map(v => ({Key: k, Value: v}));
+      })
+      .reduce((acc, x) => {
+        acc.set(x.Key, x.Value);
+        return acc;
+      }, new Map<string, V>())
+      .toPromise();
+  }
+
+  setValue(key: string, value: V): Promise<void> {
+    this.listen(key).next(value);
+    return Promise.resolve();
+  }
+  /*** END COPYPASTA ***/
+}
 
 export { InMemorySparseMap, LRUSparseMap };
