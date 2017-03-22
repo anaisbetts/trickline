@@ -8,6 +8,7 @@ import { Lifecycle, View } from './view';
 import { SerialSubscription } from './serial-subscription';
 import { when } from "./when";
 import { ArrayUpdatable } from "./updatable";
+import { Observable } from "rxjs/Observable";
 
 export interface CollectionViewProps<T> {
   viewModel: T;
@@ -38,20 +39,21 @@ export abstract class CollectionView<T extends Model, TChild extends Model>
   constructor(props?: CollectionViewProps<T>, context?: any) {
     super(props, context);
 
+    const updater = () => {
+      if (!this.viewModel) return;
+      this.forceUpdate();
+
+      if (!this.listRef) return;
+      this.listRef.forceUpdateGrid();
+    };
+
     this.lifecycle.willReceiveProps
       .startWith(props)
-      .switchMap(x => when(x.viewModel, x.arrayProperty))
+      .switchMap(x => x ? when(x.viewModel, x.arrayProperty) : Observable.never())
       .takeUntil(this.lifecycle.willUnmount)
       .subscribe(() => {
         this.clearViewModelCache();
-
-        this.queueUpdate(() => {
-          if (!this.viewModel) return;
-          this.forceUpdate();
-
-          if (!this.listRef) return;
-          this.listRef.forceUpdateGrid();
-        });
+        this.queueUpdate(updater);
       }, (e) => setTimeout(() => { throw e; }, 10));
 
     this.lifecycle.willUnmount.subscribe(() => {
