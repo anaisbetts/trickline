@@ -51,9 +51,14 @@ export function createApi(token?: string): Api {
       return socket;
     }
 
-    const p = Object.assign({}, params[0], defaultParams);
+    const rq = {
+      url: `https://slack.com/api/${names.slice(1).join('.')}`,
+      method: 'POST',
+      body: Object.assign({}, params[0], defaultParams),
+      crossDomain: true,
+    };
 
-    return Observable.ajax.post(`https://slack.com/api/${names.slice(1).join('.')}`, p)
+    return Observable.ajax(rq)
       .flatMap(x => {
         let resp = x.response as ApiCall;
         if (!resp.ok) { return Observable.throw(new Error(resp.error)); };
