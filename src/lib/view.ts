@@ -97,16 +97,16 @@ export abstract class View<T extends Model, P extends HasViewModel<T>>
     extends React.PureComponent<P, null>
     implements AttachedLifecycle<P, null> {
   readonly lifecycle: Lifecycle<P, null>;
-  viewModel: T;
+  viewModel: T | null;
 
   constructor(props?: P, context?: any) {
     super(props, context);
+    this.lifecycle = new ReactLifecycle<P, null>();
     if (props) this.viewModel = props.viewModel;
 
-    this.lifecycle = new ReactLifecycle<P, null>();
-
-    this.lifecycle.didMount
-      .flatMap(() => this.viewModel.changed)
+    this.lifecycle.didMount.map(() => null).concat(this.lifecycle.willReceiveProps)
+      .do(props => this.viewModel = props ? props.viewModel : this.viewModel)
+      .switchMap(() => this.viewModel ? this.viewModel.changed : Observable.never())
       .takeUntil(this.lifecycle.willUnmount)
       .subscribe(() => { if (this.viewModel) { this.queueUpdate(); } });
 
