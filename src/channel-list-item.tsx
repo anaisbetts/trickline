@@ -8,7 +8,7 @@ import { Observable } from 'rxjs/Observable';
 
 import { Action } from './lib/action';
 import { ChannelBase } from './lib/models/api-shapes';
-import { ChannelListViewModel } from './channel-list';
+import { IChannelList } from './channel-list';
 import { fromObservable, Model } from './lib/model';
 import { isDM } from './lib/models/slack-api';
 import { SimpleView } from './lib/view';
@@ -22,7 +22,6 @@ import './lib/standard-operators';
 const defaultAvatar = require.resolve('./images/default-avatar.png');
 
 export class ChannelViewModel extends Model {
-  store: Store;
   selectChannel: Action<void>;
 
   @fromObservable model: ChannelBase;
@@ -33,9 +32,8 @@ export class ChannelViewModel extends Model {
   @fromObservable highlighted: boolean;
   @fromObservable starred: boolean;
 
-  constructor(public readonly parent: ChannelListViewModel, model: Updatable<ChannelBase>) {
+  constructor(public readonly store: Store, public readonly parent: IChannelList, model: Updatable<ChannelBase>) {
     super();
-    this.store = parent.store;
 
     model.toProperty(this, 'model');
 
@@ -44,25 +42,23 @@ export class ChannelViewModel extends Model {
     when(this, x => x.model.mention_count).toProperty(this, 'mentions');
 
     when(this, x => x.model)
-      .switchMap((n) => this.getDisplayName(n))
+      .filter(x => !!x)
+      .switchMap(x => this.getDisplayName(x))
       .toProperty(this, 'displayName');
 
     when(this, x => x.model)
-      .filter(c => isDM(c))
+      .filter(c => !!c && isDM(c))
       .switchMap(c => {
         // XXX: This is a crime
         let u = this.store.users.listen(c.user_id, c.api);
         return u.do(x => {
-          if (x && !x.profile) {
-            console.log(`No profile! ${JSON.stringify(x)}`);
-            u.invalidate();
-          }
+          if (x && !x.profile) u.invalidate();
         });
       })
       .filter(x => x && !!x.profile)
       .map((user) => {
         if (!user) return defaultAvatar;
-        return user.profile.image_48;
+        return user.profile.image_72;
       })
       .toProperty(this, 'profileImage');
 
@@ -71,7 +67,7 @@ export class ChannelViewModel extends Model {
       .toProperty(this, 'highlighted');
 
     this.selectChannel = Action.create(() => {
-      this.parent.selectedChannel = this.model;
+      this.parent.setSelectedChannel(this.model);
     }, undefined);
   }
 

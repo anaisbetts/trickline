@@ -210,6 +210,19 @@ export function getValue<T, TRet>(target: T, accessor: ((x: T) => TRet)): { resu
   return fetchValueForPropertyChain(target, propChain);
 }
 
+const defaultResultPredicate = (v: any) => Array.isArray(v) ? !!v.length : !!v;
+export function getResultAfterChange<T extends Model, TProp>(
+  target: T,
+  selector: (value: T) => TProp,
+  predicate: (value: TProp, index: number) => boolean = defaultResultPredicate,
+  numberOfChanges: number = 1)
+: Promise<TProp> {
+  return whenPropertyInternal(target, true, selector)
+    .filter(predicate)
+    .take(numberOfChanges)
+    .toPromise();
+}
+
 /*
  * Extremely boring and ugly type descriptions ahead
  */
