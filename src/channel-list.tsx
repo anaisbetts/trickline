@@ -53,9 +53,11 @@ export class ChannelListView extends SimpleView<ChannelListViewModel> {
       x => new ChannelViewModel(this.viewModel!, x));
   }
 
-  rowRenderer({index, style}: {index: number, style: React.CSSProperties}) {
+  rowRenderer({index, key, style}: {index: number, key: any, style: React.CSSProperties}) {
     let vm = this.viewModelCache.getViewModel(index) as ChannelViewModel;
-    return <ChannelListItem key={vm.id} viewModel={vm} style={style} />;
+    return <div key={key} style={style}>
+      <ChannelListItem key={key} viewModel={vm} />;
+    </div>;
   }
 
   render() {
