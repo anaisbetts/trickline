@@ -36,7 +36,7 @@ app.on('ready', async () => {
     width: 1024, height: 768,
   });
 
-  mainWindow.loadURL(`file://${__dirname}/index.html`);
+  mainWindow.loadURL(`file://${__dirname}/index.html?react_perf`);
 
   if (traceMode) return;
 

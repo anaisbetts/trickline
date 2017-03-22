@@ -15,12 +15,5 @@
   <body style="overflow: hidden; background-color: rgba(0,0,0,0); margin: 0; user-select: none;">
     <div id="app" style="position: absolute; width: 100vw; height: 100vh"></div>
   </body>
-
-  <script type="text/typescript">
-  if (!process.execPath.match(/[\\/]electron-prebuilt/)) {
-    process.env.NODE_ENV = 'production';
-  }
-  </script>
-
-  <script src="./index.tsx"></script>
+  <script src="./bundle.js"></script>
 </html>
