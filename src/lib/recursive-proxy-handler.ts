@@ -1,3 +1,4 @@
+// tslint:disable-next-line:no-empty
 const emptyFn = function() {};
 
 /**
@@ -12,7 +13,7 @@ export class RecursiveProxyHandler {
    *
    * @private
    */
-  constructor(name, methodHandler, parent=null, overrides=null) {
+  constructor(name, methodHandler, parent = null, overrides = null) {
     this.name = name;
     this.proxies = {};
     this.methodHandler = methodHandler;
@@ -38,7 +39,7 @@ export class RecursiveProxyHandler {
    * @return {Proxy}                   An ES6 Proxy object that uses
    *                                   RecursiveProxyHandler.
    */
-  static create(name, methodHandler, overrides=null) {
+  static create(name, methodHandler, overrides = null) {
     return new Proxy(emptyFn, new RecursiveProxyHandler(name, methodHandler, null, overrides));
   }
 
