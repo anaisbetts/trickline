@@ -1,7 +1,7 @@
-import { RecursiveProxyHandler } from 'electron-remote';
 import { Observable } from 'rxjs/Observable';
 import { Subject } from 'rxjs/Subject';
 
+import { RecursiveProxyHandler } from '../recursive-proxy-handler';
 import { ChannelBase } from './api-shapes';
 
 import '../standard-operators';
