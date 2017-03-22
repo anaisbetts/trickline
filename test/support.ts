@@ -37,13 +37,6 @@ export class TestClass extends Model {
   }
 }
 
-export async function waitForPropertyChange(viewModel: Model, propName?: string) {
-  await viewModel.changed
-    .filter(({ property }) => propName ? property === propName : true)
-    .take(1)
-    .toPromise();
-}
-
 before(function() {
   // NB: We do this so that coverage is more accurate
   this.timeout(30 * 1000);

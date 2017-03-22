@@ -3,7 +3,7 @@ import { MockStore } from './lib/mock-store';
 import { Store } from '../src/lib/store';
 import { ChannelBase } from '../src/lib/models/api-shapes';
 import { ChannelListViewModel } from '../src/channel-list';
-import { waitForPropertyChange } from './support';
+import { getResultAfterChange } from '../src/lib/when';
 
 export const channels: { [key: string]: ChannelBase } = {
   C1971: {
@@ -51,21 +51,20 @@ describe('the ChannelListViewModel', () => {
 
   it('should filter archived channels and closed DMs', async () => {
     expect(fixture.orderedChannels).to.be.empty;
-    await waitForPropertyChange(fixture, 'orderedChannels');
-    expect(fixture.orderedChannels.length).to.equal(3);
+    const orderedChannels = await getResultAfterChange(fixture, x => x.orderedChannels);
+    expect(orderedChannels.length).to.equal(3);
   });
 
   it('should sort channels by name, and all DMs below channels', async () => {
-    await waitForPropertyChange(fixture, 'orderedChannels');
-    expect(fixture.orderedChannels[0].value.name).to.equal('eyes-wide-shut');
-    expect(fixture.orderedChannels[1].value.name).to.equal('the-shining');
-    expect(fixture.orderedChannels[2].value.name).to.equal('a-clockwork-orange');
+    const orderedChannels = await getResultAfterChange(fixture, x => x.orderedChannels);
+    expect(orderedChannels[0].value.name).to.equal('eyes-wide-shut');
+    expect(orderedChannels[1].value.name).to.equal('the-shining');
+    expect(orderedChannels[2].value.name).to.equal('a-clockwork-orange');
   });
 
   it('should update based on joined channels', async () => {
-    await waitForPropertyChange(fixture, 'orderedChannels');
     store.joinedChannels.next(joinedChannels.slice(2));
-    await waitForPropertyChange(fixture, 'orderedChannels');
-    expect(fixture.orderedChannels.length).to.equal(1);
+    const orderedChannels = await getResultAfterChange(fixture, x => x.orderedChannels);
+    expect(orderedChannels.length).to.equal(1);
   });
 });
