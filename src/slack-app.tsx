@@ -3,7 +3,6 @@ import * as React from 'react';
 
 // tslint:disable-next-line:no-unused-variable
 import { Observable } from 'rxjs/Observable';
-import { createProxyForRemote } from 'electron-remote';
 
 import Drawer from 'material-ui/Drawer';
 import  MuiThemeProvider from 'material-ui/styles/MuiThemeProvider';
@@ -88,7 +87,8 @@ export class SlackApp extends SimpleView<SlackAppModel> {
     this.viewModel = new SlackAppModel();
     this.viewModel.loadInitialState.execute();
 
-    if (process.env['TRICKLINE_HEAPSHOT_AND_BAIL']) {
+    if ('type' in process && process.env['TRICKLINE_HEAPSHOT_AND_BAIL']) {
+      const {createProxyForRemote} = require('electron-remote');
       const mainProcess = createProxyForRemote(null);
       this.takeHeapshot().then(() => mainProcess.tracingControl.stopTracing(true));
     }
