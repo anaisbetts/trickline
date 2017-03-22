@@ -2,7 +2,7 @@ const path = require('path');
 const webpack = require('webpack');
 
 module.exports = {
-  entry: "./src/index.web.tsx",
+  entry: "./src/index.tsx",
   output: {
     filename: "bundle.js",
     path: path.join(__dirname, "out", "web")

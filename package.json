@@ -12,7 +12,8 @@
     "test": "npm run lint && npm run test-renderer",
     "test-cov": "npm run lint && npm run test-renderer-cov",
     "lint": "tslint -c ./tslint.json -p ./tsconfig.json \"src/**/*.ts\"",
-    "package": "electron-forge make"
+    "package": "electron-forge make",
+    "package-web": "(webpack || true) && cp -R ./src/fonts ./out/web/ && cp -R ./src/images ./out/web/ && cp ./src/index.web.html ./out/web/index.html && cp ./src/*.css ./out/web"
   },
   "repository": {
     "type": "git",
