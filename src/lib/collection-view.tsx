@@ -19,20 +19,20 @@ export interface CollectionViewProps<T> {
   disableHeight?: boolean;
 }
 
-export class ViewModelListHelper<T extends Model, TItem, P extends HasViewModel<T>, S> {
+export class ViewModelListHelper<T extends Model, P extends HasViewModel<T>, S> {
   readonly shouldRender: Subject<void>;
 
-  private readonly keySelector: ((item: TItem) => string);
+  private readonly keySelector: ((item: any) => string);
   private readonly viewModelCache: LRU.Cache<Model>;
-  private readonly createViewModel: ((x: TItem, i: number) => Model);
-  private currentItems: TItem[];
+  private readonly createViewModel: ((x: any, i: number) => Model);
+  private currentItems: any[];
 
   constructor(
       lifecycle: Lifecycle<P, S>,
       props: P,
-      itemsSelector: ((x: T) => TItem[]),
-      keySelector: ((x: TItem) => string),
-      createViewModel: ((x: TItem) => Model),
+      itemsSelector: ((x: T) => any[]),
+      keySelector: ((x: any) => string),
+      createViewModel: ((x: any) => Model),
       lruOpts?: LRU.Options<Model>) {
     this.shouldRender = new Subject<void>();
     this.keySelector = keySelector;
@@ -47,8 +47,11 @@ export class ViewModelListHelper<T extends Model, TItem, P extends HasViewModel<
     opts.dispose = (_k: string, v: Model) => { v.unsubscribe(); }
     this.viewModelCache = LRU<Model>(opts);
 
-    lifecycle.didMount.map(() => props).concat(lifecycle.willReceiveProps)
+    let initialVm = props.viewModel;
+    lifecycle.didMount.map(() => ({ viewModel: initialVm })).concat(lifecycle.willReceiveProps)
+      .do(() => console.log("Got a VM!"))
       .switchMap(p => whenArray(p.viewModel, itemsSelector))
+      .do(() => console.log("Got an Array Change!"))
       .takeUntil(lifecycle.willUnmount)
       .subscribe(v => {
         this.currentItems = v.value;
@@ -68,7 +71,10 @@ export class ViewModelListHelper<T extends Model, TItem, P extends HasViewModel<
     return ret;
   }
 
-  getRowCount() { return this.currentItems.length; }
+  getRowCount() {
+    if (!this.currentItems) return 0;
+    return this.currentItems.length;
+  }
 }
 
 export abstract class CollectionView<T extends Model, TChild extends Model>
