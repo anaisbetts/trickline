@@ -73,7 +73,9 @@ export class NaiveStore implements Store {
   constructor(tokenList: string[] = []) {
     this.api = tokenList.map(x => createApi(x));
 
-    this.channels = new InMemorySparseMap((id: string, api: Api) => infoApiForChannel(id, api).toPromise(), 'merge');
+    this.channels = new InMemorySparseMap((id: string, api: Api) => {
+      return infoApiForChannel(id, api).toPromise();
+    }, 'merge');
     this.users = new InMemorySparseMap<string, User>(
       (user: string, api: Api) => userForId(user, api).toPromise(),
       'merge');

@@ -2,7 +2,6 @@
 import * as React from 'react';
 import * as moment from 'moment';
 import Avatar from 'material-ui/Avatar';
-import Chip from 'material-ui/Chip';
 import Paper from 'material-ui/Paper';
 import { Observable } from 'rxjs/Observable';
 

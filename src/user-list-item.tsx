@@ -20,7 +20,7 @@ export class UserViewModel extends Model {
   constructor(public readonly store: Store, id: string, api: Api) {
     super();
 
-    let model = this.store.users.listen(id, api);
+    const model = this.store.users.listen(id, api);
     model.toProperty(this, 'model');
 
     model.pinned = true;

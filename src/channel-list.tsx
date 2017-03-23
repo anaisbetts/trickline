@@ -4,7 +4,7 @@ import { AutoSizer, List } from 'react-virtualized';
 
 import { ChannelBase } from './lib/models/api-shapes';
 import { ChannelViewModel, ChannelListItem } from './channel-list-item';
-import { channelSort, isDM } from './lib/models/slack-api';
+import { channelSort, isChannel, isDM } from './lib/models/slack-api';
 import { ViewModelListHelper } from './lib/collection-view';
 import { fromObservable, notify, Model } from './lib/model';
 import { Store } from './lib/store';
@@ -12,8 +12,13 @@ import { when } from './lib/when';
 import { Updatable } from './lib/updatable';
 import { SimpleView, HasViewModel } from './lib/view';
 
+export interface IChannelList {
+  selectedChannel?: ChannelBase;
+  setSelectedChannel: (channel: ChannelBase) => void;
+}
+
 @notify('selectedChannel')
-export class ChannelListViewModel extends Model {
+export class ChannelListViewModel extends Model implements IChannelList {
   selectedChannel: ChannelBase;
   @fromObservable channels: string[];
   @fromObservable orderedChannels: Updatable<ChannelBase>[];
@@ -31,10 +36,20 @@ export class ChannelListViewModel extends Model {
       })
       .map(list => {
         return list
-          .filter(c => !c.value.is_archived || (isDM(c.value) && c.value.is_open))
+          .filter(c => {
+            if (isChannel(c.value)) {
+              return !c.value.is_archived;
+            } else if (isDM(c.value)) {
+              return c.value.is_open;
+            }
+          })
           .sort(channelSort);
       })
       .toProperty(this, 'orderedChannels');
+  }
+
+  setSelectedChannel(channel: ChannelBase) {
+    this.selectedChannel = channel;
   }
 }
 
