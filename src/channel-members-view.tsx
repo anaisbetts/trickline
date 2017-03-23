@@ -40,9 +40,11 @@ export class ChannelMembersView extends SimpleView<ChannelMembersViewModel> {
   rowRenderer({index, key, style}: {index: number, key: any, style: React.CSSProperties}) {
     let vm = this.viewModelCache.getViewModel(index) as UserViewModel;
 
-    return <div key={key} style={style}>
-      <UserListItem viewModel={vm} />;
-    </div>;
+    return (
+      <div key={key} style={style}>
+        <UserListItem viewModel={vm} />
+      </div>
+    );
   }
 
   render() {
