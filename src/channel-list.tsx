@@ -64,7 +64,7 @@ export class ChannelListView extends SimpleView<ChannelListViewModel> {
       this.lifecycle, props,
       (x: ChannelListViewModel) => x.orderedChannels,
       x => x.value.id,
-      x => new ChannelViewModel(this.viewModel!, x));
+      x => new ChannelViewModel(this.viewModel!.store, this.viewModel!, x));
 
     const update = () => {
       this.listRef.forceUpdateGrid();
