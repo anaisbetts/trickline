@@ -53,10 +53,7 @@ export class ChannelViewModel extends Model {
         // XXX: This is a crime
         let u = this.store.users.listen(c.user_id, c.api);
         return u.do(x => {
-          if (x && !x.profile) {
-            console.log(`No profile! ${JSON.stringify(x)}`);
-            u.invalidate();
-          }
+          if (x && !x.profile) { u.invalidate(); }
         });
       })
       .filter(x => x && !!x.profile)
