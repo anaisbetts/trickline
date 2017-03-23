@@ -2,17 +2,17 @@
 import * as React from 'react';
 import { AutoSizer, CellMeasurer, CellMeasurerCache, InfiniteLoader, List } from 'react-virtualized';
 
-import { Api, isChannel, timestampToPage, dateToTimestamp, tsToTimestamp } from './lib/models/slack-api';
+import { Api, timestampToPage, dateToTimestamp } from './lib/models/slack-api';
 import { ChannelBase, Message } from './lib/models/api-shapes';
-import { CollectionView } from './lib/collection-view';
-import { fromObservable, Model, notify } from './lib/model';
+import { ViewModelListHelper } from './lib/collection-view';
+import { Model, notify } from './lib/model';
 import { MessageViewModel, MessageListItem } from './message-list-item';
 import { Store, MessageKey, messageCompare } from './lib/store';
-import { when, whenArray } from './lib/when';
-import { fetchMessagePageForChannel, getNextPageNumber } from './lib/store-network';
+import { getNextPageNumber } from './lib/store-network';
 import { SortedArray } from './lib/sorted-array';
 import { Action } from './lib/action';
 import { Observable } from 'rxjs/Observable';
+import { SimpleView, HasViewModel } from './lib/view';
 
 export interface MessageCollection {
   [ts: string]: Message;
@@ -73,26 +73,34 @@ export class MessagesViewModel extends Model {
   }
 }
 
-export class MessagesView extends CollectionView<MessagesViewModel, MessageViewModel> {
+export class MessagesView extends SimpleView<MessagesViewModel> {
+  viewModelCache: ViewModelListHelper<MessagesViewModel, HasViewModel<MessagesViewModel>, null>;
+
   private readonly cache: CellMeasurerCache = new CellMeasurerCache({
     fixedWidth: true,
     minHeight: 43
   });
 
-  viewModelFactory(_item: any, index: number) {
-    const message = this.viewModel.messages[index];
-    return new MessageViewModel(
-      this.viewModel.store,
-      this.viewModel.api,
-      this.viewModel.store.messages.listen(message, this.viewModel.api)!);
+  constructor(props: { viewModel: MessagesViewModel }, context?: any) {
+    super(props, context);
+
+    this.viewModelCache = new ViewModelListHelper(
+      this.lifecycle, props,
+      (x: MessagesViewModel) => x.messages,
+      x => x.ts,
+      (message: MessageKey) => new MessageViewModel(
+        this.viewModel!.store,
+        this.viewModel!.api,
+        this.viewModel!.store.messages.listen(message, this.viewModel!.api)!));
+
   }
 
   isRowLoaded({ index }: { index: number }) {
-    return !!this.viewModel.messages[index];
+    return !!this.viewModel!.messages[index];
   }
 
   async loadMoreRows() {
-    await this.viewModel.scrollPreviousPage.execute().toPromise();
+    await this.viewModel!.scrollPreviousPage.execute().toPromise();
   }
 
   renderItem(viewModel: MessageViewModel) {
@@ -100,7 +108,7 @@ export class MessagesView extends CollectionView<MessagesViewModel, MessageViewM
   }
 
   rowRenderer({ index, key, style, parent }: RowRendererArgs) {
-    const viewModel = this.getOrCreateViewModel(index);
+    const viewModel = this.viewModelCache.getViewModel(index) as MessageViewModel;
 
     return (
       <CellMeasurer
@@ -118,14 +126,14 @@ export class MessagesView extends CollectionView<MessagesViewModel, MessageViewM
   }
 
   render() {
-    const key = this.viewModel.channel ? this.viewModel.channel.id : null;
+    const key = this.viewModel!.channel ? this.viewModel!.channel.id : null;
 
     return (
       <div style={{ width: '100%', height: '100%' }}>
         <InfiniteLoader
           isRowLoaded={this.isRowLoaded.bind(this)}
           loadMoreRows={this.loadMoreRows.bind(this)}
-          rowCount={this.viewModel.messagesCount * 2}
+          rowCount={this.viewModel!.messages.length * 2}
         >
           {({ onRowsRendered, registerChild }: any) => (
             <AutoSizer disableWidth>
@@ -138,7 +146,7 @@ export class MessagesView extends CollectionView<MessagesViewModel, MessageViewM
                   registerChild={registerChild}
                   deferredMeasurementCache={this.cache}
                   rowHeight={this.cache.rowHeight}
-                  rowCount={this.viewModel.messages.length}
+                  rowCount={this.viewModel!.messages.length}
                   rowRenderer={this.rowRenderer.bind(this)}
                 />
               )}
