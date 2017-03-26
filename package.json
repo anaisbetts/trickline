@@ -9,8 +9,8 @@
     "test-renderer": "xvfb-maybe electron-mocha --renderer --watch-extensions tsx,ts \"./test/**/*.{js,ts}\"",
     "test-renderer-cov": "cross-env NODE_ENV='test' npm run test-renderer && cat ./coverage/lcov.info | node ./node_modules/coveralls/bin/coveralls.js",
     "dtest": "electron-mocha --renderer --interactive --watch-extensions tsx,ts \"./test/**/*.{js,ts}\"",
-    "test": "npm run lint && npm run test-renderer",
-    "test-cov": "npm run lint && npm run test-renderer-cov",
+    "test": "npm run test-renderer && npm run lint",
+    "test-cov": "npm run test-renderer-cov && npm run lint",
     "lint": "tslint -c ./tslint.json -p ./tsconfig.json \"src/**/*.ts\"",
     "package": "electron-forge make",
     "package-web": "(webpack || true) && cp -R ./src/fonts ./out/web/ && cp -R ./src/images ./out/web/ && cp ./src/index.web.html ./out/web/index.html && cp ./src/*.css ./out/web"
