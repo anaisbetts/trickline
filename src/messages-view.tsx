@@ -88,6 +88,7 @@ export class MessagesViewModel extends Model {
 
 export class MessagesView extends SimpleView<MessagesViewModel> {
   viewModelCache: ViewModelListHelper<MessagesViewModel, HasViewModel<MessagesViewModel>, null>;
+  listRef: List;
 
   private readonly cache: CellMeasurerCache = new CellMeasurerCache({
     fixedWidth: true,
@@ -106,6 +107,12 @@ export class MessagesView extends SimpleView<MessagesViewModel> {
         this.viewModel!.api,
         this.viewModel!.store.messages.listen(message, this.viewModel!.api)!));
 
+    const update = () => {
+      this.listRef.forceUpdateGrid();
+      this.forceUpdate();
+    };
+
+    this.viewModelCache.shouldRender.subscribe(() => this.queueUpdate(update));
   }
 
   isRowLoaded({ index }: { index: number }) {
@@ -113,6 +120,7 @@ export class MessagesView extends SimpleView<MessagesViewModel> {
   }
 
   async loadMoreRows() {
+    d('Loading more rows!');
     await this.viewModel!.scrollPreviousPage.execute().toPromise();
   }
 
@@ -140,6 +148,7 @@ export class MessagesView extends SimpleView<MessagesViewModel> {
 
   render() {
     const key = this.viewModel!.channel ? this.viewModel!.channel.id : null;
+    const refBind = (l: List) => this.listRef = l;
 
     return (
       <div style={{ width: '100%', height: '100%' }}>
@@ -152,6 +161,7 @@ export class MessagesView extends SimpleView<MessagesViewModel> {
             <AutoSizer disableWidth>
               {({ width, height }: { width: number, height: number }) => (
                 <List
+                  ref={refBind}
                   key={key}
                   width={width}
                   height={height}
