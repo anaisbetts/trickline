@@ -3,12 +3,24 @@ import { fromObservable, Model, notify } from '../src/lib/model';
 import { Updatable } from '../src/lib/updatable';
 import { Observable } from 'rxjs/Observable';
 import { Subject } from 'rxjs/Subject';
+import { config } from 'dotenv';
+import { ISuiteCallbackContext } from 'mocha';
 
-let chai = require("chai");
-let chaiAsPromised = require("chai-as-promised");
+let chai = require('chai');
+let chaiAsPromised = require('chai-as-promised');
 
 chai.should();
 chai.use(chaiAsPromised);
+
+config();
+
+export function describeIntegration(name: string, fn: ((this: ISuiteCallbackContext) => void)) {
+  if (!process.env.SLACK_API_TOKEN) {
+    describe.skip(name, fn);
+  } else {
+    describe(name, fn);
+  }
+}
 
 @notify('foo', 'bar')
 export class TestClass extends Model {
