@@ -10,6 +10,8 @@ import 'rxjs/add/observable/dom/webSocket';
 import './standard-operators';
 import './custom-operators';
 
+//const d = require('debug')('trickline:store-network');
+
 /*
  * users.counts
  */

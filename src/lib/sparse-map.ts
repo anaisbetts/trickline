@@ -15,45 +15,14 @@ export interface SparseMap<K, V> {
   setAsync(key: K, value: Promise<V>): Promise<void>;
   invalidate(key: K): Promise<void>;
 
+  listenMany(keys: Array<K>, hint?: any, dontCreate?: boolean): Map<K, Updatable<V>>;
+  get(key: K, hint?: any, dontCreate?: boolean): Promise<V|null>;
+  getMany(keys: Array<K>, hint?: any, dontCreate?: boolean): Promise<Map<K, V|null>>;
+  setValue(key: K, value: V): Promise<void>;
+
   created: Observable<Pair<K, Updatable<V>>>;
   evicted: Observable<Pair<K, Updatable<V>>>;
 };
-
-export class SparseMapMixins {
-  static listenMany<K, V>(this: SparseMap<K, V>, keys: Array<K>, hint?: any, dontCreate?: boolean): Map<K, Updatable<V> | null> {
-    return keys.reduce((acc, x) => {
-      acc.set(x, this.listen(x, hint, dontCreate));
-      return acc;
-    }, new Map<K, Updatable<V> | null>());
-  }
-
-  static get<K, V>(this: SparseMap<K, V>, key: K, hint?: any, dontCreate?: boolean): Promise<V|null> {
-    let ret = this.listen(key, hint, dontCreate);
-    if (!ret) return Promise.resolve(null);
-
-    return ret.take(1).toPromise();
-  }
-
-  static getMany<K, V>(this: SparseMap<K, V>, keys: Array<K>, hint?: any, dontCreate?: boolean): Promise<Map<K, V>> {
-    return Observable.of(...keys)
-      .flatMap(k => {
-        let ret = this.listen(k, hint, dontCreate);
-        if (!ret) return Observable.empty();
-
-        return ret.take(1).map(v => ({Key: k, Value: v}));
-      })
-      .reduce((acc, x) => {
-        acc.set(x.Key, x.Value);
-        return acc;
-      }, new Map<K, V>())
-      .toPromise();
-  }
-
-  static setValue<K, V>(this: SparseMap<K, V>, key: K, value: V): Promise<void> {
-    this.listen(key).next(value);
-    return Promise.resolve();
-  }
-}
 
 class InMemorySparseMap<K, V> implements SparseMap<K, V> {
   created: Subject<Pair<K, Updatable<V>>>;

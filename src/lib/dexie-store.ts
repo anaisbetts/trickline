@@ -2,19 +2,24 @@ import { AsyncSubject } from 'rxjs/AsyncSubject';
 
 import Dexie from 'dexie';
 
-import { Store, MessagesKey, MessageCollection, ModelType } from './store';
-import { Api, createApi, infoApiForChannel } from './models/slack-api';
+import { Store, MessagesKey, MessageCollection, ModelType, MessagePageKey, MessageKey, messageCompare } from './store';
+import { Api, createApi, infoApiForChannel, fetchSingleMessage } from './models/slack-api';
 import { ArrayUpdatable } from './updatable';
 import { SparseMap, InMemorySparseMap } from './sparse-map';
 import { ChannelBase, User, Message } from './models/api-shapes';
 import { EventType } from './models/event-type';
 import { Pair } from './utils';
 import { asyncMap } from './promise-extras';
+import { SortedArray } from './sorted-array';
+import { fetchMessagePageForChannel } from './store-network';
+
+const d = require('debug')('trickline:dexie-store');
 
 const VERSION = 1;
 
-export interface DeferredPutItem<T> {
+export interface DeferredPutItem<T, TKey> {
   item: T;
+  key: TKey;
   completion: AsyncSubject<void>;
 }
 
@@ -26,40 +31,41 @@ export interface DeferredGetItem<T, TKey> {
 declare module 'dexie' {
   module Dexie {
     interface Table<T, Key> {
-      deferredPut: ((item: T) => Promise<void>);
+      deferredPut: ((item: T, key: Key) => Promise<void>);
       deferredGet: ((key: Key, database: Dexie) => Promise<T>);
       idlePutHandle: number | null;
       idleGetHandle: number | null;
-      deferredPuts: DeferredPutItem<T>[];
+      deferredPuts: DeferredPutItem<T, Key>[];
       deferredGets: DeferredGetItem<T, Key>[];
     }
   }
 }
 
-function deferredPut<T, Key>(this: Dexie.Table<T, Key>, item: T): Promise<void> {
-  let newItem = { item, completion: new AsyncSubject<void>() };
+function deferredPut<T, Key>(this: Dexie.Table<T, Key>, item: T, key: Key): Promise<void> {
+  let newItem = { item, key, completion: new AsyncSubject<void>() };
+  newItem.item = Object.assign({}, newItem.item);
 
   let createIdle = () => window.requestIdleCallback(deadline => {
     while (deadline.timeRemaining() > 5/*ms*/) {
       // TODO: This would be cooler if it recognized duplicate IDs and threw out the older
       // one (i.e. you update channel.topic and channel.name in the same batch, so we really
       // only need to write the newer one)
-      let itemsToAdd = this.deferredPuts;
-      this.deferredPuts = itemsToAdd.splice(128);
-
-      let toPut = itemsToAdd.map(x => {
-        let ret = Object.assign({}, x.item);
-        if (ret.api) {
-          ret.token = ret.api.token();
-          ret.api = null;
+      let allItems = this.deferredPuts;
+      let itemsToAdd = allItems.splice(0, 128).map(x => {
+        if (x.item.api) {
+          x.item.token = x.item.api.token();
+          x.item.api = null;
         }
 
-        return ret;
+        return x;
       });
 
       // XXX: This is unbounded concurrency!
-      this.bulkPut(toPut);
-      itemsToAdd.forEach(x => { x.completion.next(undefined); x.completion.complete(); });
+      this.bulkPut(itemsToAdd.map(x => x.item))
+        .then(
+          () => itemsToAdd.forEach(x => { d(`Actually wrote ${x.key}!`); x.completion.next(undefined); x.completion.complete(); }),
+          (e) => itemsToAdd.forEach(x => x.completion.error(e)))
+        .finally(() => this.deferredPuts = allItems.splice(128));
     }
 
     if (this.deferredPuts.length) {
@@ -69,8 +75,10 @@ function deferredPut<T, Key>(this: Dexie.Table<T, Key>, item: T): Promise<void> 
     }
   });
 
+  d(`Queuing new item for write! ${newItem.key}`);
   this.deferredPuts = this.deferredPuts || [];
   this.deferredPuts.push(newItem);
+
   if (!this.idlePutHandle) {
     this.idlePutHandle = createIdle();
   }
@@ -87,8 +95,35 @@ function deferredGet<T, Key>(this: Dexie.Table<T, Key>, key: Key, database: Dexi
 
     try {
       await database.transaction('r', this, () => {
+        let pendingPutsIndex = (this.deferredPuts || []).reduce((acc, x) => {
+          acc.set(x.key, x.item);
+          return acc;
+        }, new Map<Key, T>());
+
         return asyncMap(itemsToGet, (x) => {
-          return this.get(x.key).then(result => {
+          // First, search pending writes to see if we're about to save this
+          d(`Attempting to fetch ${x.key}!`);
+          let pending = pendingPutsIndex.get(key);
+          if (pending) {
+            d(`Early-completing ${key}!`);
+
+            // NB: We need to do a shallow clone here because otherwise at some point,
+            // api will be replaced by 'token' on this pending object, thereby trolling
+            // the caller
+            x.completion.next(Object.assign({}, pending));
+            x.completion.complete();
+            return Promise.resolve();
+          }
+
+          let val = pendingPutsIndex.get(x.key);
+          let ret: Promise<T>;
+          if (val) {
+            ret = Promise.resolve(val);
+          } else {
+            ret = this.get(x.key);
+          }
+
+          return ret.then(result => {
             x.completion.next(result!);
             x.completion.complete();
           }, (e: Error) => x.completion.error(e));
@@ -135,7 +170,8 @@ export class DexieStore implements Store {
   joinedChannels: ArrayUpdatable<string>;
   channels: SparseMap<string, ChannelBase>;
   users: SparseMap<string, User>;
-  messages: SparseMap<MessagesKey, MessageCollection>;
+  messages: SparseMap<MessageKey, Message>;
+  messagePages: SparseMap<MessagePageKey, SortedArray<MessageKey>>;
   events: SparseMap<EventType, Message>;
   keyValueStore: SparseMap<string, any>;
 
@@ -154,10 +190,11 @@ export class DexieStore implements Store {
     this.database.open();
 
     this.channels = new InMemorySparseMap<string, ChannelBase>(async (id, api) => {
+      d(`Factory'ing channel ${id}!`);
       let ret = await this.database.channels.deferredGet(id, this.database);
       if (ret) {
         if (ret.token) {
-          ret.api = this.apiTokenMap.get(ret.api);
+          ret.api = this.apiTokenMap.get(ret.token);
           delete ret.token;
         }
 
@@ -188,16 +225,13 @@ export class DexieStore implements Store {
       return ret;
     }, 'merge');
 
-    this.messages = new InMemorySparseMap<MessagesKey, MessageCollection>((key: MessagesKey, api: Api) => {
-      return api.channels.history(key).map(({ messages }: { messages: Array<Message> }) => {
-        return {
-          latest: messages[0].ts,
-          oldest: messages[messages.length - 1].ts,
-          messages,
-          api
-        };
-      });
-    }, 'merge');
+    this.messages = new InMemorySparseMap<MessageKey, Message>(
+      (key: MessageKey, api) => fetchSingleMessage(key.channel, key.timestamp, api).toPromise(), 'merge');
+
+    this.messagePages = new InMemorySparseMap<MessagePageKey, SortedArray<MessageKey>>(async (k, api) => {
+      let result = await fetchMessagePageForChannel(this, k.channel, k.page, api);
+      return new SortedArray({ unique: true, compare: messageCompare }, result);
+    }, 'array');
 
     this.keyValueStore = new InMemorySparseMap<string, any>(async (key: string) => {
       let ret = await this.database.keyValues.deferredGet(key, this.database);
@@ -212,23 +246,23 @@ export class DexieStore implements Store {
     let u;
     switch (type) {
     case 'channel':
-      this.database.channels.deferredPut(value);
+      this.database.channels.deferredPut(value, value.id);
       u = this.channels.listen(value.id, api, true);
       if (u) u.next(value);
       break;
     case 'user':
-      this.database.users.deferredPut(value);
+      this.database.users.deferredPut(value, value.id);
       u = this.users.listen(value.id, api, true);
       if (u) u.next(value);
       break;
     case 'event':
-      this.events.listen(value.id, api).next(value);
+      this.events.listen(value.id, api)!.next(value);
       break;
     }
   }
 
   setKeyInStore(key: string, value: any): void {
-    this.database.keyValues.deferredPut({ Key: key, Value: JSON.stringify(value) });
+    this.database.keyValues.deferredPut({ Key: key, Value: JSON.stringify(value) }, key);
     let u = this.users.listen(key, null, true);
     if (u) u.next(value);
   }

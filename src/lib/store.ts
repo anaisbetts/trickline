@@ -76,6 +76,7 @@ export class NaiveStore implements Store {
     this.channels = new InMemorySparseMap((id: string, api: Api) => {
       return infoApiForChannel(id, api).toPromise();
     }, 'merge');
+
     this.users = new InMemorySparseMap<string, User>(
       (user: string, api: Api) => userForId(user, api).toPromise(),
       'merge');

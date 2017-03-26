@@ -45,10 +45,10 @@ export class MessagesViewModel extends Model {
     let messagesForUs = store.events.listen('message', this.api)!
       .filter(x => x && x.channel === channel.id);
 
-    messagesForUs.subscribe(x => {
+    this.addTeardown(messagesForUs.subscribe(x => {
       this.messages.insertOne({ channel: channel.id, timestamp: x.ts});
       Platform.performMicrotaskCheckpoint();
-    });
+    }));
 
     this.scrollPreviousPage = new Action(() => {
       let page = this.messages && this.messages.length > 0 ? this.messages[0].timestamp : this.messagePage;
@@ -133,7 +133,7 @@ export class MessagesView extends SimpleView<MessagesViewModel> {
         <InfiniteLoader
           isRowLoaded={this.isRowLoaded.bind(this)}
           loadMoreRows={this.loadMoreRows.bind(this)}
-          rowCount={this.viewModel!.messages.length * 2}
+          rowCount={Math.min(50, this.viewModel!.messages.length * 2)}
         >
           {({ onRowsRendered, registerChild }: any) => (
             <AutoSizer disableWidth>
