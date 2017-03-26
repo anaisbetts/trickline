@@ -137,7 +137,7 @@ class InMemorySparseMap<K, V> implements SparseMap<K, V> {
     let ret = this.listen(key, hint, dontCreate);
     if (!ret) return Promise.resolve(null);
 
-    return this.listen(key).take(1).toPromise();
+    return ret.waitForValue();
   }
 
   getMany(keys: Array<K>, hint?: any, dontCreate?: boolean): Promise<Map<K, V|null>> {
@@ -253,7 +253,7 @@ class LRUSparseMap<V> implements SparseMap<string, V> {
     let ret = this.listen(key, hint, dontCreate);
     if (!ret) return Promise.resolve(null);
 
-    return this.listen(key).take(1).toPromise();
+    return ret.waitForValue();
   }
 
   getMany(keys: Array<string>, hint?: any, dontCreate?: boolean): Promise<Map<string, V|null>> {

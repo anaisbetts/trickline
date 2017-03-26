@@ -30,7 +30,7 @@ export class ChannelListViewModel extends Model implements IChannelList {
     when(this, x => x.channels)
       .flatMap(async list => {
         let updatables = Array.from(store.channels.listenMany(list || []).values());
-        await Promise.all(updatables.map(x => x.get()));
+        await Promise.all(updatables.map(x => x.waitForValue()));
 
         return updatables;
       })
