@@ -14,6 +14,8 @@ import { Action } from './lib/action';
 import { Observable } from 'rxjs/Observable';
 import { SimpleView, HasViewModel } from './lib/view';
 
+const d = require('debug')('trickline-test:messages-view');
+
 export interface MessageCollection {
   [ts: string]: Message;
 };
@@ -50,14 +52,23 @@ export class MessagesViewModel extends Model {
       Platform.performMicrotaskCheckpoint();
     }));
 
-    this.scrollPreviousPage = new Action(() => {
-      let page = this.messages && this.messages.length > 0 ? this.messages[0].timestamp : this.messagePage;
-      return getNextPageNumber(store, channel.id, timestampToPage(page), false, this.api);
+    this.scrollPreviousPage = new Action(async () => {
+      let page = this.messages && this.messages.length > 0 ?
+        timestampToPage(this.messages[0].timestamp) :
+        this.messagePage;
+
+      let newPage = await getNextPageNumber(store, channel.id, page, false, this.api);
+
+      d(`getNextPageNumber: ${newPage}`);
+      return newPage;
     }, this.messagePage);
 
     this.scrollNextPage = new Action(() => {
-      let page = this.messages && this.messages.length > 0 ? this.messages[this.messages.length - 1].timestamp : this.messagePage;
-      return getNextPageNumber(store, channel.id, timestampToPage(page), true, this.api);
+      let page = this.messages && this.messages.length > 0 ?
+        timestampToPage(this.messages[this.messages.length - 1].timestamp) :
+        this.messagePage;
+
+      return getNextPageNumber(store, channel.id, page, true, this.api);
     }, this.messagePage);
 
     Observable.merge(
@@ -65,8 +76,10 @@ export class MessagesViewModel extends Model {
       this.scrollNextPage.result,
       messagesForUs.map(x => timestampToPage(x.ts))
     ).distinctUntilChanged()
+      .do(x => d(`Getting messages for page! ${x}`))
       .switchMap(page => store.messagePages.get({ channel: channel.id, page }, this.api))
       .subscribe((x: SortedArray<MessageKey>) => {
+        d(`Got new messages! ${x.length}`);
         this.messages.insert(...x);
         Platform.performMicrotaskCheckpoint();
       });
