@@ -6,7 +6,7 @@ import { Store, MessagesKey, MessageCollection, ModelType, MessagePageKey, Messa
 import { Api, createApi, infoApiForChannel, fetchSingleMessage } from './models/slack-api';
 import { ArrayUpdatable } from './updatable';
 import { SparseMap, InMemorySparseMap } from './sparse-map';
-import { ChannelBase, User, Message } from './models/api-shapes';
+import { ChannelBase, User, Message, MsgTimestamp } from './models/api-shapes';
 import { EventType } from './models/event-type';
 import { Pair } from './utils';
 import { asyncMap } from './promise-extras';
@@ -147,6 +147,7 @@ function deferredGet<T, Key>(this: Dexie.Table<T, Key>, key: Key, database: Dexi
 export class DataModel extends Dexie {
   users: Dexie.Table<User, string>;
   channels: Dexie.Table<ChannelBase, string>;
+  messages: Dexie.Table<Message, { channel: string, ts: MsgTimestamp }>;
   keyValues: Dexie.Table<Pair<string, string>, string>;
 
   constructor() {
@@ -156,7 +157,7 @@ export class DataModel extends Dexie {
       users: 'id',
       channels: 'id',
       keyValues: 'Key',
-      messages: '++,channel,ts'
+      messages: '[channel+ts]'
     });
 
     Object.getPrototypeOf(this.users).deferredPut = deferredPut;
@@ -202,8 +203,8 @@ export class DexieStore implements Store {
       }
 
       ret = await (infoApiForChannel(id, api).toPromise());
+      ret.api = api;
       this.saveModelToStore('channel', ret, api);
-
       return ret;
     }, 'merge');
 
