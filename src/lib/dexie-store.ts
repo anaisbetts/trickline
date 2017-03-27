@@ -1,7 +1,7 @@
 import { Store, ModelType, MessagePageKey, MessageKey, messageCompare, messageKeyToString } from './store';
 import { Api, createApi, infoApiForChannel, fetchSingleMessage, pageToTimestamp } from './models/slack-api';
 import { ArrayUpdatable } from './updatable';
-import { SparseMap, InMemorySparseMap, LRUSparseMap } from './sparse-map';
+import { SparseMap, InMemorySparseMap } from './sparse-map';
 import { ChannelBase, User, Message } from './models/api-shapes';
 import { EventType } from './models/event-type';
 import { SortedArray } from './sorted-array';

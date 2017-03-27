@@ -157,7 +157,7 @@ export class DataModel extends Dexie {
       messages: '[channel+ts]'
     });
 
-    // NB: They'll all share the same prototype, no need to bolt this onto 
+    // NB: They'll all share the same prototype, no need to bolt this onto
     // every instance
     Object.getPrototypeOf(this.users).deferredPut = deferredPut;
     Object.getPrototypeOf(this.users).deferredGet = deferredGet;
