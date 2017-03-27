@@ -33,7 +33,6 @@ Object.keys(toTest).forEach((k) => {
     });
 
     it('should fetch messages for the first channel in the store', async function() {
-      debugger;
       let channelChanges = fixture.joinedChannels.createCollection();
       expect(channelChanges.length).to.equal(1);
 

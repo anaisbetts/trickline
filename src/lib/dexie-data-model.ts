@@ -60,7 +60,7 @@ function deferredPut<T, Key>(this: Dexie.Table<T, Key>, item: T & Api, key: Key)
       // XXX: This is unbounded concurrency!
       this.bulkPut(itemsToAdd.map(x => x.item))
         .then(
-          () => itemsToAdd.forEach(x => { d(`Actually wrote ${x.key}!`); x.completion.next(undefined); x.completion.complete(); }),
+          () => itemsToAdd.forEach(x => { d(`Actually wrote ${JSON.stringify(x.key)}!`); x.completion.next(undefined); x.completion.complete(); }),
           (e) => itemsToAdd.forEach(x => x.completion.error(e)))
         .finally(() => this.deferredPuts = allItems.splice(128));
     }
@@ -72,7 +72,7 @@ function deferredPut<T, Key>(this: Dexie.Table<T, Key>, item: T & Api, key: Key)
     }
   });
 
-  d(`Queuing new item for write! ${newItem.key}`);
+  d(`Queuing new item for write! ${JSON.stringify(newItem.key)}`);
   this.deferredPuts = this.deferredPuts || [];
   this.deferredPuts.push(newItem);
 

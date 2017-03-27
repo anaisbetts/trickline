@@ -7,7 +7,7 @@ import { whenArray } from '../src/lib/when';
 
 const toTest = {
   'NaiveStore': NaiveStore,
-//  'DexieStore': DexieStore
+  'DexieStore': DexieStore
 };
 
 const d = require('debug')('trickline-test:messages-view-integration');
@@ -37,7 +37,6 @@ Object.keys(toTest).forEach((k) => {
     });
 
     it('should fetch a list of initial messages', async function() {
-      console.log(fixture);
       fixture.scrollPreviousPage.execute().subscribe(p => d(`New page is ${p}`));
       await whenArray(fixture, x => x.messages).skip(1).take(1).toPromise();
 

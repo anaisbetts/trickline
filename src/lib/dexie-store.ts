@@ -105,18 +105,16 @@ export class DexieStore implements Store {
     }, 'merge');
 
     this.messagePages = new InMemorySparseMap<MessagePageKey, SortedArray<MessageKey>>(async (k, api) => {
-      let range = [
-        pageToTimestamp(k.page),
-        pageToTimestamp(k.page + 1)
-      ];
-
       let dbItems = await this.database.messages
-        .where('ts').inAnyRange([range])
-        .filter(x => x.channel === k.channel)
+        .where('[channel+ts]').between(
+           [k.channel, pageToTimestamp(k.page)],
+           [k.channel, pageToTimestamp(k.page + 1)]
+         )
         .toArray();
 
       let result;
-      if (dbItems) {
+      if (dbItems && dbItems.length > 0) {
+        d(`Found ${dbItems.length} messages in IndexedDb for ${k.channel} on page ${k.page}`);
         result = dbItems.map(x => {
           if (x.token) {
             x.api = this.apiTokenMap.get(x.api);
@@ -127,6 +125,8 @@ export class DexieStore implements Store {
           this.messageCache.set(messageKeyToString(key), x);
           return key;
         });
+      } else {
+        d(`No messages found for ${k.channel} on page ${k.page}, fetching from network`);
       }
 
       if (!result) result = await fetchMessagePageForChannel(this, k.channel, k.page, api);
