@@ -2,7 +2,7 @@ import { Observable } from 'rxjs/Observable';
 import { Subject } from 'rxjs/Subject';
 
 import { RecursiveProxyHandler } from '../recursive-proxy-handler';
-import { ChannelBase, User, Message, MsgTimestamp } from './api-shapes';
+import { ChannelBase, User, MsgTimestamp, Message } from './api-shapes';
 
 import '../standard-operators';
 
@@ -144,7 +144,7 @@ export function dateToTimestamp(date: Date) {
   return unixTime * 1000000;
 }
 
-export function timestampToDate(timestamp: MsgTimestamp): Date {
+export function timestampToDate(timestamp: MsgTimestamp) {
   let unixTime = Math.floor(timestamp / 1000000);
   return new Date(unixTime * 1000);
 }

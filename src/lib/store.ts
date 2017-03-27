@@ -59,6 +59,10 @@ export function messageCompare(a: Message, b: Message) {
   return (c > 0) ? 1 : (c == 0)  ? 0 : -1;
 }
 
+export function messageKeyToString(key: MessageKey) {
+  return `${key.channel}.${key.timestamp}`;
+}
+
 export class NaiveStore implements Store {
   api: Api[];
 
