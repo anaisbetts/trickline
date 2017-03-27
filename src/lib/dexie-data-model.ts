@@ -2,12 +2,13 @@ import { AsyncSubject } from 'rxjs/AsyncSubject';
 
 import Dexie from 'dexie';
 import { asyncMap } from './promise-extras';
-import { User, ChannelBase, Message, MsgTimestamp } from './models/api-shapes';
+import { User, ChannelBase, Message } from './models/api-shapes';
 import { Pair } from './utils';
 import { Api } from './models/slack-api';
 
 import './standard-operators';
 import 'request-idle-polyfill';
+import { MessageKey } from './store';
 
 const d = require('debug')('trickline:dexie-data-model');
 
@@ -143,7 +144,7 @@ function deferredGet<T, Key>(this: Dexie.Table<T, Key>, key: Key, database: Dexi
 export class DataModel extends Dexie {
   users: Dexie.Table<User, string>;
   channels: Dexie.Table<ChannelBase, string>;
-  messages: Dexie.Table<Message, { channel: string, ts: MsgTimestamp }>;
+  messages: Dexie.Table<Message, MessageKey>;
   keyValues: Dexie.Table<Pair<string, string>, string>;
 
   constructor() {
@@ -156,6 +157,8 @@ export class DataModel extends Dexie {
       messages: '[channel+ts]'
     });
 
+    // NB: They'll all share the same prototype, no need to bolt this onto 
+    // every instance
     Object.getPrototypeOf(this.users).deferredPut = deferredPut;
     Object.getPrototypeOf(this.users).deferredGet = deferredGet;
   }
