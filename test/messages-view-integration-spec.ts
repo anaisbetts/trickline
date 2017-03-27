@@ -36,7 +36,7 @@ Object.keys(toTest).forEach((k) => {
       fixture = new MessagesViewModel(store, channel!);
     });
 
-    it.only('should fetch a list of initial messages', async function() {
+    it('should fetch a list of initial messages', async function() {
       console.log(fixture);
       fixture.scrollPreviousPage.execute().subscribe(p => d(`New page is ${p}`));
       await whenArray(fixture, x => x.messages).skip(1).take(1).toPromise();
