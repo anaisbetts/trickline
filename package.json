@@ -4,11 +4,11 @@
   "description": "A fast, offline Slack client",
   "main": "src/main.ts",
   "scripts": {
-    "start": "cross-env DEBUG='trickline' electron-forge start",
+    "start": "cross-env DEBUG='*,-electron-compile:*' electron-forge start",
     "clean-build": "ts-node -D ./docker/surf-build-current",
     "test-renderer": "xvfb-maybe electron-mocha --renderer --watch-extensions tsx,ts \"./test/**/*.{js,ts}\"",
     "test-renderer-cov": "cross-env NODE_ENV='test' npm run test-renderer && cat ./coverage/lcov.info | node ./node_modules/coveralls/bin/coveralls.js",
-    "dtest": "electron-mocha --renderer --interactive --watch-extensions tsx,ts \"./test/**/*.{js,ts}\"",
+    "dtest": "cross-env DEBUG='*,-electron-compile:*' electron-mocha --renderer --interactive --watch-extensions tsx,ts \"./test/**/*.{js,ts}\"",
     "test": "npm run test-renderer && npm run lint",
     "test-cov": "npm run test-renderer-cov && npm run lint",
     "lint": "tslint -c ./tslint.json -p ./tsconfig.json \"src/**/*.ts\"",

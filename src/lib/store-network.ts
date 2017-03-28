@@ -10,7 +10,7 @@ import 'rxjs/add/observable/dom/webSocket';
 import './standard-operators';
 import './custom-operators';
 
-//const d = require('debug')('trickline:store-network');
+const d = require('debug')('trickline:store-network');
 
 /*
  * users.counts
@@ -36,6 +36,7 @@ async function fetchSingleInitialChannelList(store: Store, api: Api): Promise<st
 
   const result: UsersCounts = await api.users.counts({ simple_unreads: true }).toPromise();
 
+  d(`Fetching channels for ${api.token()}`);
   result.channels.forEach((c) => {
     c.api = api;
 
@@ -57,6 +58,7 @@ async function fetchSingleInitialChannelList(store: Store, api: Api): Promise<st
     joinedChannels.push(dm.id);
   });
 
+  d(`Setting joinedChannels in store`);
   store.setKeyInStore('joinedChannels', joinedChannels);
   return joinedChannels;
 }
