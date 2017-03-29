@@ -36,9 +36,10 @@ export class ViewModelListHelper<T extends Model, P extends HasViewModel<T>, S> 
     this.viewModelCache = LRU<Model>(opts);
 
     let initialVm = props.viewModel;
-    let sub = lifecycle.willMount.map(() => ({ viewModel: initialVm })).concat(lifecycle.willReceiveProps)
+    let sub = lifecycle.didMount.map(() => ({ viewModel: initialVm })).concat(lifecycle.willReceiveProps)
       .switchMap(p => whenArray(p.viewModel, itemsSelector))
       .subscribe(v => {
+        d(`Listening to new array via ${itemsSelector}`);
         this.currentItems = v.value;
         this.shouldRender.next();
       });
