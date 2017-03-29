@@ -23,6 +23,7 @@ Object.keys(toTest).forEach((k) => {
       const tokenSource = process.env.SLACK_API_TEST_TOKEN || process.env.SLACK_API_TOKEN;
       const tokens = tokenSource.indexOf(',') >= 0 ? tokenSource.split(',') : [tokenSource];
 
+
       await new Promise((res) => {
         const wnd = require('electron').remote.getCurrentWindow();
         wnd.webContents.session.clearStorageData({ origin: window.location.origin, storages: ['indexdb']}, res);
@@ -38,6 +39,14 @@ Object.keys(toTest).forEach((k) => {
       await fetchInitialChannelList(store);
       await whenArray(fixture, x => x.orderedChannels).filter(() => fixture.orderedChannels.length > 0).take(1).toPromise();
       expect(fixture.orderedChannels.length > 0).to.be.true;
+    });
+
+    it('should fetch channels from more than one source', async function() {
+      await fetchInitialChannelList(store);
+      await whenArray(fixture, x => x.orderedChannels).filter(() => fixture.orderedChannels.length > 0).take(1).toPromise();
+
+      let generalChannels = fixture.orderedChannels.filter(x => x.value.name.match(/general$/i));
+      expect(generalChannels.length).to.equal(store.api.length);
     });
   });
 });
