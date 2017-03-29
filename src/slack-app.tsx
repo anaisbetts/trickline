@@ -64,7 +64,6 @@ export class SlackAppModel extends Model {
 
     this.store = new DexieStore(tokens);
     this.channelList = new ChannelListViewModel(this.store);
-    this.channelList = new ChannelListViewModel(this.store);
     this.channelHeader = new ChannelHeaderViewModel(this.store, this.channelList);
 
     when(this, x => x.channelHeader.isDrawerOpen)

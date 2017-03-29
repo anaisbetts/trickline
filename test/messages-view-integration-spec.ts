@@ -23,6 +23,7 @@ Object.keys(toTest).forEach((k) => {
       const tokenSource = process.env.SLACK_API_TEST_TOKEN || process.env.SLACK_API_TOKEN;
       const tokens = tokenSource.indexOf(',') >= 0 ? tokenSource.split(',') : [tokenSource];
 
+      d('Clearing IndexedDb');
       await new Promise((res) => {
         const wnd = require('electron').remote.getCurrentWindow();
         wnd.webContents.session.clearStorageData({ origin: window.location.origin, storages: ['indexdb']}, res);
@@ -31,8 +32,11 @@ Object.keys(toTest).forEach((k) => {
       const Klass = toTest[k];
       store = new Klass(tokens);
 
+      d('Fetching initial channel list');
       await fetchInitialChannelList(store);
       let channel = await store.channels.get(store.joinedChannels.value[0], store.api[0]);
+
+      d('Creating fixture');
       fixture = new MessagesViewModel(store, channel!);
     });
 

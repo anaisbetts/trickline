@@ -108,6 +108,7 @@ export class MessagesView extends SimpleView<MessagesViewModel> {
         this.viewModel!.store.messages.listen(message, this.viewModel!.api)!));
 
     const update = () => {
+      if (!this.viewModel) return;
       this.listRef.forceUpdateGrid();
       this.forceUpdate();
     };

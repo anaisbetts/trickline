@@ -22,12 +22,13 @@ export function describeIntegration(name: string, fn: ((this: ISuiteCallbackCont
   }
 }
 
-@notify('foo', 'bar')
+@notify('foo', 'bar', 'arrayFoo')
 export class TestClass extends Model {
   someSubject: Subject<number>;
-  foo: Number;
-  bar: Number;
-  baz: Number;
+  foo: number;
+  bar: number;
+  baz: number;
+  arrayFoo: number[];
   updatableFoo: Updatable<number>;
   @fromObservable derived: number;
   @fromObservable subjectDerived: number;
@@ -38,6 +39,7 @@ export class TestClass extends Model {
 
   constructor() {
     super();
+    this.arrayFoo = [1];
     this.updatableFoo = new Updatable(() => Observable.of(6));
     this.someSubject = new Subject();
 

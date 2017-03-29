@@ -44,7 +44,7 @@ export type ArrayChange<T> = { value: T[], splices: splice[] };
 export function whenArray<TSource, TProp>(
     target: TSource,
     prop: (t: TSource) => TProp[]): Observable<ArrayChange<TProp>> {
-  return when(target, prop).switchMap(x => observeArray(x).startWith({ value: x, splices: []}));
+  return when(target, prop).switchMap(x => observeArray(x).startWith({ value: x ? Array.from(x) : x, splices: []}));
 }
 
 export function observeArray<T>(arr: T[]): Observable<ArrayChange<T>> {
@@ -56,7 +56,7 @@ export function observeArray<T>(arr: T[]): Observable<ArrayChange<T>> {
     try {
       ao = new ArrayObserver(arr);
       ao.open((s) => {
-        subj.next({value: arr, splices: s});
+        subj.next({value: Array.from(arr), splices: s});
       });
     } catch (e) {
       subj.error(e);

@@ -3,7 +3,7 @@ import { Subject } from 'rxjs/Subject';
 import { Updatable } from '../../src/lib/updatable';
 import { getValue, when, whenProperty } from '../../src/lib/when';
 
-import { observableForPropertyChain, notificationForProperty } from '../../src/lib/when';
+import { observableForPropertyChain, notificationForProperty, whenArray } from '../../src/lib/when';
 
 import { expect, TestClass } from '../support';
 
@@ -430,5 +430,66 @@ describe('the typed when method', function() {
   });
 });
 
+describe('the typed whenArray method', function() {
+  it('should work in the single item case', function() {
+    let fixture = new TestClass();
+    let result = whenArray(fixture, x => x.arrayFoo).createCollection();
+    expect(result.length).to.equal(1);
 
+    fixture.arrayFoo = [5];
+    expect(result.length).to.equal(2);
+    expect(result[1].value).to.deep.equal([5]);
 
+    fixture.arrayFoo = [5];
+    expect(result.length).to.equal(2);
+
+    fixture.arrayFoo = [7];
+    expect(result.length).to.equal(3);
+    expect(result[2].value).to.deep.equal([7]);
+  });
+
+  it('should observe arrays', function() {
+    let fixture = new TestClass();
+    let result = whenArray(fixture, x => x.arrayFoo).createCollection();
+    expect(result.length).to.equal(1);
+
+    fixture.arrayFoo = [5];
+    expect(result.length).to.equal(2);
+    expect(result[1].value).to.deep.equal([5]);
+
+    fixture.arrayFoo.push(7);
+    Platform.performMicrotaskCheckpoint();
+    expect(result.length).to.equal(3);
+    expect(result[2].value).to.deep.equal([5, 7]);
+  });
+
+  it("shouldn't be fooled by setting the array", function() {
+    let fixture = new TestClass();
+    let result = whenArray(fixture, x => x.arrayFoo).createCollection();
+    expect(result.length).to.equal(1);
+
+    fixture.arrayFoo = [5];
+    expect(result.length).to.equal(2);
+    expect(result[1].value).to.deep.equal([5]);
+
+    fixture.arrayFoo.push(7);
+    Platform.performMicrotaskCheckpoint();
+    expect(result.length).to.equal(3);
+    expect(result[1].value).to.deep.equal([5]);
+    expect(result[2].value).to.deep.equal([5, 7]);
+
+    let origArrayFoo = fixture.arrayFoo;
+    fixture.arrayFoo = [10];
+    expect(result.length).to.equal(4);
+    expect(result[1].value).to.deep.equal([5]);
+    expect(result[2].value).to.deep.equal([5, 7]);
+    expect(result[3].value).to.deep.equal([10]);
+
+    origArrayFoo.push(10);
+    Platform.performMicrotaskCheckpoint();
+    expect(result.length).to.equal(4);
+    expect(result[1].value).to.deep.equal([5]);
+    expect(result[2].value).to.deep.equal([5, 7]);
+    expect(result[3].value).to.deep.equal([10]);
+  });
+});

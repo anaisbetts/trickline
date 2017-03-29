@@ -23,7 +23,6 @@ Object.keys(toTest).forEach((k) => {
       const tokenSource = process.env.SLACK_API_TEST_TOKEN || process.env.SLACK_API_TOKEN;
       const tokens = tokenSource.indexOf(',') >= 0 ? tokenSource.split(',') : [tokenSource];
 
-
       await new Promise((res) => {
         const wnd = require('electron').remote.getCurrentWindow();
         wnd.webContents.session.clearStorageData({ origin: window.location.origin, storages: ['indexdb']}, res);

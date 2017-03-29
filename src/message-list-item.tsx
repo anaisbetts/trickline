@@ -83,8 +83,8 @@ export class MessageViewModel extends Model {
 export class MessageListItem extends SimpleView<MessageViewModel> {
   render() {
     const viewModel = this.props.viewModel;
-    const userProfile = viewModel.user && viewModel.user.profileImage ? (
-      <Avatar src={viewModel.user.profileImage} />
+    const userProfile = viewModel.profileImage ? (
+      <Avatar src={viewModel.profileImage} />
     ) : null;
 
     return (
