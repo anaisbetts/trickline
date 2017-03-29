@@ -15,7 +15,7 @@ chai.use(chaiAsPromised);
 config();
 
 export function describeIntegration(name: string, fn: ((this: ISuiteCallbackContext) => void)) {
-  if (!process.env.SLACK_API_TOKEN) {
+  if (!process.env.SLACK_API_TOKEN || process.type !== 'renderer') {
     describe.skip(name, fn);
   } else {
     describe(name, fn);

@@ -14,10 +14,11 @@
     "module": "commonjs",
     "moduleResolution": "node",
     "pretty": true,
-    "target": "es2015",
+    "target": "es6",
     "jsx": "react",
     "outDir": ".tmp/build"
   },
+  "lib": ["dom", "es2015"],
   "formatCodeOptions": {
     "indentSize": 2,
     "tabSize": 2

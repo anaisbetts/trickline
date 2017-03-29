@@ -67,7 +67,7 @@ export class Updatable<T> extends Subject<T> {
       shouldNext = false;
     }
 
-    if (subscription && shouldNext && !(<ISubscription>subscription).closed) {
+    if (this._hasValue && subscription && shouldNext && !(<ISubscription>subscription).closed) {
       subscriber.next(this._value);
     }
 
@@ -150,6 +150,7 @@ export class ArrayUpdatable<T> extends Updatable<T[]> {
 
   nextOverwrite(value: T[]): void {
     this._hasPendingValue = true;
+    this._hasValue = true;
     super.next(Array.from(this._value = value));
 
     this.arraySub.set(

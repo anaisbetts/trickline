@@ -5,6 +5,8 @@ import { Lifecycle, HasViewModel } from './view';
 import { whenArray } from './when';
 import * as LRU from 'lru-cache';
 
+const d = require('debug')('trickline-test:collection-view');
+
 export class ViewModelListHelper<T extends Model, P extends HasViewModel<T>, S> {
   readonly shouldRender: Subject<void>;
 
@@ -34,7 +36,7 @@ export class ViewModelListHelper<T extends Model, P extends HasViewModel<T>, S> 
     this.viewModelCache = LRU<Model>(opts);
 
     let initialVm = props.viewModel;
-    let sub = lifecycle.didMount.map(() => ({ viewModel: initialVm })).concat(lifecycle.willReceiveProps)
+    let sub = lifecycle.willMount.map(() => ({ viewModel: initialVm })).concat(lifecycle.willReceiveProps)
       .switchMap(p => whenArray(p.viewModel, itemsSelector))
       .subscribe(v => {
         this.currentItems = v.value;
