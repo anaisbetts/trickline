@@ -10,7 +10,7 @@ import './standard-operators';
 import 'request-idle-polyfill';
 import { MessageKey } from './store';
 
-const d = require('debug')('trickline:dexie-data-model');
+//const d = require('debug')('trickline:dexie-data-model');
 const dn = require('debug')('trickline-noisy:dexie-data-model');
 
 const VERSION = 1;

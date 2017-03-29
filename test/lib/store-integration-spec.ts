@@ -34,11 +34,11 @@ Object.keys(toTest).forEach((k) => {
 
     it('should fetch messages for the first channel in the store', async function() {
       let channelChanges = fixture.joinedChannels.createCollection();
-      expect(channelChanges.length).to.equal(1);
+      expect(channelChanges.length).to.equal(0);
 
       d('Fetching Initial Channel List');
       await fetchInitialChannelList(fixture);
-      expect(channelChanges.length === 2).to.be.true;
+      expect(channelChanges.length === 1).to.be.true;
       expect(fixture.channels.listenAll().size > 0);
 
       d(`Getting channel ${fixture.joinedChannels.value[0]} out of the store`);
