@@ -130,7 +130,7 @@ function deferredGet<T, Key>(this: Dexie.Table<T, Key>, key: Key, database: Dexi
       this.idleGetHandle = null;
     }
 
-    if (this.deferredGets) {
+    if (this.deferredGets.length > 0) {
       this.idleGetHandle = createIdle();
     }
   }, 10);
