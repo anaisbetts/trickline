@@ -1,3 +1,4 @@
+import { Observable } from 'rxjs/Observable';
 import { SparseMap, InMemorySparseMap } from './sparse-map';
 import { Api, createApi, infoApiForChannel, userForId, fetchSingleMessage, timestampToPage } from './models/slack-api';
 import { ChannelBase, Message, User, MsgTimestamp } from './models/api-shapes';
@@ -95,7 +96,7 @@ export class NaiveStore implements Store {
 
     this.events = new InMemorySparseMap<EventType, Message>();
     this.joinedChannels = new ArrayUpdatable<string>();
-    this.keyValueStore = new InMemorySparseMap<string, any>();
+    this.keyValueStore = new InMemorySparseMap<string, any>(() => Observable.of(undefined));
   }
 
   saveModelToStore(type: ModelType, value: any, api: Api): void {
