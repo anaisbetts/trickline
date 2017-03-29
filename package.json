@@ -77,7 +77,7 @@
     "csslint": "^1.0.5",
     "electron-compilers": "5.6.0",
     "electron-mocha": "^3.3.0",
-    "electron-prebuilt-compile": "1.6.0",
+    "electron-prebuilt-compile": "1.6.4",
     "esdoc": "^0.5.2",
     "esdoc-es7-plugin": "0.0.3",
     "esdoc-plugin-async-to-sync": "^0.5.0",
