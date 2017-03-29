@@ -86,7 +86,7 @@ function deferredPut<T, Key>(this: Dexie.Table<T, Key>, item: T & Api, key: Key)
 function deferredGet<T, Key>(this: Dexie.Table<T, Key>, key: Key, database: Dexie): Promise<T> {
   let newItem = { key, completion: new AsyncSubject<T>() };
 
-  let createIdle = () => window.requestAnimationFrame(async () => {
+  let createIdle = () => window.setTimeout(async () => {
     let itemsToGet = this.deferredGets;
     this.deferredGets = [];
 
@@ -129,7 +129,11 @@ function deferredGet<T, Key>(this: Dexie.Table<T, Key>, key: Key, database: Dexi
     } finally {
       this.idleGetHandle = null;
     }
-  });
+
+    if (this.deferredGets) {
+      this.idleGetHandle = createIdle();
+    }
+  }, 10);
 
   this.deferredGets = this.deferredGets || [];
   this.deferredGets.push(newItem);
