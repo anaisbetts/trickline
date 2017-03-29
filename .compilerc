@@ -24,7 +24,8 @@
         "inlineSources": true,
         "noUnusedParameters": true,
         "module": "commonjs",
-        "target": "es6",
+        "target": "es5",
+        "sourceMap": false,
         "jsx": "react",
         "types": [
           "node"
@@ -57,7 +58,8 @@
         "inlineSources": true,
         "noUnusedParameters": true,
         "module": "commonjs",
-        "target": "es6",
+        "sourceMap": false,
+        "target": "es5",
         "jsx": "react",
         "types": [
           "node"
@@ -87,7 +89,7 @@
         "noUnusedParameters": true,
         "sourceMap": false,
         "module": "commonjs",
-        "target": "es6",
+        "target": "es5",
         "jsx": "react",
         "types": [
           "node"
