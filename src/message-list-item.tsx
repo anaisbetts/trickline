@@ -3,16 +3,16 @@ import * as React from 'react';
 import * as moment from 'moment';
 import Avatar from 'material-ui/Avatar';
 import Paper from 'material-ui/Paper';
-import { Observable } from 'rxjs/Observable';
 
 import { Api, timestampToDate } from './lib/models/slack-api';
 import { Message } from './lib/models/api-shapes';
 import { Model, fromObservable } from './lib/model';
-import { SimpleView } from './lib/view';
+import { SimpleView, View } from './lib/view';
 import { Store } from './lib/store';
 import { UserViewModel } from './user-list-item';
 import { when } from './lib/when';
 import { Updatable } from './lib/updatable';
+import { Observable } from "rxjs/Observable";
 
 const styles: { [key: string]: React.CSSProperties } = {
   message: {
@@ -53,7 +53,7 @@ export class MessageViewModel extends Model {
   constructor(public readonly store: Store, public readonly api: Api, message: Updatable<Message>) {
     super();
 
-    Observable.of(message).toProperty(this, 'model');
+    message.toProperty(this, 'model');
 
     when(this, x => x.model)
       .filter(x => !!x)
@@ -80,7 +80,27 @@ export class MessageViewModel extends Model {
   }
 }
 
-export class MessageListItem extends SimpleView<MessageViewModel> {
+export interface MessageListItemProps {
+  viewModel: MessageViewModel;
+  requestMeasure: Function;
+}
+
+export class MessageListItem extends View<MessageViewModel, MessageListItemProps> {
+  constructor(props: MessageListItemProps, c: any) {
+    super(props, c);
+
+    this.lifecycle.didMount.map(() => null).concat(this.lifecycle.willReceiveProps)
+      .switchMap(() => this.viewModel ? this.viewModel.changed : Observable.never())
+      .takeUntil(this.lifecycle.willUnmount)
+      .guaranteedThrottle(100)
+      .subscribe(() => { if (this.viewModel) { this.props.requestMeasure(); } });
+  }
+
+  customUpdateFunc() {
+    this.forceUpdate();
+    this.props.requestMeasure();
+  }
+
   render() {
     const viewModel = this.props.viewModel;
     const userProfile = viewModel.profileImage ? (

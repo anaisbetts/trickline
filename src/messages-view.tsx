@@ -98,14 +98,18 @@ export class MessagesView extends SimpleView<MessagesViewModel> {
   constructor(props: { viewModel: MessagesViewModel }, context?: any) {
     super(props, context);
 
+    const createViewModel = (message: MessageKey) => {
+      return new MessageViewModel(
+        this.viewModel!.store,
+        this.viewModel!.api,
+        this.viewModel!.store.messages.listen(message, this.viewModel!.api)!);
+    };
+
     this.viewModelCache = new ViewModelListHelper(
       this.lifecycle, props,
       (x: MessagesViewModel) => x.messages,
-      x => x.ts,
-      (message: MessageKey) => new MessageViewModel(
-        this.viewModel!.store,
-        this.viewModel!.api,
-        this.viewModel!.store.messages.listen(message, this.viewModel!.api)!));
+      x => x.timestamp,
+      createViewModel);
 
     const update = () => {
       if (!this.viewModel) return;
@@ -125,10 +129,6 @@ export class MessagesView extends SimpleView<MessagesViewModel> {
     await this.viewModel!.scrollPreviousPage.execute().toPromise();
   }
 
-  renderItem(viewModel: MessageViewModel) {
-    return <MessageListItem viewModel={viewModel} />;
-  }
-
   rowRenderer({ index, key, style, parent }: RowRendererArgs) {
     const viewModel = this.viewModelCache.getViewModel(index) as MessageViewModel;
 
@@ -140,9 +140,11 @@ export class MessagesView extends SimpleView<MessagesViewModel> {
         rowIndex={index}
         parent={parent}
       >
+      {({measure}: { measure: Function }) => (
         <div style={style}>
-          {this.renderItem(viewModel)}
+          <MessageListItem viewModel={viewModel} requestMeasure={measure} />
         </div>
+      )}
       </CellMeasurer>
     );
   }
