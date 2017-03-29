@@ -42,7 +42,7 @@ function deferredPut<T, Key>(this: Dexie.Table<T, Key>, item: T & Api, key: Key)
   let newItem = { item, key, completion: new AsyncSubject<void>() };
   newItem.item = Object.assign({}, newItem.item);
 
-  let createIdle = () => window.requestIdleCallback(deadline => {
+  let createIdle = () => window.requestIdleCallback(async deadline => {
     while (deadline.timeRemaining() > 5/*ms*/) {
       // TODO: This would be cooler if it recognized duplicate IDs and threw out the older
       // one (i.e. you update channel.topic and channel.name in the same batch, so we really
@@ -57,8 +57,7 @@ function deferredPut<T, Key>(this: Dexie.Table<T, Key>, item: T & Api, key: Key)
         return x;
       });
 
-      // XXX: This is unbounded concurrency!
-      this.bulkPut(itemsToAdd.map(x => x.item))
+      await this.bulkPut(itemsToAdd.map(x => x.item))
         .then(
           () => itemsToAdd.forEach(x => { d(`Actually wrote ${JSON.stringify(x.key)}!`); x.completion.next(undefined); x.completion.complete(); }),
           (e) => itemsToAdd.forEach(x => x.completion.error(e)))
