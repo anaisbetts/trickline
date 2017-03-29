@@ -8,7 +8,7 @@ import { channelSort, isChannel, isDM } from './lib/models/slack-api';
 import { ViewModelListHelper } from './lib/collection-view';
 import { fromObservable, notify, Model } from './lib/model';
 import { Store } from './lib/store';
-import { when } from './lib/when';
+import { when, whenArray } from './lib/when';
 import { Updatable } from './lib/updatable';
 import { SimpleView, HasViewModel } from './lib/view';
 
@@ -27,9 +27,10 @@ export class ChannelListViewModel extends Model implements IChannelList {
     super();
 
     store.joinedChannels.toProperty(this, 'channels');
-    when(this, x => x.channels)
-      .flatMap(async list => {
-        let updatables = Array.from(store.channels.listenMany(list || []).values());
+    whenArray(this, x => x.channels)
+      .flatMap(async ({value}) => {
+        if (!value) return [];
+        let updatables = Array.from(store.channels.listenMany(value || []).values());
         await Promise.all(updatables.map(x => x.waitForValue()));
 
         return updatables;
