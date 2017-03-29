@@ -73,7 +73,7 @@ class AttachedReactLifecycle<P, S> extends Lifecycle<P, S> {
   }
 }
 
-class ReactLifecycle<P, S> extends Lifecycle<P, S> {
+export class ExplicitLifecycle<P, S> extends Lifecycle<P, S> {
   willMountSubj: AsyncSubject<boolean>;
   didMountSubj: AsyncSubject<boolean>;
   willReceivePropsSubj: Subject<P>;
@@ -101,7 +101,7 @@ export abstract class View<T extends Model, P extends HasViewModel<T>>
 
   constructor(props?: P, context?: any) {
     super(props, context);
-    this.lifecycle = new ReactLifecycle<P, null>();
+    this.lifecycle = new ExplicitLifecycle<P, null>();
     if (props) this.viewModel = props.viewModel;
 
     this.lifecycle.didMount.map(() => null).concat(this.lifecycle.willReceiveProps)

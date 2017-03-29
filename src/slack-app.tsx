@@ -5,13 +5,13 @@ import * as React from 'react';
 import { Observable } from 'rxjs/Observable';
 
 import Drawer from 'material-ui/Drawer';
-import  MuiThemeProvider from 'material-ui/styles/MuiThemeProvider';
+import MuiThemeProvider from 'material-ui/styles/MuiThemeProvider';
 import getMuiTheme from 'material-ui/styles/getMuiTheme';
 
 import { Action } from './lib/action';
 import { SimpleView } from './lib/view';
 import { fromObservable, Model } from './lib/model';
-import { Store } from './lib/store';
+import { Store, NaiveStore } from './lib/store';
 import { DexieStore } from './lib/dexie-store';
 import { handleRtmMessagesForStore, connectToRtm, fetchInitialChannelList } from './lib/store-network';
 
@@ -63,6 +63,7 @@ export class SlackAppModel extends Model {
     const tokens = tokenSource.indexOf(',') >= 0 ? tokenSource.split(',') : [tokenSource];
 
     this.store = new DexieStore(tokens);
+    this.channelList = new ChannelListViewModel(this.store);
     this.channelList = new ChannelListViewModel(this.store);
     this.channelHeader = new ChannelHeaderViewModel(this.store, this.channelList);
 

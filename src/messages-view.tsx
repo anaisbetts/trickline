@@ -169,7 +169,7 @@ export class MessagesView extends SimpleView<MessagesViewModel> {
                   registerChild={registerChild}
                   deferredMeasurementCache={this.cache}
                   rowHeight={this.cache.rowHeight}
-                  rowCount={this.viewModel!.messages.length}
+                  rowCount={this.viewModelCache.getRowCount()}
                   rowRenderer={this.rowRenderer.bind(this)}
                 />
               )}
