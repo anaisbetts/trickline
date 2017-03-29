@@ -11,6 +11,7 @@ import { DataModel } from './dexie-data-model';
 import * as LRU from 'lru-cache';
 
 const d = require('debug')('trickline:dexie-store');
+const dn = require('debug')('trickline-noisy:dexie-store');
 
 export class DexieStore implements Store {
   api: Api[];
@@ -39,7 +40,7 @@ export class DexieStore implements Store {
     this.database.open();
 
     this.channels = new InMemorySparseMap<string, ChannelBase>(async (id, api) => {
-      d(`Factory'ing channel ${id}!`);
+      dn(`Factory'ing channel ${id}!`);
       let ret = await this.database.channels.deferredGet(id, this.database);
       if (ret) {
         if (ret.token) {
@@ -175,6 +176,7 @@ export class DexieStore implements Store {
 
   setKeyInStore(key: string, value: any): void {
     this.database.keyValues.deferredPut({ Key: key, Value: JSON.stringify(value) }, key);
+
     let u = this.users.listen(key, null, true);
     if (u) u.next(value);
   }

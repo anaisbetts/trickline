@@ -11,6 +11,7 @@ import 'request-idle-polyfill';
 import { MessageKey } from './store';
 
 const d = require('debug')('trickline:dexie-data-model');
+const dn = require('debug')('trickline-noisy:dexie-data-model');
 
 const VERSION = 1;
 
@@ -59,7 +60,7 @@ function deferredPut<T, Key>(this: Dexie.Table<T, Key>, item: T & Api, key: Key)
 
       await this.bulkPut(itemsToAdd.map(x => x.item))
         .then(
-          () => itemsToAdd.forEach(x => { d(`Actually wrote ${JSON.stringify(x.key)}!`); x.completion.next(undefined); x.completion.complete(); }),
+          () => itemsToAdd.forEach(x => { dn(`Actually wrote ${JSON.stringify(x.key)}!`); x.completion.next(undefined); x.completion.complete(); }),
           (e) => itemsToAdd.forEach(x => x.completion.error(e)))
         .finally(() => this.deferredPuts = allItems.splice(128));
     }
@@ -71,7 +72,7 @@ function deferredPut<T, Key>(this: Dexie.Table<T, Key>, item: T & Api, key: Key)
     }
   });
 
-  d(`Queuing new item for write! ${JSON.stringify(newItem.key)}`);
+  dn(`Queuing new item for write! ${JSON.stringify(newItem.key)}`);
   this.deferredPuts = this.deferredPuts || [];
   this.deferredPuts.push(newItem);
 
@@ -98,10 +99,10 @@ function deferredGet<T, Key>(this: Dexie.Table<T, Key>, key: Key, database: Dexi
 
         return asyncMap(itemsToGet, (x) => {
           // First, search pending writes to see if we're about to save this
-          d(`Attempting to fetch ${x.key}!`);
+          dn(`Attempting to fetch ${x.key}!`);
           let pending = pendingPutsIndex.get(key);
           if (pending) {
-            d(`Early-completing ${key}!`);
+            dn(`Early-completing ${key}!`);
 
             // NB: We need to do a shallow clone here because otherwise at some point,
             // api will be replaced by 'token' on this pending object, thereby trolling
