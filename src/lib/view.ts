@@ -104,8 +104,8 @@ export abstract class View<T extends Model, P extends HasViewModel<T>>
     this.lifecycle = new ExplicitLifecycle<P, null>();
     if (props) this.viewModel = props.viewModel;
 
-    this.lifecycle.willMount.map(() => null).concat(this.lifecycle.willReceiveProps)
-      .do(props => this.viewModel = props ? props.viewModel : this.viewModel)
+    this.lifecycle.didMount.map(() => null).concat(this.lifecycle.willReceiveProps)
+      .do(p => this.viewModel = p ? p.viewModel : this.viewModel)
       .switchMap(() => this.viewModel ? this.viewModel.changed : Observable.never())
       .takeUntil(this.lifecycle.willUnmount)
       .subscribe(() => { if (this.viewModel) { this.queueUpdate(); } });
