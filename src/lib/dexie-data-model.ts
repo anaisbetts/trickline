@@ -63,7 +63,8 @@ function deferredPut<T, Key>(this: Dexie.Table<T, Key>, item: T & Api, key: Key)
         .then(
           () => itemsToAdd.forEach(x => { dn(`Actually wrote ${JSON.stringify(x.key)}!`); x.completion.next(undefined); x.completion.complete(); }),
           (e) => itemsToAdd.forEach(x => x.completion.error(e)))
-        .finally(() => this.deferredPuts.splice(itemsToAdd.length));
+
+      this.deferredPuts.splice(0, itemsToAdd.length);
     }
 
     if (this.deferredPuts.length > 0) {

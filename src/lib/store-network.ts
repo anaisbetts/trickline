@@ -28,6 +28,8 @@ export async function fetchInitialChannelList(store: Store): Promise<void> {
     .reduce((acc, x) => { acc.push(...x); return acc; }, [])
     .toPromise();
 
+  d(`Setting joinedChannels in store`);
+  store.setKeyInStore('joinedChannels', channelList);
   store.joinedChannels.next(channelList);
 }
 
@@ -58,8 +60,6 @@ async function fetchSingleInitialChannelList(store: Store, api: Api): Promise<st
     joinedChannels.push(dm.id);
   });
 
-  d(`Setting joinedChannels in store`);
-  store.setKeyInStore('joinedChannels', joinedChannels);
   return joinedChannels;
 }
 
