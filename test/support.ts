@@ -3,19 +3,32 @@ import { fromObservable, Model, notify } from '../src/lib/model';
 import { Updatable } from '../src/lib/updatable';
 import { Observable } from 'rxjs/Observable';
 import { Subject } from 'rxjs/Subject';
+import { config } from 'dotenv';
+import { ISuiteCallbackContext } from 'mocha';
 
-let chai = require("chai");
-let chaiAsPromised = require("chai-as-promised");
+let chai = require('chai');
+let chaiAsPromised = require('chai-as-promised');
 
 chai.should();
 chai.use(chaiAsPromised);
 
-@notify('foo', 'bar')
+config();
+
+export function describeIntegration(name: string, fn: ((this: ISuiteCallbackContext) => void)) {
+  if (!process.env.SLACK_API_TOKEN || process.type !== 'renderer') {
+    describe.skip(name, fn);
+  } else {
+    describe(name, fn);
+  }
+}
+
+@notify('foo', 'bar', 'arrayFoo')
 export class TestClass extends Model {
   someSubject: Subject<number>;
-  foo: Number;
-  bar: Number;
-  baz: Number;
+  foo: number;
+  bar: number;
+  baz: number;
+  arrayFoo: number[];
   updatableFoo: Updatable<number>;
   @fromObservable derived: number;
   @fromObservable subjectDerived: number;
@@ -26,6 +39,7 @@ export class TestClass extends Model {
 
   constructor() {
     super();
+    this.arrayFoo = [1];
     this.updatableFoo = new Updatable(() => Observable.of(6));
     this.someSubject = new Subject();
 

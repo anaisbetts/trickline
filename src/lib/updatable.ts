@@ -12,13 +12,14 @@ import { Subject } from 'rxjs/Subject';
 
 import './standard-operators';
 
-export type MergeStrategy = 'overwrite' | 'merge';
+export type MergeStrategy = 'overwrite' | 'merge' | 'array';
 
 const d = debug('trickline:updatable');
 
 export class Updatable<T> extends Subject<T> {
   protected _value: T;
   protected _hasPendingValue: boolean;
+  protected _hasValue: boolean;
   protected _factory?: () => (Promise<T>|Observable<T>);
   protected _errFunc: ((e: Error) => void);
   protected _nextFunc: ((x: T) => void);
@@ -28,6 +29,7 @@ export class Updatable<T> extends Subject<T> {
     super();
 
     this._hasPendingValue = false;
+    this._hasValue = false;
     this._factory = factory;
     this._innerSub = new Subscription();
 
@@ -65,7 +67,7 @@ export class Updatable<T> extends Subject<T> {
       shouldNext = false;
     }
 
-    if (subscription && shouldNext && !(<ISubscription>subscription).closed) {
+    if (this._hasValue && subscription && shouldNext && !(<ISubscription>subscription).closed) {
       subscriber.next(this._value);
     }
 
@@ -74,6 +76,7 @@ export class Updatable<T> extends Subject<T> {
 
   protected nextOverwrite(value: T): void {
     this._hasPendingValue = true;
+    this._hasValue = true;
     super.next(this._value = value);
   }
 
@@ -84,6 +87,7 @@ export class Updatable<T> extends Subject<T> {
     }
 
     this._hasPendingValue = true;
+    this._hasValue = true;
 
     if (this._value) {
       this._value = Object.assign({}, this._value || {}, value || {});
@@ -96,11 +100,13 @@ export class Updatable<T> extends Subject<T> {
 
   error(error: any) {
     d(`Updatable threw error: ${error.message}\nCurrent value is ${JSON.stringify(this._value)}\n${error.stack}`);
+    this._hasValue = true;
     super.error(error);
   }
 
   invalidate() {
     this._hasPendingValue = false;
+    this._hasValue = false;
     delete this._value;
 
     if (this._factory) {
@@ -122,13 +128,14 @@ export class Updatable<T> extends Subject<T> {
     this._innerSub.add(teardown);
   }
 
+  waitForValue(): Promise<T> {
+    if (this._hasValue) return Promise.resolve(this._value);
+    return this.take(1).toPromise();
+  }
+
   unsubscribe() {
     super.unsubscribe();
     this._innerSub.unsubscribe();
-  }
-
-  get(): Promise<T> {
-    return this.take(1).toPromise();
   }
 }
 
@@ -143,6 +150,7 @@ export class ArrayUpdatable<T> extends Updatable<T[]> {
 
   nextOverwrite(value: T[]): void {
     this._hasPendingValue = true;
+    this._hasValue = true;
     super.next(Array.from(this._value = value));
 
     this.arraySub.set(

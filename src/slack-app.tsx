@@ -5,7 +5,7 @@ import * as React from 'react';
 import { Observable } from 'rxjs/Observable';
 
 import Drawer from 'material-ui/Drawer';
-import  MuiThemeProvider from 'material-ui/styles/MuiThemeProvider';
+import MuiThemeProvider from 'material-ui/styles/MuiThemeProvider';
 import getMuiTheme from 'material-ui/styles/getMuiTheme';
 
 import { Action } from './lib/action';
@@ -75,7 +75,7 @@ export class SlackAppModel extends Model {
       .toProperty(this, 'messagesViewModel');
 
     const rtmSub = new SerialSubscription();
-    rtmSub.set(handleRtmMessagesForStore(connectToRtm(this.store.api), this.store));
+    //rtmSub.set(handleRtmMessagesForStore(connectToRtm(this.store.api), this.store));
 
     this.loadInitialState = new Action<void>(() => fetchInitialChannelList(this.store), undefined);
   }

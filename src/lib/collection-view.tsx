@@ -1,125 +1,70 @@
-import * as React from 'react';
-import * as pick from 'lodash.pick';
-import { AutoSizer, List } from 'react-virtualized';
-import { ArrayObserver } from 'observe-js';
+import { Subject } from 'rxjs/Subject';
 
 import { Model } from './model';
-import { Lifecycle, View } from './view';
-import { SerialSubscription } from './serial-subscription';
-import { when } from "./when";
-import { ArrayUpdatable } from "./updatable";
-import { Observable } from "rxjs/Observable";
+import { Lifecycle, HasViewModel } from './view';
+import { whenArray } from './when';
+import * as LRU from 'lru-cache';
 
-export interface CollectionViewProps<T> {
-  viewModel: T;
-  arrayProperty: string;
-  rowHeight?: number;
-  width?: number;
-  height?: number;
-  disableWidth?: boolean;
-  disableHeight?: boolean;
-}
+const d = require('debug')('trickline-test:collection-view');
 
-export abstract class CollectionView<T extends Model, TChild extends Model>
-    extends View<T, CollectionViewProps<T>> {
-  private viewModelCache: { [key: number]: TChild } = {};
-  private listRef: List;
+export class ViewModelListHelper<T extends Model, P extends HasViewModel<T>, S> {
+  readonly shouldRender: Subject<void>;
 
-  readonly lifecycle: Lifecycle<CollectionViewProps<T>, null>;
+  private readonly keySelector: ((item: any) => string);
+  private readonly viewModelCache: LRU.Cache<Model>;
+  private readonly createViewModel: ((x: any, i: number) => Model);
+  private currentItems: any[];
 
-  abstract viewModelFactory(item: any, index: number): TChild;
-  abstract renderItem(viewModel: TChild): JSX.Element;
+  constructor(
+      lifecycle: Lifecycle<P, S>,
+      props: P,
+      itemsSelector: ((x: T) => any[]),
+      keySelector: ((x: any) => string),
+      createViewModel: ((x: any) => Model),
+      lruOpts?: LRU.Options<Model>) {
+    this.shouldRender = new Subject<void>();
+    this.keySelector = keySelector;
+    this.createViewModel = createViewModel;
 
-  static defaultProps = {
-    rowHeight: 32,
-    width: 300,
-    disableWidth: true
-  };
+    let opts = lruOpts || {max: 100};
 
-  constructor(props?: CollectionViewProps<T>, context?: any) {
-    super(props, context);
+    if (opts.dispose) {
+      throw new Error("Don't set dispose, use the evicted observable");
+    }
 
-    const updater = () => {
-      if (!this.viewModel) return;
-      this.forceUpdate();
+    opts.dispose = (_k: string, v: Model) => { v.unsubscribe(); };
+    this.viewModelCache = LRU<Model>(opts);
 
-      if (!this.listRef) return;
-      this.listRef.forceUpdateGrid();
-    };
+    let initialVm = props.viewModel;
+    let sub = lifecycle.didMount.map(() => ({ viewModel: initialVm })).concat(lifecycle.willReceiveProps)
+      .switchMap(p => whenArray(p.viewModel, itemsSelector))
+      .subscribe(v => {
+        d(`Listening to new array via ${itemsSelector}`);
+        this.currentItems = v.value;
+        this.shouldRender.next();
+      });
 
-    this.lifecycle.willReceiveProps
-      .startWith(props)
-      .switchMap(x => x ? when(x.viewModel, x.arrayProperty) : Observable.never())
-      .takeUntil(this.lifecycle.willUnmount)
-      .subscribe(() => {
-        this.clearViewModelCache();
-        this.queueUpdate(updater);
-      }, (e) => setTimeout(() => { throw e; }, 10));
-
-    this.lifecycle.willUnmount.subscribe(() => {
-      this.clearViewModelCache();
+    lifecycle.willUnmount.subscribe(() => {
+      this.viewModelCache.reset();
+      this.shouldRender.unsubscribe();
+      sub.unsubscribe();
     });
   }
 
-  clearViewModelCache() {
-    // TODO: It would be rull cool if we could reuse these in some sane way
-    Object.keys(this.viewModelCache).forEach(x => this.viewModelCache[x].unsubscribe());
-    this.viewModelCache = {};
+  getViewModel(index: number) {
+    let key = this.keySelector(this.currentItems[index]);
+    let ret = this.viewModelCache.get(key);
+    if (ret) return ret;
+
+    ret = this.createViewModel(this.currentItems[index], index);
+    ret.addTeardown(() => this.viewModelCache.del(key));
+    this.viewModelCache.set(key, ret);
+
+    return ret;
   }
 
-  getOrCreateViewModel(index: number): TChild {
-    if (!this.viewModelCache[index]) {
-      const arr: Array<any> = this.props.viewModel[this.props.arrayProperty];
-      const itemViewModel = this.viewModelFactory(arr[index], index);
-
-      itemViewModel.addTeardown(() => delete this.viewModelCache[index]);
-      this.viewModelCache[index] = itemViewModel;
-    }
-
-    return this.viewModelCache[index];
-  }
-
-  rowRenderer({ index, style }: { index: number, style: React.CSSProperties }) {
-    return (
-      <div key={index} style={style}>
-        {this.renderItem(this.getOrCreateViewModel(index))}
-      </div>
-    );
-  }
-
-  rowCount() {
-    const arr: Array<any> = this.props.viewModel[this.props.arrayProperty];
-    return arr.length;
-  }
-
-  render() {
-    const autoSizerProps = pick(this.props, ['disableWidth', 'disableHeight']);
-    const listProps = pick(this.props, ['width', 'height', 'rowHeight']);
-
-    if (listProps.width && listProps.height) {
-      return (
-        <List
-          {...listProps}
-          rowRenderer={this.rowRenderer.bind(this)}
-          rowCount={this.rowCount()}
-        />
-      );
-    }
-
-    let refBind = ((l: List) => this.listRef = l).bind(this);
-    return (
-      <AutoSizer {...autoSizerProps}>
-        {({ width, height }: { width: number, height: number }) => (
-          <List
-            ref={refBind}
-            width={width}
-            height={height}
-            {...listProps}
-            rowRenderer={this.rowRenderer.bind(this)}
-            rowCount={this.rowCount()}
-          />
-        )}
-      </AutoSizer>
-    );
+  getRowCount() {
+    if (!this.currentItems) return 0;
+    return this.currentItems.length;
   }
 }

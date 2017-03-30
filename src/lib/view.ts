@@ -73,7 +73,7 @@ class AttachedReactLifecycle<P, S> extends Lifecycle<P, S> {
   }
 }
 
-class ReactLifecycle<P, S> extends Lifecycle<P, S> {
+export class ExplicitLifecycle<P, S> extends Lifecycle<P, S> {
   willMountSubj: AsyncSubject<boolean>;
   didMountSubj: AsyncSubject<boolean>;
   willReceivePropsSubj: Subject<P>;
@@ -101,14 +101,18 @@ export abstract class View<T extends Model, P extends HasViewModel<T>>
 
   constructor(props?: P, context?: any) {
     super(props, context);
-    this.lifecycle = new ReactLifecycle<P, null>();
+    this.lifecycle = new ExplicitLifecycle<P, null>();
     if (props) this.viewModel = props.viewModel;
 
+    const customUpdater = this.customUpdateFunc ?
+      this.customUpdateFunc.bind(this) :
+      null;
+
     this.lifecycle.didMount.map(() => null).concat(this.lifecycle.willReceiveProps)
-      .do(props => this.viewModel = props ? props.viewModel : this.viewModel)
+      .do(p => this.viewModel = p ? p.viewModel : this.viewModel)
       .switchMap(() => this.viewModel ? this.viewModel.changed : Observable.never())
       .takeUntil(this.lifecycle.willUnmount)
-      .subscribe(() => { if (this.viewModel) { this.queueUpdate(); } });
+      .subscribe(() => { if (this.viewModel) { this.queueUpdate(customUpdater); } });
 
     this.lifecycle.willUnmount.subscribe(() => { if (this.viewModel) this.viewModel.unsubscribe(); this.viewModel = null; });
   }

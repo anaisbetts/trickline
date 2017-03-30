@@ -2,11 +2,13 @@ import { Observable } from 'rxjs/Observable';
 import { Subject } from 'rxjs/Subject';
 
 import { RecursiveProxyHandler } from '../recursive-proxy-handler';
-import { ChannelBase } from './api-shapes';
+import { ChannelBase, User, MsgTimestamp, Message } from './api-shapes';
 
 import '../standard-operators';
 
 import 'rxjs/add/observable/dom/ajax';
+
+export const MESSAGE_PAGE_SIZE = 1 * 60 * 60 /*sec*/;
 
 export interface ApiCall {
   ok: boolean;
@@ -81,6 +83,15 @@ export function infoApiForChannel(id: string, api: Api): Observable<ChannelBase|
   }
 }
 
+export function userForId(user: string, api: Api): Observable<User> {
+  return api.users.info({user})
+    .map((x: any) => {
+      let u = x.user! as User;
+      u.api = api;
+      return u;
+    });
+}
+
 export function channelSort(
   { value: a }: { value: ChannelBase},
   { value: b }: { value: ChannelBase}
@@ -110,4 +121,124 @@ export function isDM(channel: ChannelBase|string): boolean {
   return typeof channel == 'string' ?
     channel[0] === 'D' :
     !!channel.id && channel.id[0] === 'D';
+}
+
+export function tsToTimestamp(ts: string): MsgTimestamp {
+  return parseInt(ts.replace('.', ''));
+}
+
+export function timestampToTs(timestamp: MsgTimestamp) {
+  return timestamp.toString().replace(/(\d{6})$/, '.$1');
+}
+
+export function timestampToPage(timestamp: MsgTimestamp): number {
+  return Math.floor(timestamp / 1000000 / MESSAGE_PAGE_SIZE);
+}
+
+export function pageToTimestamp(page: number): MsgTimestamp {
+  return page * MESSAGE_PAGE_SIZE * 1000000;
+}
+
+export function dateToTimestamp(date: Date) {
+  let unixTime = date.getTime() / 1000;
+  return unixTime * 1000000;
+}
+
+export function timestampToDate(timestamp: MsgTimestamp) {
+  let unixTime = Math.floor(timestamp / 1000000);
+  return new Date(unixTime * 1000);
+}
+
+export function fetchSingleMessage(channel: string, timestamp: MsgTimestamp, api: Api): Observable<Message> {
+  let ts = timestampToTs(timestamp);
+
+  return api.channels.history({
+    channel, latest: ts, inclusive: true, count: 1
+  }).map((x: any) => {
+    let m = x.messages[0] as Message;
+    m.channel = channel;
+    m.api = api; m.ts = tsToTimestamp(ts);
+    return m;
+  });
+}
+
+async function fetchMessagesForPageAsync(channel: string, page: number, api: Api): Promise<Message[]> {
+  let latest = timestampToTs(pageToTimestamp(page + 1));
+  let oldest = timestampToTs(pageToTimestamp(page));
+
+  let acc: Message[] = [];
+  let result;
+  do {
+    result = await api.channels.history({ channel, latest, oldest, count: 1000 }).toPromise();
+    latest = result.latest;
+
+    acc = acc.concat(result.messages.map((x: Message) => {
+      x.api = api;
+      x.channel = channel;
+      x.ts = tsToTimestamp(x.ts as string);
+      return x;
+    }));
+  } while (result.has_more);
+
+  return acc;
+}
+
+async function fetchMessagesPastPageAsync(
+    channel: string,
+    page: number,
+    directionIsForward: boolean,
+    api: Api): Promise<{ messages: Message[], page: number}> {
+  let filterCriteria;
+  if (directionIsForward) {
+    filterCriteria = { oldest: timestampToTs(pageToTimestamp(page + 1)) };
+  } else {
+    filterCriteria = { latest: timestampToTs(pageToTimestamp(page)) };
+  }
+
+  let result = await api.channels.history(Object.assign({ channel, count: 10, inclusive: false }, filterCriteria)).toPromise();
+  let messages: Message[] = result.messages.map((x: Message) => {
+      x.api = api;
+      x.channel = channel;
+      x.ts = tsToTimestamp(x.ts as string);
+      return x;
+  });
+
+  if (directionIsForward) {
+    let oldest = messages.reduce((acc: number, x) => {
+      let thisPage = timestampToPage(x.ts);
+
+      // Return the smallest number that is larger than thisPage
+      if (thisPage <= page) return acc;
+      if (thisPage > page && acc === page) return thisPage;
+
+      return acc > thisPage ? thisPage : acc;
+    }, page);
+
+    return { messages, page: oldest };
+  } else {
+    let newest = messages.reduce((acc: number, x) => {
+      let thisPage = timestampToPage(x.ts);
+
+      // Return the largest number that is smaller than thisPage
+      if (thisPage >= page) return acc;
+      if (thisPage < page && acc === page) return thisPage;
+
+      return acc < thisPage ? thisPage : acc;
+    }, page);
+
+    return { messages, page: newest };
+  }
+}
+
+export function fetchMessagesPastPage(
+    channel: string,
+    page: number,
+    directionIsForward: boolean,
+    api: Api): Observable<{ messages: Message[], page: number}> {
+  return Observable.defer(() => Observable.fromPromise(fetchMessagesPastPageAsync(channel, page, directionIsForward, api)));
+}
+
+export function fetchMessagesForPage(channel: string, page: number, api: Api): Observable<Message[]> {
+  // NB: I'm not smart enough to write this as a Beautiful Functional Programming Tribute
+  return Observable.defer(() => Observable.fromPromise(fetchMessagesForPageAsync(channel, page, api)));
 }
