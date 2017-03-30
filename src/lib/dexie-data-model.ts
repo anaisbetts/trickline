@@ -49,7 +49,7 @@ function deferredPut<T, Key>(this: Dexie.Table<T, Key>, item: T & Api, key: Key)
       // one (i.e. you update channel.topic and channel.name in the same batch, so we really
       // only need to write the newer one)
       let allItems = this.deferredPuts;
-      let itemsToAdd = allItems.splice(0, 128).map(x => {
+      let itemsToAdd = allItems.slice(0, 128).map(x => {
         if (x.item.api) {
           x.item.token = x.item.api.token();
           x.item.api = null;
@@ -58,6 +58,8 @@ function deferredPut<T, Key>(this: Dexie.Table<T, Key>, item: T & Api, key: Key)
         return x;
       });
 
+      if (itemsToAdd.length < 1) break;
+
       await this.bulkPut(itemsToAdd.map(x => x.item))
         .then(
           () => itemsToAdd.forEach(x => { dn(`Actually wrote ${JSON.stringify(x.key)}!`); x.completion.next(undefined); x.completion.complete(); }),
@@ -65,7 +67,7 @@ function deferredPut<T, Key>(this: Dexie.Table<T, Key>, item: T & Api, key: Key)
         .finally(() => this.deferredPuts = allItems.splice(128));
     }
 
-    if (this.deferredPuts.length) {
+    if (this.deferredPuts.length > 0) {
       this.idlePutHandle = createIdle();
     } else {
       this.idlePutHandle = null;
