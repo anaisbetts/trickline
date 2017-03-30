@@ -93,15 +93,11 @@ function deferredGet<T, Key>(this: Dexie.Table<T, Key>, key: Key, database: Dexi
 
     try {
       await database.transaction('r', this, () => {
-        let pendingPutsIndex = (this.deferredPuts || []).reduce((acc, x) => {
-          acc.set(x.key, x.item);
-          return acc;
-        }, new Map<Key, T>());
-
         return asyncMap(itemsToGet, (x) => {
           // First, search pending writes to see if we're about to save this
           dn(`Attempting to fetch ${x.key}!`);
-          let pending = pendingPutsIndex.get(key);
+
+          let pending = (this.deferredPuts || []).find(y => y.key === x.key);
           if (pending) {
             dn(`Early-completing ${key}!`);
 
@@ -113,15 +109,7 @@ function deferredGet<T, Key>(this: Dexie.Table<T, Key>, key: Key, database: Dexi
             return Promise.resolve();
           }
 
-          let val = pendingPutsIndex.get(x.key);
-          let ret: Promise<T>;
-          if (val) {
-            ret = Promise.resolve(val);
-          } else {
-            ret = this.get(x.key);
-          }
-
-          return ret.then(result => {
+          return this.get(x.key).then(result => {
             x.completion.next(result!);
             x.completion.complete();
           }, (e: Error) => x.completion.error(e));
