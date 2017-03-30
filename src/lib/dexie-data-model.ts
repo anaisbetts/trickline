@@ -48,8 +48,7 @@ function deferredPut<T, Key>(this: Dexie.Table<T, Key>, item: T & Api, key: Key)
       // TODO: This would be cooler if it recognized duplicate IDs and threw out the older
       // one (i.e. you update channel.topic and channel.name in the same batch, so we really
       // only need to write the newer one)
-      let allItems = this.deferredPuts;
-      let itemsToAdd = allItems.slice(0, 128).map(x => {
+      let itemsToAdd = this.deferredPuts.slice(0, 128).map(x => {
         if (x.item.api) {
           x.item.token = x.item.api.token();
           x.item.api = null;
@@ -64,7 +63,7 @@ function deferredPut<T, Key>(this: Dexie.Table<T, Key>, item: T & Api, key: Key)
         .then(
           () => itemsToAdd.forEach(x => { dn(`Actually wrote ${JSON.stringify(x.key)}!`); x.completion.next(undefined); x.completion.complete(); }),
           (e) => itemsToAdd.forEach(x => x.completion.error(e)))
-        .finally(() => this.deferredPuts = allItems.splice(128));
+        .finally(() => this.deferredPuts.splice(itemsToAdd.length));
     }
 
     if (this.deferredPuts.length > 0) {
