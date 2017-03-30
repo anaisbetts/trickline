@@ -62,7 +62,7 @@ function deferredPut<T, Key>(this: Dexie.Table<T, Key>, item: T & Api, key: Key)
       await this.bulkPut(itemsToAdd.map(x => x.item))
         .then(
           () => itemsToAdd.forEach(x => { dn(`Actually wrote ${JSON.stringify(x.key)}!`); x.completion.next(undefined); x.completion.complete(); }),
-          (e) => itemsToAdd.forEach(x => x.completion.error(e)))
+          (e) => itemsToAdd.forEach(x => x.completion.error(e)));
 
       this.deferredPuts.splice(0, itemsToAdd.length);
     }
