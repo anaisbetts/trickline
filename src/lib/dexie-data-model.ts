@@ -48,8 +48,7 @@ function deferredPut<T, Key>(this: Dexie.Table<T, Key>, item: T & Api, key: Key)
       // TODO: This would be cooler if it recognized duplicate IDs and threw out the older
       // one (i.e. you update channel.topic and channel.name in the same batch, so we really
       // only need to write the newer one)
-      let allItems = this.deferredPuts;
-      let itemsToAdd = allItems.splice(0, 128).map(x => {
+      let itemsToAdd = this.deferredPuts.slice(0, 128).map(x => {
         if (x.item.api) {
           x.item.token = x.item.api.token();
           x.item.api = null;
@@ -58,14 +57,17 @@ function deferredPut<T, Key>(this: Dexie.Table<T, Key>, item: T & Api, key: Key)
         return x;
       });
 
+      if (itemsToAdd.length < 1) break;
+
       await this.bulkPut(itemsToAdd.map(x => x.item))
         .then(
           () => itemsToAdd.forEach(x => { dn(`Actually wrote ${JSON.stringify(x.key)}!`); x.completion.next(undefined); x.completion.complete(); }),
-          (e) => itemsToAdd.forEach(x => x.completion.error(e)))
-        .finally(() => this.deferredPuts = allItems.splice(128));
+          (e) => itemsToAdd.forEach(x => x.completion.error(e)));
+
+      this.deferredPuts.splice(0, itemsToAdd.length);
     }
 
-    if (this.deferredPuts.length) {
+    if (this.deferredPuts.length > 0) {
       this.idlePutHandle = createIdle();
     } else {
       this.idlePutHandle = null;
@@ -92,15 +94,11 @@ function deferredGet<T, Key>(this: Dexie.Table<T, Key>, key: Key, database: Dexi
 
     try {
       await database.transaction('r', this, () => {
-        let pendingPutsIndex = (this.deferredPuts || []).reduce((acc, x) => {
-          acc.set(x.key, x.item);
-          return acc;
-        }, new Map<Key, T>());
-
         return asyncMap(itemsToGet, (x) => {
           // First, search pending writes to see if we're about to save this
           dn(`Attempting to fetch ${x.key}!`);
-          let pending = pendingPutsIndex.get(key);
+
+          let pending = (this.deferredPuts || []).find(y => y.key === x.key);
           if (pending) {
             dn(`Early-completing ${key}!`);
 
@@ -112,15 +110,7 @@ function deferredGet<T, Key>(this: Dexie.Table<T, Key>, key: Key, database: Dexi
             return Promise.resolve();
           }
 
-          let val = pendingPutsIndex.get(x.key);
-          let ret: Promise<T>;
-          if (val) {
-            ret = Promise.resolve(val);
-          } else {
-            ret = this.get(x.key);
-          }
-
-          return ret.then(result => {
+          return this.get(x.key).then(result => {
             x.completion.next(result!);
             x.completion.complete();
           }, (e: Error) => x.completion.error(e));

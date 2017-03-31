@@ -55,7 +55,8 @@
     "react-tap-event-plugin": "^2.0.1",
     "react-virtualized": "^9.0.0",
     "request-idle-polyfill": "1.0.1",
-    "rxjs": "^5.0.2"
+    "rxjs": "^5.0.2",
+    "sw-toolbox": "3.6.0"
   },
   "devDependencies": {
     "@types/chai": "^3.4.34",
