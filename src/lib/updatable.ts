@@ -24,8 +24,10 @@ export class Updatable<T> extends Subject<T> {
   protected _errFunc: ((e: Error) => void);
   protected _nextFunc: ((x: T) => void);
   protected _innerSub: Subscription;
+  protected _refcount: number;
+  protected readonly _released: (() => void) | undefined;
 
-  constructor(factory?: () => (Promise<T>|Observable<T>), strategy?: MergeStrategy) {
+  constructor(factory?: () => (Promise<T>|Observable<T>), strategy?: MergeStrategy, onRelease?: (() => void)) {
     super();
 
     this._hasPendingValue = false;
@@ -44,6 +46,8 @@ export class Updatable<T> extends Subject<T> {
 
     this._nextFunc = this.next.bind(this);
     this._errFunc = this.error.bind(this);
+    this._refcount = 0;
+    this._released = onRelease;
   }
 
   get value(): T {
@@ -69,6 +73,18 @@ export class Updatable<T> extends Subject<T> {
 
     if (this._hasValue && subscription && shouldNext && !(<ISubscription>subscription).closed) {
       subscriber.next(this._value);
+    }
+
+    if (this._released) {
+
+    this._refcount++;
+      subscription.add(() => {
+        this._refcount--;
+
+        if (this._refcount < 1) {
+          this._released!();
+        }
+      });
     }
 
     return subscription;
@@ -142,8 +158,9 @@ export class Updatable<T> extends Subject<T> {
 export class ArrayUpdatable<T> extends Updatable<T[]> {
   readonly arraySub: SerialSubscription;
 
-  constructor(factory?: () => (Promise<T[]>|Observable<T[]>)) {
-    super(factory);
+  constructor(factory?: () => (Promise<T[]>|Observable<T[]>), onRelease?: (() => void)) {
+    super(factory, 'overwrite', onRelease);
+
     this.arraySub = new SerialSubscription();
     this._innerSub.add(this.arraySub);
   }
