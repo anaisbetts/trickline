@@ -55,7 +55,6 @@ class InMemorySparseMap<K, V> implements SparseMap<K, V> {
       (x: Updatable<V> | ArrayUpdatable<V>) => {
         this._latest.delete(key);
         this.evicted.next({ Key: key, Value: x as Updatable<V> });
-        x.unsubscribe();
       } :
       undefined;
 
