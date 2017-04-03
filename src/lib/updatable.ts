@@ -75,18 +75,21 @@ export class Updatable<T> extends Subject<T> {
       subscriber.next(this._value);
     }
 
-    if (this._released) {
-      this._refcount++;
-      subscription.add(() => {
-        this._refcount--;
+    if (!this._released) return subscription;
 
-        if (this._refcount < 1) {
-          this._released!(this);
-        }
-      });
-    }
+    // NB: subscription.add doesn't work because ???
+    let ret = new Subscription(() => subscription.unsubscribe());
+    this._refcount++;
 
-    return subscription;
+    ret.add(() => {
+      this._refcount--;
+
+      if (this._refcount < 1) {
+        setImmediate(() => this._released!(this));
+      }
+    });
+
+    return ret;
   }
 
   protected nextOverwrite(value: T): void {
