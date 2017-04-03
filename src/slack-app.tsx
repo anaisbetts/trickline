@@ -10,7 +10,7 @@ import getMuiTheme from 'material-ui/styles/getMuiTheme';
 
 import { Action } from './lib/action';
 import { SimpleView } from './lib/view';
-import { fromObservable, Model } from './lib/model';
+import { fromObservable, Model, notify } from './lib/model';
 import { Store, NaiveStore } from './lib/store';
 import { DexieStore } from './lib/dexie-store';
 import { handleRtmMessagesForStore, connectToRtm, fetchInitialChannelList } from './lib/store-network';
@@ -45,6 +45,7 @@ const slackTheme = getMuiTheme({
   }
 });
 
+@notify('channelList')
 export class SlackAppModel extends Model {
   store: Store;
   channelList: ChannelListViewModel;
@@ -63,19 +64,25 @@ export class SlackAppModel extends Model {
     const tokens = tokenSource.indexOf(',') >= 0 ? tokenSource.split(',') : [tokenSource];
 
     this.store = new DexieStore(tokens);
-    this.channelList = new ChannelListViewModel(this.store);
-    this.channelHeader = new ChannelHeaderViewModel(this.store, this.channelList);
+    this.channelHeader = new ChannelHeaderViewModel(this.store);
 
     when(this, x => x.channelHeader.isDrawerOpen)
       .toProperty(this, 'isDrawerOpen');
 
     when(this, x => x.channelList.selectedChannel)
       .filter(channel => !!channel)
+      .do((x) => this.channelHeader.selectedChannel = x)
       .map(channel => new MessagesViewModel(this.store, channel))
       .toProperty(this, 'messagesViewModel');
 
+    this.channelList = new ChannelListViewModel(this.store);
+    when(this, x => x.isDrawerOpen)
+      .skip(1)
+      .filter(x => !x)
+      .subscribe(() => this.channelList = new ChannelListViewModel(this.store));
+
     const rtmSub = new SerialSubscription();
-    //rtmSub.set(handleRtmMessagesForStore(connectToRtm(this.store.api), this.store));
+    rtmSub.set(handleRtmMessagesForStore(connectToRtm(this.store.api), this.store));
 
     this.loadInitialState = new Action<void>(() => fetchInitialChannelList(this.store), undefined);
   }
@@ -113,7 +120,7 @@ export class SlackApp extends SimpleView<SlackAppModel> {
   }
 
   render() {
-    const vm = this.viewModel;
+    const vm = this.viewModel!;
     const shouldShift = vm.isDrawerOpen && window.outerWidth > window.outerHeight;
     const containerStyle = {
       height: '100%',
@@ -122,14 +129,13 @@ export class SlackApp extends SimpleView<SlackAppModel> {
     };
 
     const channelListView = vm.isDrawerOpen ? (
-      <ChannelListView viewModel={vm.channelList} arrayProperty='orderedChannels' />
+      <ChannelListView viewModel={vm.channelList} />
     ) : null;
 
     const messagesView = vm.messagesViewModel ? (
       <MessagesView
         key={vm.messagesViewModel.channel.id}
         viewModel={vm.messagesViewModel}
-        arrayProperty='messages'
       />
     ) : null;
 
