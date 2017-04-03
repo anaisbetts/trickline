@@ -34,6 +34,7 @@ declare module 'dexie' {
       idlePutHandle: NodeJS.Timer | null;
       idleGetHandle: number | null;
       deferredPuts: DeferredPutItem<T & Api, Key>[];
+      recentlyWritten: DeferredPutItem<T, Key>[] | null;
       deferredGets: DeferredGetItem<T, Key>[];
     }
   }
@@ -57,6 +58,15 @@ function deferredPut<T, Key>(this: Dexie.Table<T, Key>, item: T & Api, key: Key)
         return x;
       });
 
+      // NB: Because both bulkPut and deferredGet's handler operate in a
+      // transaction, there is a window where the bulk put has *finished*, but
+      // since the read transaction was created before the bulkPut completed,
+      // the gets will fail and our scan of deferredGets will *also* fail.
+      //
+      // To solve this, we'll effectively extend the lifetime of deferredGets
+      // until a short time after we complete.
+      this.recentlyWritten = itemsToAdd;
+
       if (itemsToAdd.length < 1) break;
 
       await this.bulkPut(itemsToAdd.map(x => x.item))
@@ -65,6 +75,7 @@ function deferredPut<T, Key>(this: Dexie.Table<T, Key>, item: T & Api, key: Key)
           (e) => itemsToAdd.forEach(x => x.completion.error(e)));
 
       this.deferredPuts.splice(0, itemsToAdd.length);
+      setTimeout(() => this.recentlyWritten = null, 250);
     }
 
     if (this.deferredPuts.length > 0) {
@@ -99,6 +110,7 @@ function deferredGet<T, Key>(this: Dexie.Table<T, Key>, key: Key, database: Dexi
           dn(`Attempting to fetch ${x.key}!`);
 
           let pending = (this.deferredPuts || []).find(y => y.key === x.key);
+          pending = pending || (this.recentlyWritten || []).find(y => y.key === x.key);
           if (pending) {
             dn(`Early-completing ${key}!`);
 
