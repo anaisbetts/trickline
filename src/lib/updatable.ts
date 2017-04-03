@@ -85,7 +85,7 @@ export class Updatable<T> extends Subject<T> {
       this._refcount--;
 
       if (this._refcount < 1) {
-        setImmediate(() => this._released!(this));
+        this._released!(this);
       }
     });
 
