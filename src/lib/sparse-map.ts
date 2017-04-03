@@ -31,11 +31,16 @@ class InMemorySparseMap<K, V> implements SparseMap<K, V> {
   private _latest: Map<K, Updatable<V>>;
   private _factory: ((key: K, hint?: any) => Promise<V>) | undefined;
   private _strategy: MergeStrategy;
+  private _evictOnNoSubscribers: boolean;
 
-  constructor(factory: ((key: K, hint?: any) => Promise<V>) | undefined = undefined, strategy: MergeStrategy = 'overwrite') {
+  constructor(
+      factory: ((key: K, hint?: any) => Promise<V>) | undefined = undefined,
+      strategy: MergeStrategy = 'overwrite',
+      evictOnNoSubscribers: boolean = false) {
     this._latest = new Map();
     this._factory = factory;
     this._strategy = strategy;
+    this._evictOnNoSubscribers = evictOnNoSubscribers;
 
     this.created = new Subject();
     this.evicted = new Subject();
@@ -46,12 +51,20 @@ class InMemorySparseMap<K, V> implements SparseMap<K, V> {
     if (ret) return ret;
     if (!ret && dontCreate) return null;
 
+    const releaseHandler = this._evictOnNoSubscribers ?
+      (x: Updatable<V> | ArrayUpdatable<V>) => {
+        this._latest.delete(key);
+        this.evicted.next({ Key: key, Value: x as Updatable<V> });
+        x.unsubscribe();
+      } :
+      undefined;
+
     if (this._factory) {
       let fact = this._factory.bind(this);
       if (this._strategy === 'array') {
-        ret = new ArrayUpdatable(() => fact(key, hint));
+        ret = new ArrayUpdatable(() => fact(key, hint), releaseHandler);
       } else {
-        ret = new Updatable<V>(() => fact(key, hint), this._strategy);
+        ret = new Updatable<V>(() => fact(key, hint), this._strategy, releaseHandler);
       }
     } else {
       if (this._strategy === 'array') {
