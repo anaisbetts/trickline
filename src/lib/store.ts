@@ -11,6 +11,8 @@ import 'rxjs/add/observable/dom/webSocket';
 import './standard-operators';
 import './custom-operators';
 
+const d = require('debug')('trickline:store');
+
 export interface Range<T> {
   oldest: T;
   latest: T;
@@ -100,15 +102,19 @@ export class NaiveStore implements Store {
   }
 
   saveModelToStore(type: ModelType, value: any, api: Api): void {
-    this[modelTypeToSparseMap[type]].listen(value.id, api).next(value);
-
     if (type === 'message') {
+      d(`Saving ${value.ts} to store!`);
+      this.messages.listen({ channel: value.channel, timestamp: value.ts })!.next(value);
+
       let msg = value as Message;
       let page = this.messagePages.listen({ channel: msg.channel, page: timestampToPage(msg.ts) }, msg.api, true);
       if (!page || !page.value) return;
 
       page.value.insertOne({ channel: msg.channel, timestamp: msg.ts });
       Platform.performMicrotaskCheckpoint();
+    } else {
+      d(`Saving ${value.id} to store!`);
+      this[modelTypeToSparseMap[type]].listen(value.id, api).next(value);
     }
   }
 

@@ -42,7 +42,7 @@ Object.keys(toTest).forEach((k) => {
 
     it('should fetch a list of initial messages', async function() {
       fixture.scrollPreviousPage.execute().subscribe(p => d(`New page is ${p}`));
-      await whenArray(fixture, x => x.messages).skip(1).take(1).toPromise();
+      await whenArray(fixture, x => x.messages).take(2).toPromise();
 
       expect(fixture.messages.length > 0).to.be.true;
     });

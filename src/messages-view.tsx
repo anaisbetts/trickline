@@ -13,7 +13,7 @@ import { SortedArray } from './lib/sorted-array';
 import { Action } from './lib/action';
 import { Observable } from 'rxjs/Observable';
 import { SimpleView, HasViewModel } from './lib/view';
-import { when, whenArray } from "./lib/when";
+import { when, whenArray } from './lib/when';
 
 const d = require('debug')('trickline-test:messages-view');
 
@@ -55,8 +55,8 @@ export class MessagesViewModel extends Model {
     }));
 
     this.scrollPreviousPage = new Action(async () => {
-      let page = //this.messages && this.messages.length > 0 ?
-        //timestampToPage(this.messages[0].timestamp) - 1 :
+      let page = this.messages && this.messages.length > 0 ?
+        timestampToPage(this.messages[0].timestamp) - 1 :
         this.messagePage;
 
       let newPage = await getNextPageNumber(store, channel.id, page, false, this.api);
@@ -68,7 +68,7 @@ export class MessagesViewModel extends Model {
 
     this.scrollNextPage = new Action(async () => {
       let page = this.messages && this.messages.length > 0 ?
-        timestampToPage(this.messages[this.messages.length - 1].timestamp) + 1:
+        timestampToPage(this.messages[this.messages.length - 1].timestamp) + 1 :
         this.messagePage;
 
       let newPage = await getNextPageNumber(store, channel.id, page, true, this.api);
@@ -91,14 +91,6 @@ export class MessagesViewModel extends Model {
     ).distinctUntilChanged()
       .do(x => d(`Getting messages for page! ${x}`))
       .switchMap(page => store.messagePages.get({ channel: channel.id, page }, this.api))
-      .switchMap(async messages => {
-        if (!messages || messages.length < 1) return messages;
-
-        let msgs = Array.from(store.messages.listenMany(messages).values());
-        await Promise.all(msgs.map(x => x.waitForValue()));
-
-        return messages;
-      })
       .subscribe((x: SortedArray<MessageKey>) => {
         d(`Got new messages! ${x.length}`);
         this.messages.insert(...x);

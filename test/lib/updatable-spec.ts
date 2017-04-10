@@ -245,7 +245,7 @@ describe('the ArrayUpdatable class', function() {
   it('should execute onrelease handler', function() {
     let isReleased = false;
     const a = [1, 2, 3];
-    const fixture = new ArrayUpdatable<number>(() => Observable.of(a));
+    const fixture = new ArrayUpdatable<number>(() => Observable.of(a), () => isReleased = true);
     expect(isReleased).to.equal(false);
 
     let disp1 = fixture.subscribe();
