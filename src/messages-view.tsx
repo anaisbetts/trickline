@@ -56,7 +56,7 @@ export class MessagesViewModel extends Model {
 
     this.scrollPreviousPage = new Action(async () => {
       let page = this.messages && this.messages.length > 0 ?
-        timestampToPage(this.messages[0].timestamp) - 1 :
+        timestampToPage(this.messages[this.messages.length - 1].timestamp) - 1 :
         this.messagePage;
 
       let newPage = await getNextPageNumber(store, channel.id, page, false, this.api);
@@ -68,7 +68,7 @@ export class MessagesViewModel extends Model {
 
     this.scrollNextPage = new Action(async () => {
       let page = this.messages && this.messages.length > 0 ?
-        timestampToPage(this.messages[this.messages.length - 1].timestamp) + 1 :
+        timestampToPage(this.messages[0].timestamp) + 1 :
         this.messagePage;
 
       let newPage = await getNextPageNumber(store, channel.id, page, true, this.api);
@@ -133,7 +133,7 @@ export class MessagesView extends SimpleView<MessagesViewModel> {
       this.forceUpdate();
     };
 
-//    this.viewModelCache.shouldRender.subscribe(() => this.queueUpdate(update));
+    this.viewModelCache.shouldRender.subscribe(() => this.queueUpdate(update));
     this.viewModel!.getMessagesForCurrentPage.execute();
   }
 

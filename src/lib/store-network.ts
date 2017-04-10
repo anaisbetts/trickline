@@ -86,6 +86,8 @@ export async function getNextPageNumber(
   let result = await fetchMessagesPastPage(channel, currentPage, directionIsForward, api).toPromise();
   result.messages.forEach(msg => store.saveModelToStore('message', msg, api));
 
+  d(`getNextPageNumber: ${result.messages.length} msgs, page = ${result.page}`);
+  await fetchMessagePageForChannel(store, channel, result.page, api);
   return result.page;
 }
 

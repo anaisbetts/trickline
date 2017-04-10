@@ -60,13 +60,13 @@ const modelTypeToSparseMap = {
 export function messageCompare(a: Message, b: Message) {
   if (a.ts === b.ts) return 0;
   let c = a.ts - b.ts;
-  return (c > 0) ? 1 : -1;
+  return (c < 0) ? 1 : -1;
 }
 
 export function messageKeyCompare(a: MessageKey, b: MessageKey) {
   if (a.timestamp === b.timestamp) return 0;
   let c = a.timestamp - b.timestamp;
-  return (c > 0) ? 1 : -1;
+  return (c < 0) ? 1 : -1;
 }
 
 export function messageKeyToString(key: MessageKey) {
