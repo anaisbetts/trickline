@@ -105,7 +105,7 @@ function deferredGet<T, Key>(this: Dexie.Table<T, Key>, key: Key, database: Dexi
             // NB: We need to do a shallow clone here because otherwise at some point,
             // api will be replaced by 'token' on this pending object, thereby trolling
             // the caller
-            x.completion.next(Object.assign({}, pending));
+            x.completion.next(Object.assign({}, pending.item));
             x.completion.complete();
             return Promise.resolve();
           }

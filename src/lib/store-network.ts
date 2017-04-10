@@ -31,6 +31,7 @@ export async function fetchInitialChannelList(store: Store): Promise<void> {
   d(`Setting joinedChannels in store`);
   store.setKeyInStore('joinedChannels', channelList);
   store.joinedChannels.next(channelList);
+  return channelList;
 }
 
 async function fetchSingleInitialChannelList(store: Store, api: Api): Promise<string[]> {
