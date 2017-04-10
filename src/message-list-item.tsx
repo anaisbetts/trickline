@@ -24,7 +24,8 @@ const styles: { [key: string]: React.CSSProperties } = {
     paddingRight: '20px'
   },
   profileImage: {
-    width: '40px'
+    width: '40px',
+    height: '40px'
   },
   topContainer: {
     marginLeft: '0.6rem'
@@ -90,7 +91,7 @@ export class MessageListItem extends View<MessageViewModel, MessageListItemProps
     super(props, c);
 
     this.lifecycle.didMount.map(() => null).concat(this.lifecycle.willReceiveProps)
-      .switchMap(() => this.viewModel ? this.viewModel.changed : Observable.never())
+      .switchMap(() => this.viewModel ? when(this.viewModel, x => x.user.profileImage, x => x.text, () => true) : Observable.never())
       .takeUntil(this.lifecycle.willUnmount)
       .guaranteedThrottle(100)
       .subscribe(() => { if (this.viewModel) { this.props.requestMeasure(); } });

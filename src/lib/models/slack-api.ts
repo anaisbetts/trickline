@@ -204,6 +204,10 @@ async function fetchMessagesPastPageAsync(
   });
 
   if (directionIsForward) {
+    if (messages.length < 1) {
+      return { messages, page: timestampToPage(dateToTimestamp(new Date())) };
+    }
+
     let oldest = messages.reduce((acc: number, x) => {
       let thisPage = timestampToPage(x.ts);
 
@@ -216,6 +220,10 @@ async function fetchMessagesPastPageAsync(
 
     return { messages, page: oldest };
   } else {
+    if (messages.length < 1) {
+      return { messages, page: 0 };
+    }
+
     let newest = messages.reduce((acc: number, x) => {
       let thisPage = timestampToPage(x.ts);
 

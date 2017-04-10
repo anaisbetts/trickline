@@ -54,7 +54,7 @@
     "react-dom": "^15.4.2",
     "react-hot-loader": "^3.0.0-beta.6",
     "react-tap-event-plugin": "^2.0.1",
-    "react-virtualized": "^9.0.0",
+    "react-virtualized": "9.7.2",
     "request-idle-polyfill": "1.0.1",
     "rxjs": "^5.2.1-smooth",
     "sw-toolbox": "3.6.0"

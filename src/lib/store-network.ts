@@ -16,7 +16,7 @@ const d = require('debug')('trickline:store-network');
  * users.counts
  */
 
-export async function fetchInitialChannelList(store: Store): Promise<void> {
+export async function fetchInitialChannelList(store: Store): Promise<string[]> {
   let storedChannels = await store.keyValueStore.get('joinedChannels') as string[];
 
   if (storedChannels) {
@@ -31,6 +31,7 @@ export async function fetchInitialChannelList(store: Store): Promise<void> {
   d(`Setting joinedChannels in store`);
   store.setKeyInStore('joinedChannels', channelList);
   store.joinedChannels.next(channelList);
+
   return channelList;
 }
 
