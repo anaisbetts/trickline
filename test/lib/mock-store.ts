@@ -3,7 +3,9 @@ import { ArrayUpdatable } from '../../src/lib/updatable';
 import { ChannelBase, Message, User } from '../../src/lib/models/api-shapes';
 import { EventType } from '../../src/lib/models/event-type';
 import { SparseMap, InMemorySparseMap } from '../../src/lib/sparse-map';
-import { Store, ModelType, MessagesKey, MessageCollection } from '../../src/lib/store';
+import { Store, ModelType, MessageKey, MessagePageKey } from '../../src/lib/store';
+import { Observable } from 'rxjs/Observable';
+import { SortedArray } from '../../src/lib/sorted-array';
 
 export interface MockStoreSeedData {
   channels?: { [key: string]: ChannelBase };
@@ -16,7 +18,8 @@ export class MockStore implements Store {
 
   channels: SparseMap<string, ChannelBase>;
   users: SparseMap<string, User>;
-  messages: SparseMap<MessagesKey, MessageCollection>;
+  messages: SparseMap<MessageKey, Message>;
+  messagePages: SparseMap<MessagePageKey, SortedArray<MessageKey>>;
   events: SparseMap<EventType, Message>;
   joinedChannels: ArrayUpdatable<string>;
   keyValueStore: SparseMap<string, any>;
@@ -39,6 +42,8 @@ export class MockStore implements Store {
         Promise.resolve(seedData.joinedChannels) :
         Promise.reject(`Missing joined channels`);
     });
+
+    this.keyValueStore = new InMemorySparseMap<string, any>(() => Observable.of(undefined));
   }
 
   saveModelToStore(_type: ModelType, _value: any, _api: Api): void { } // tslint:disable-line

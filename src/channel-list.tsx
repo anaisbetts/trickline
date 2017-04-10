@@ -28,7 +28,7 @@ export class ChannelListViewModel extends Model implements IChannelList {
 
     store.joinedChannels.toProperty(this, 'channels');
     whenArray(this, x => x.channels)
-      .flatMap(async ({value}) => {
+      .switchMap(async ({value}) => {
         if (!value) return [];
         let updatables = Array.from(store.channels.listenMany(value || []).values());
         await Promise.all(updatables.map(x => x.waitForValue()));

@@ -1,4 +1,4 @@
-import { Store, ModelType, MessagePageKey, MessageKey, messageCompare, messageKeyToString } from './store';
+import { Store, ModelType, MessagePageKey, MessageKey, messageKeyToString, messageKeyCompare } from './store';
 import { Api, createApi, infoApiForChannel, fetchSingleMessage, pageToTimestamp } from './models/slack-api';
 import { ArrayUpdatable } from './updatable';
 import { SparseMap, InMemorySparseMap } from './sparse-map';
@@ -55,7 +55,7 @@ export class DexieStore implements Store {
       info!.api = api;
       this.saveModelToStore('channel', info, api);
       return info;
-    }, 'merge');
+    }, 'merge', true);
 
     this.users = new InMemorySparseMap<string, User>(async (id, api) => {
       let ret = await this.database.users.deferredGet(id, this.database);
@@ -73,7 +73,7 @@ export class DexieStore implements Store {
       this.saveModelToStore('user', ret, api);
 
       return ret;
-    }, 'merge');
+    }, 'merge', true);
 
     this.messageCache = LRU<Message>({ max: 256 });
 
@@ -103,7 +103,7 @@ export class DexieStore implements Store {
       }
 
       return ret;
-    }, 'merge');
+    }, 'merge', true);
 
     this.messagePages = new InMemorySparseMap<MessagePageKey, SortedArray<MessageKey>>(async (k, api) => {
       let dbItems = await this.database.messages
@@ -131,8 +131,8 @@ export class DexieStore implements Store {
       }
 
       if (!result) result = await fetchMessagePageForChannel(this, k.channel, k.page, api);
-      return new SortedArray({ unique: true, compare: messageCompare }, result);
-    }, 'array');
+      return new SortedArray({ unique: true, compare: messageKeyCompare }, result);
+    }, 'array', true);
 
     this.keyValueStore = new InMemorySparseMap<string, any>(async (key: string) => {
       let ret = await this.database.keyValues.deferredGet(key, this.database);

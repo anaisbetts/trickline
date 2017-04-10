@@ -104,6 +104,22 @@ describe('The Updatable class', function() {
     fixture.invalidate();
     expect(fixture.value).to.deep.equal({a: 1});
   });
+
+  it('should execute onrelease handler', function() {
+    let isReleased = false;
+    let fixture = new Updatable<Object>(() => Observable.of({a: 1}), 'merge', () => isReleased = true);
+    expect(isReleased).to.equal(false);
+
+    let disp1 = fixture.subscribe();
+    expect(isReleased).to.equal(false);
+    let disp2 = fixture.subscribe();
+    expect(isReleased).to.equal(false);
+
+    disp2.unsubscribe();
+    expect(isReleased).to.equal(false);
+    disp1.unsubscribe();
+    expect(isReleased).to.equal(true);
+  });
 });
 
 describe('the ArrayUpdatable class', function() {
@@ -224,5 +240,22 @@ describe('the ArrayUpdatable class', function() {
     Platform.performMicrotaskCheckpoint();
     expect(changeList.length).to.equal(3);
     expect(changeList[2]).to.deep.equal(b);
+  });
+
+  it('should execute onrelease handler', function() {
+    let isReleased = false;
+    const a = [1, 2, 3];
+    const fixture = new ArrayUpdatable<number>(() => Observable.of(a), () => isReleased = true);
+    expect(isReleased).to.equal(false);
+
+    let disp1 = fixture.subscribe();
+    expect(isReleased).to.equal(false);
+    let disp2 = fixture.subscribe();
+    expect(isReleased).to.equal(false);
+
+    disp2.unsubscribe();
+    expect(isReleased).to.equal(false);
+    disp1.unsubscribe();
+    expect(isReleased).to.equal(true);
   });
 });

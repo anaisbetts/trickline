@@ -7,18 +7,18 @@ import { Tab } from 'material-ui/Tabs';
 
 import { Action } from './lib/action';
 import { Channel, ChannelBase } from './lib/models/api-shapes';
-import { ChannelListViewModel } from './channel-list';
 import { ChannelMembersViewModel, ChannelMembersView } from './channel-members-view';
 import { isDM } from './lib/models/slack-api';
-import { Model, fromObservable } from './lib/model';
+import { Model, fromObservable, notify } from './lib/model';
 import { SimpleView } from './lib/view';
 import { Store } from './lib/store';
 import { updateChannelToLatest } from './lib/store-network';
 import { when } from './lib/when';
 import { Observable } from 'rxjs/Observable';
 
+@notify('selectedChannel')
 export class ChannelHeaderViewModel extends Model {
-  @fromObservable selectedChannel: ChannelBase;
+  selectedChannel: ChannelBase;
   @fromObservable channelInfo: Channel;
   @fromObservable members: Array<string>;
   @fromObservable topic: { value: string };
@@ -29,7 +29,7 @@ export class ChannelHeaderViewModel extends Model {
   @fromObservable isDrawerOpen: boolean;
   @fromObservable isMembersListOpen: boolean;
 
-  constructor(public readonly store: Store, listViewModel: ChannelListViewModel) {
+  constructor(public readonly store: Store) {
     super();
 
     let isDrawerOpen = false;
@@ -39,9 +39,6 @@ export class ChannelHeaderViewModel extends Model {
     let isMembersListOpen = false;
     this.toggleMembersList = Action.create(() => isMembersListOpen = !isMembersListOpen, false);
     this.toggleMembersList.result.toProperty(this, 'isMembersListOpen');
-
-    when(listViewModel, x => x.selectedChannel)
-      .toProperty(this, 'selectedChannel');
 
     when(this, x => x.selectedChannel)
       .filter(c => !!c)
