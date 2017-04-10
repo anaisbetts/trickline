@@ -58,8 +58,15 @@ const modelTypeToSparseMap = {
 };
 
 export function messageCompare(a: Message, b: Message) {
+  if (a.ts === b.ts) return 0;
   let c = a.ts - b.ts;
-  return (c > 0) ? 1 : (c == 0)  ? 0 : -1;
+  return (c > 0) ? 1 : -1;
+}
+
+export function messageKeyCompare(a: MessageKey, b: MessageKey) {
+  if (a.timestamp === b.timestamp) return 0;
+  let c = a.timestamp - b.timestamp;
+  return (c > 0) ? 1 : -1;
 }
 
 export function messageKeyToString(key: MessageKey) {
@@ -93,7 +100,7 @@ export class NaiveStore implements Store {
 
     this.messagePages = new InMemorySparseMap<MessagePageKey, SortedArray<MessageKey>>(async (k, api) => {
       let result = await fetchMessagePageForChannel(this, k.channel, k.page, api);
-      return new SortedArray({ unique: true, compare: messageCompare }, result);
+      return new SortedArray({ unique: true, compare: messageKeyCompare }, result);
     }, 'array');
 
     this.events = new InMemorySparseMap<EventType, Message>();

@@ -7,7 +7,7 @@ import { ChannelBase, Message } from './lib/models/api-shapes';
 import { ViewModelListHelper } from './lib/collection-view';
 import { Model, notify } from './lib/model';
 import { MessageViewModel, MessageListItem } from './message-list-item';
-import { Store, MessageKey, messageCompare } from './lib/store';
+import { Store, MessageKey, messageKeyCompare } from './lib/store';
 import { getNextPageNumber } from './lib/store-network';
 import { SortedArray } from './lib/sorted-array';
 import { Action } from './lib/action';
@@ -43,7 +43,7 @@ export class MessagesViewModel extends Model {
     super();
 
     this.messagePage = timestampToPage(dateToTimestamp(new Date()));
-    this.messages = new SortedArray<MessageKey>({ unique: true, compare: messageCompare });
+    this.messages = new SortedArray<MessageKey>({ unique: true, compare: messageKeyCompare });
     this.api = channel.api;
 
     let messagesForUs = store.events.listen('message', this.api)!
