@@ -21,10 +21,10 @@ export class Updatable<T> extends Subject<T> {
   protected _hasPendingValue: boolean;
   protected _hasValue: boolean;
   protected _factory?: () => (Promise<T>|Observable<T>);
-  protected _errFunc: ((e: Error) => void);
-  protected _nextFunc: ((x: T) => void);
   protected _innerSub: Subscription;
   protected _refcount: number;
+  protected _nextFunc: ((x: T) => void);
+  protected _errFunc: ((x: Error) => void);
   protected readonly _released: ((x: Updatable<T>) => void) | undefined;
 
   constructor(factory?: () => (Promise<T>|Observable<T>), strategy?: MergeStrategy, onRelease?: ((x: Updatable<T>) => void)) {
@@ -134,12 +134,17 @@ export class Updatable<T> extends Subject<T> {
 
   nextAsync(source: (Promise<T>|Observable<T>)) {
     this._hasPendingValue = true;
+    let src: Observable<T>;
 
     if ('then' in source) {
-      (source as Promise<T>).then(this._nextFunc, this._errFunc);
+      src = Observable.fromPromise(source as Promise<T>);
     } else {
-      (source as Observable<T>).take(1).subscribe(this._nextFunc, this._errFunc);
+      src = source as Observable<T>;
     }
+
+    src.take(1)
+      .takeWhile(() => !this._hasValue)
+      .subscribe(this._nextFunc, this._errFunc);
   }
 
   addTeardown(teardown: ISubscription | Function) {
