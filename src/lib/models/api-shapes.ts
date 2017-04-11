@@ -66,7 +66,7 @@ export interface Icon {
   image_132?: string;
   image_original?: string;
   image_default: boolean;
-};
+}
 
 export interface Message {
   // common for every message type
@@ -204,7 +204,7 @@ export interface Team {
   description: string;
   discoverable: string;
   api: Api;
-};
+}
 
 export interface TeamPrefs {
   msg_edit_window_mins: number;
@@ -229,7 +229,7 @@ export interface TeamPrefs {
   warn_before_at_channel: string;
   custom_status_presets: Array<Array<string>>;
   custom_status_default_emoji: string;
-};
+}
 
 export interface TeamProfile {
   fields: Array<TeamProfileField>;

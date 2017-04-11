@@ -7,8 +7,8 @@ import { SerialSubscription } from './serial-subscription';
 
 import './standard-operators';
 
-export interface CreateSelector<TRet> { (): TRet; };
-export interface CreateAsyncSelector<TRet> { (): Observable<TRet>|Promise<TRet>; };
+export interface CreateSelector<TRet> { (): TRet };
+export interface CreateAsyncSelector<TRet> { (): Observable<TRet>|Promise<TRet> };
 export interface ActionCtor<TRet> {
   new(func: any, initialValue: TRet): Action<TRet>;
 }

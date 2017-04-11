@@ -22,7 +22,7 @@ export interface SparseMap<K, V> {
 
   created: Observable<Pair<K, Updatable<V>>>;
   evicted: Observable<Pair<K, Updatable<V>>>;
-};
+}
 
 class InMemorySparseMap<K, V> implements SparseMap<K, V> {
   created: Subject<Pair<K, Updatable<V>>>;

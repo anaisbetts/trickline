@@ -1,8 +1,8 @@
 import { Observable } from 'rxjs/Observable';
 import { ISubscription, Subscription } from 'rxjs/Subscription';
 import { Subject } from 'rxjs/Subject';
-import * as isEqual from 'lodash.isequal';
 
+import * as isEqual from 'lodash.isequal';
 import * as debug from 'debug';
 
 import './standard-operators';
@@ -10,9 +10,9 @@ import './standard-operators';
 const d = debug('trickline:model');
 
 export interface ChangeNotification {
-  sender: any;
-  property: string;
-  value?: any;
+  sender: any
+  property: string
+  value?: any
 };
 
 export interface TypedChangeNotification<TSender, TVal> extends ChangeNotification {
