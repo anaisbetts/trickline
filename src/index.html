@@ -16,11 +16,11 @@
     <div id="app" style="position: absolute; width: 100vw; height: 100vh"></div>
   </body>
 
-  <script type="text/typescript">
+  <script>
   if (!process.execPath.match(/[\\/]electron-prebuilt/)) {
     process.env.NODE_ENV = 'production';
   }
-  </script>
 
-  <script src="./index.tsx"></script>
+  require('./index.tsx');
+  </script>
 </html>
