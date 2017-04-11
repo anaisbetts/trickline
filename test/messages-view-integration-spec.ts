@@ -46,5 +46,16 @@ Object.keys(toTest).forEach((k) => {
 
       expect(fixture.messages.length > 0).to.be.true;
     });
+
+    it('should always sort the messages by timestamp', async function() {
+      do {
+        fixture.scrollPreviousPage.execute().subscribe(p => d(`New page is ${p}`));
+        await whenArray(fixture, x => x.messages).take(2).toPromise();
+      } while (fixture.messages.length < 5);
+
+      for (let i=1; i < fixture.messages.length; i++) {
+        expect(fixture.messages[i].timestamp < fixture.messages[i-1].timestamp).to.be.ok;
+      }
+    });
   });
 });
