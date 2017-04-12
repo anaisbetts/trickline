@@ -40,6 +40,12 @@ function createDeferredAction() {
   if (currentRafToken) return;
   if (hasFocus === undefined) hasFocus = document.hasFocus();
 
+  if (isInTestRunner) {
+    currentRafToken = 1;
+    dispatchDeferredActions();
+    return;
+  }
+
   currentRafToken = hasFocus ?
     requestAnimationFrame(dispatchDeferredActions) :
     window.setTimeout(dispatchDeferredActions, 20);
