@@ -9,6 +9,7 @@ import * as React from 'react';
 import { Model } from './model';
 
 import './standard-operators';
+import { detectTestRunner } from "./utils";
 
 export interface AttachedLifecycle<P, S> {
   lifecycle: Lifecycle<P, S>;
@@ -93,6 +94,8 @@ export interface HasViewModel<T extends Model> {
   viewModel: T;
 }
 
+let isInTestRunner: boolean | undefined;
+
 export abstract class View<T extends Model, P extends HasViewModel<T>>
     extends React.PureComponent<P, null>
     implements AttachedLifecycle<P, null> {
@@ -102,6 +105,11 @@ export abstract class View<T extends Model, P extends HasViewModel<T>>
   constructor(props?: P, context?: any) {
     super(props, context);
     this.lifecycle = new ExplicitLifecycle<P, null>();
+
+    if (isInTestRunner === undefined) {
+      isInTestRunner = detectTestRunner();
+    }
+
     if (props) this.viewModel = props.viewModel;
 
     const customUpdater = this.customUpdateFunc ?
@@ -200,6 +208,10 @@ export abstract class View<T extends Model, P extends HasViewModel<T>>
           this.queueUpdate();
         }
       });
+    }
+
+    if (isInTestRunner) {
+      View.dispatchUpdates();
     }
 
     if (View.currentRafToken === 0 || View.currentRafToken === undefined) {
