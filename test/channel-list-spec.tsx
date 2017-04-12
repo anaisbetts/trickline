@@ -1,9 +1,15 @@
+import * as React from 'react';
+
 import { expect } from './support';
 import { MockStore } from './lib/mock-store';
 import { Store } from '../src/lib/store';
-import { ChannelBase } from '../src/lib/models/api-shapes';
-import { ChannelListViewModel } from '../src/channel-list';
+import { ChannelBase, User } from '../src/lib/models/api-shapes';
+import { ChannelListViewModel, ChannelListView } from '../src/channel-list';
 import { getResultAfterChange } from '../src/lib/when';
+import MuiThemeProvider from 'material-ui/styles/MuiThemeProvider';
+
+import { shallow, render } from 'enzyme';
+import { ChannelListItem } from '../src/channel-list-item';
 
 export const channels: { [key: string]: ChannelBase } = {
   C1971: {
@@ -39,13 +45,26 @@ export const channels: { [key: string]: ChannelBase } = {
   }
 } as any;
 
+export const users: { [key: string]: User } = {
+  stanleyKubrick: {
+    id: 'stanleyKubrick',
+    name: 'StanleyKubrick',
+    real_name: 'Stanley Kubrick',
+    deleted: false,
+    profile: {
+      first_name: 'Stanley',
+      last_name: 'Kubrick',
+    }
+  }
+};
+
 export const joinedChannels: Array<string> = ['C1971', 'C1999', 'C1968', 'D1987', 'D1980'];
 
 describe('the ChannelListViewModel', () => {
   let store: Store, fixture: ChannelListViewModel;
 
   beforeEach(() => {
-    store = new MockStore({ channels, joinedChannels });
+    store = new MockStore({ channels, joinedChannels, users });
     fixture = new ChannelListViewModel(store);
   });
 
@@ -68,3 +87,29 @@ describe('the ChannelListViewModel', () => {
     expect(orderedChannels.length).to.equal(1);
   });
 });
+
+describe.only('the ChannelListView', () => {
+  let store: Store, viewModel: ChannelListViewModel;
+
+  beforeEach(() => {
+    store = new MockStore({ channels, joinedChannels, users });
+    viewModel = new ChannelListViewModel(store);
+  });
+
+  it('should render channel items for each channel', async function() {
+    await getResultAfterChange(viewModel, x => x.orderedChannels);
+
+    const result = render(<div style={{width: 1000, height: 1000}}>
+      <MuiThemeProvider>
+        <ChannelListView viewModel={viewModel} noAutoSize={true} />
+      </MuiThemeProvider>
+    </div>);
+
+    console.log(result.html());
+
+    let text = result.text();
+    viewModel.orderedChannels.forEach(x => {
+      expect(text).to.contain(x.value.name);
+    })
+  });
+})

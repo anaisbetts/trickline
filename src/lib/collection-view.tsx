@@ -36,11 +36,23 @@ export class ViewModelListHelper<T extends Model, P extends HasViewModel<T>, S> 
     this.viewModelCache = LRU<Model>(opts);
 
     let initialVm = props.viewModel;
-    let sub = lifecycle.didMount.map(() => ({ viewModel: initialVm })).concat(lifecycle.willReceiveProps)
+    let initialStart = false;
+    let sub = lifecycle.willMount.map(() => ({ viewModel: initialVm })).concat(lifecycle.willReceiveProps)
+      .do(() => initialStart = true)
       .switchMap(p => whenArray(p.viewModel, itemsSelector))
       .subscribe(v => {
         d(`Listening to new array via ${itemsSelector}`);
         this.currentItems = v.value;
+
+        // NB: We need to not issue a shouldRender when we're coming from
+        // willMount, because we will inevitably render anyways. However, if
+        // we're being called because the array contents changed, we _do_ want
+        // to re-render.
+        if (initialStart) {
+          initialStart = false;
+          return;
+        }
+
         this.shouldRender.next();
       });
 
