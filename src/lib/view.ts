@@ -129,6 +129,7 @@ export abstract class View<T extends Model, P extends HasViewModel<T>>
       .switchMap(() => this.viewModel ? this.viewModel.changed : Observable.never())
       .do(() => this.changeIndex++)
       .takeUntil(this.lifecycle.willUnmount)
+      .debounceTime(10)
       .subscribe(() => { if (this.viewModel) { this.queueUpdate(customUpdater); } });
 
     this.lifecycle.willUpdate.subscribe(() => this.renderIndex = this.changeIndex);
