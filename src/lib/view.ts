@@ -190,17 +190,12 @@ export abstract class View<T extends Model, P extends HasViewModel<T>>
     View.toUpdate.push(updater || this);
 
     if (!View.isInFocusSub) {
-      View.isInFocusSub = Observable.merge(
-        Observable.fromEvent(window, 'blur').map(() => false),
-        Observable.fromEvent(window, 'focus').map(() => true),
-      ).startWith(true).subscribe(x => {
-        View.isInFocus = x;
-
+      View.isInFocusSub = Observable.fromEvent(window, 'focus').subscribe(() => {
         // NB: If the window loses focus, then comes back, there could
         // be an up-to-750ms delay between the window regaining focus
         // and the idle setTimeout actually running. That's bad, we will
         // instead cancel our lazy timer and fire a quick one
-        if (x && View.currentRafToken) {
+        if (View.currentRafToken) {
           clearTimeout(View.currentRafToken);
           this.queueUpdate();
         }
@@ -208,9 +203,9 @@ export abstract class View<T extends Model, P extends HasViewModel<T>>
     }
 
     if (View.currentRafToken === 0 || View.currentRafToken === undefined) {
-      View.currentRafToken = View.isInFocus ?
+      View.currentRafToken = document.hasFocus() ?
         requestAnimationFrame(View.dispatchUpdates) :
-        window.setTimeout(View.dispatchUpdates, 750);
+        window.setTimeout(View.dispatchUpdates, 20);
     }
   }
 }
