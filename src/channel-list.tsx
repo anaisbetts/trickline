@@ -75,7 +75,6 @@ export class ChannelListView extends SimpleView<ChannelListViewModel> {
     };
 
     this.viewModelCache.shouldRender.subscribe(() => this.queueUpdate(update));
-    this.noAutoSize = props.noAutoSize;
   }
 
   rowRenderer({index, key, style}: {index: number, key: any, style: React.CSSProperties}) {
