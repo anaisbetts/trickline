@@ -7,9 +7,9 @@ import * as isFunction from 'lodash.isfunction';
 import * as React from 'react';
 
 import { Model } from './model';
+import { detectTestRunner } from './utils';
 
 import './standard-operators';
-import { detectTestRunner } from "./utils";
 
 export interface AttachedLifecycle<P, S> {
   lifecycle: Lifecycle<P, S>;
@@ -94,20 +94,19 @@ export interface HasViewModel<T extends Model> {
   viewModel: T;
 }
 
-let isInTestRunner: boolean | undefined;
-
 export abstract class View<T extends Model, P extends HasViewModel<T>>
     extends React.PureComponent<P, null>
     implements AttachedLifecycle<P, null> {
   readonly lifecycle: Lifecycle<P, null>;
+  customUpdateFunc: () => void;
   viewModel: T | null;
 
   constructor(props?: P, context?: any) {
     super(props, context);
     this.lifecycle = new ExplicitLifecycle<P, null>();
 
-    if (isInTestRunner === undefined) {
-      isInTestRunner = detectTestRunner();
+    if (View.isInTestRunner === undefined) {
+      View.isInTestRunner = detectTestRunner();
     }
 
     if (props) this.viewModel = props.viewModel;
@@ -166,6 +165,7 @@ export abstract class View<T extends Model, P extends HasViewModel<T>>
   private static currentRafToken: number;
   private static isInFocus: boolean;
   private static isInFocusSub: Subscription;
+  static isInTestRunner: boolean | undefined;
 
   private static seenViews: Set<any>;
   static dispatchUpdates() {
