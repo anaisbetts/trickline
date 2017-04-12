@@ -100,12 +100,16 @@ export abstract class View<T extends Model, P extends HasViewModel<T>>
     extends React.PureComponent<P, null>
     implements AttachedLifecycle<P, null> {
   readonly lifecycle: Lifecycle<P, null>;
+  protected changeIndex: number;
+  protected renderIndex: number;
   customUpdateFunc: () => void;
   viewModel: T | null;
 
   constructor(props?: P, context?: any) {
     super(props, context);
     this.lifecycle = new ExplicitLifecycle<P, null>();
+    this.changeIndex = 0;
+    this.renderIndex = -1;
 
     if (View.isInTestRunner === undefined) {
       View.isInTestRunner = detectTestRunner();
@@ -118,12 +122,21 @@ export abstract class View<T extends Model, P extends HasViewModel<T>>
       null;
 
     this.lifecycle.didMount.map(() => null).concat(this.lifecycle.willReceiveProps)
-      .do(p => this.viewModel = p ? p.viewModel : this.viewModel)
+      .do(p => {
+        this.viewModel = p ? p.viewModel : this.viewModel;
+        this.renderIndex = -1;
+      })
       .switchMap(() => this.viewModel ? this.viewModel.changed : Observable.never())
+      .do(() => this.changeIndex++)
       .takeUntil(this.lifecycle.willUnmount)
       .subscribe(() => { if (this.viewModel) { this.queueUpdate(customUpdater); } });
 
+    this.lifecycle.willUpdate.subscribe(() => this.renderIndex = this.changeIndex);
     this.lifecycle.willUnmount.subscribe(() => { if (this.viewModel) this.viewModel.unsubscribe(); this.viewModel = null; });
+  }
+
+  hasUnrenderedViewModelChanges() {
+    return (this.renderIndex >= this.changeIndex);
   }
 
   componentWillMount() {
@@ -165,7 +178,6 @@ export abstract class View<T extends Model, P extends HasViewModel<T>>
 
   private static toUpdate: (View<any, any> | Function)[];
   private static currentRafToken: number;
-  private static isInFocus: boolean;
   private static isInFocusSub: Subscription;
   static isInTestRunner: boolean | undefined;
 
@@ -226,4 +238,7 @@ export abstract class View<T extends Model, P extends HasViewModel<T>>
 }
 
 export abstract class SimpleView<T extends Model> extends View<T, { viewModel: T }> {
+  shouldComponentUpdate(_nextProps: { viewModel: T }, _nextState: void): boolean {
+    return this.hasUnrenderedViewModelChanges();
+  }
 }
