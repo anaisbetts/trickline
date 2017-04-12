@@ -60,7 +60,7 @@ export class ChannelListView extends SimpleView<ChannelListViewModel> {
   listRef: List;
   noAutoSize: boolean;
 
-  constructor(props: { viewModel: ChannelListViewModel, noAutoSize: boolean }, context?: any) {
+  constructor(props: { viewModel: ChannelListViewModel }, context?: any) {
     super(props, context);
 
     this.viewModelCache = new ViewModelListHelper(
