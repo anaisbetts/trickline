@@ -6,5 +6,5 @@ export function captureStack(): string {
 
 export function detectTestRunner() {
   let stack = captureStack();
-  return stack.split('\n').find(x => !!x.match(/[\\\/](enzyme|mocha)[\\\/]/i)) !== null;
+  return !!stack.split('\n').find(x => !!x.match(/[\\\/](enzyme|mocha)[\\\/]/i));
 }
