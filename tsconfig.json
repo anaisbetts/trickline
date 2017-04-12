@@ -14,7 +14,7 @@
     "module": "commonjs",
     "moduleResolution": "node",
     "pretty": true,
-    "target": "es6",
+    "target": "ESNext",
     "jsx": "react",
     "outDir": ".tmp/build"
   },
