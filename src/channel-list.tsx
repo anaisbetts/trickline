@@ -57,8 +57,9 @@ export class ChannelListViewModel extends Model implements IChannelList {
 export class ChannelListView extends SimpleView<ChannelListViewModel> {
   viewModelCache: ViewModelListHelper<ChannelListViewModel, HasViewModel<ChannelListViewModel>, null>;
   listRef: List;
+  noAutoSize: boolean;
 
-  constructor(props: { viewModel: ChannelListViewModel }, context?: any) {
+  constructor(props: { viewModel: ChannelListViewModel, noAutoSize: boolean }, context?: any) {
     super(props, context);
 
     this.viewModelCache = new ViewModelListHelper(
@@ -73,6 +74,7 @@ export class ChannelListView extends SimpleView<ChannelListViewModel> {
     };
 
     this.viewModelCache.shouldRender.subscribe(() => this.queueUpdate(update));
+    this.noAutoSize = props.noAutoSize;
   }
 
   rowRenderer({index, key, style}: {index: number, key: any, style: React.CSSProperties}) {
@@ -86,6 +88,18 @@ export class ChannelListView extends SimpleView<ChannelListViewModel> {
 
   render() {
     let refBind = ((l: List) => this.listRef = l).bind(this);
+
+    // NB: noAutoSize is used for the test suite so that autosizer
+    // doesn't immediately determine that our size is zero
+    if (this.noAutoSize) {
+      return <List
+        ref={refBind}
+        width={1000}
+        height={1000}
+        rowHeight={32}
+        rowRenderer={this.rowRenderer.bind(this)}
+        rowCount={this.viewModelCache.getRowCount()} />;
+    }
 
     return <AutoSizer disableWidth={true}>
       {({ width, height }: { width: number, height: number }) => (
