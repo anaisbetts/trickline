@@ -6,6 +6,8 @@ import { Store } from '../src/lib/store';
 import { ChannelBase, User } from '../src/lib/models/api-shapes';
 import { ChannelListViewModel, ChannelListView } from '../src/channel-list';
 import { getResultAfterChange } from '../src/lib/when';
+
+import Star from 'material-ui/svg-icons/toggle/star';
 import MuiThemeProvider from 'material-ui/styles/MuiThemeProvider';
 
 import { mount, render } from 'enzyme';
@@ -130,5 +132,22 @@ describe('the ChannelListView', () => {
 
     expect(viewModel.orderedChannels.length).to.equal(0);
     expect(result.find(ChannelListItem).length).to.equal(0);
+  });
+
+  it('should re-render channels when a channel gets starred', async function() {
+    await getResultAfterChange(viewModel, x => x.orderedChannels);
+
+    const result = mount(<div style={{width: 1000, height: 1000}}>
+      <MuiThemeProvider>
+        <ChannelListView viewModel={viewModel} />
+      </MuiThemeProvider>
+    </div>);
+
+    expect(result.find(Star).length).to.equal(1);
+
+    store.channels.listen('C1971').next({is_starred: true});
+    await getResultAfterChange(viewModel, x => x.orderedChannels);
+
+    expect(result.find(Star).length).to.equal(2);
   });
 });
