@@ -11,6 +11,8 @@ import { detectTestRunner } from './utils';
 
 import './standard-operators';
 
+const d = require('debug')('trickline-test:view');
+
 export interface AttachedLifecycle<P, S> {
   lifecycle: Lifecycle<P, S>;
 }
@@ -210,7 +212,8 @@ export abstract class View<T extends Model, P extends HasViewModel<T>>
       });
     }
 
-    if (isInTestRunner) {
+    if (View.isInTestRunner) {
+      d('Immediately dispatching updates!');
       View.dispatchUpdates();
     }
 
