@@ -7,7 +7,7 @@ import * as isFunction from 'lodash.isfunction';
 import * as React from 'react';
 
 import { Model } from './model';
-import { detectTestRunner } from './utils';
+import { detectTestRunner, queueDeferredAction } from './utils';
 
 import './standard-operators';
 
@@ -211,29 +211,7 @@ export abstract class View<T extends Model, P extends HasViewModel<T>>
     View.toUpdate = View.toUpdate || [];
     View.toUpdate.push(updater || this);
 
-    if (!View.isInFocusSub) {
-      View.isInFocusSub = Observable.fromEvent(window, 'focus').subscribe(() => {
-        // NB: If the window loses focus, then comes back, there could
-        // be an up-to-750ms delay between the window regaining focus
-        // and the idle setTimeout actually running. That's bad, we will
-        // instead cancel our lazy timer and fire a quick one
-        if (View.currentRafToken) {
-          clearTimeout(View.currentRafToken);
-          this.queueUpdate();
-        }
-      });
-    }
-
-    if (View.isInTestRunner) {
-      d('Immediately dispatching updates!');
-      View.dispatchUpdates();
-    }
-
-    if (View.currentRafToken === 0 || View.currentRafToken === undefined) {
-      View.currentRafToken = document.hasFocus() ?
-        requestAnimationFrame(View.dispatchUpdates) :
-        window.setTimeout(View.dispatchUpdates, 20);
-    }
+    queueDeferredAction(View.dispatchUpdates);
   }
 }
 
