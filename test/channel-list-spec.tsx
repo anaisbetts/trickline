@@ -8,7 +8,7 @@ import { ChannelListViewModel, ChannelListView } from '../src/channel-list';
 import { getResultAfterChange } from '../src/lib/when';
 import MuiThemeProvider from 'material-ui/styles/MuiThemeProvider';
 
-import { shallow, render } from 'enzyme';
+import { mount, render } from 'enzyme';
 import { ChannelListItem } from '../src/channel-list-item';
 
 export const channels: { [key: string]: ChannelBase } = {
@@ -88,7 +88,7 @@ describe('the ChannelListViewModel', () => {
   });
 });
 
-describe.only('the ChannelListView', () => {
+describe('the ChannelListView', () => {
   let store: Store, viewModel: ChannelListViewModel;
 
   beforeEach(() => {
@@ -101,15 +101,34 @@ describe.only('the ChannelListView', () => {
 
     const result = render(<div style={{width: 1000, height: 1000}}>
       <MuiThemeProvider>
-        <ChannelListView viewModel={viewModel} noAutoSize={true} />
+        <ChannelListView viewModel={viewModel} />
       </MuiThemeProvider>
     </div>);
-
-    console.log(result.html());
 
     let text = result.text();
     viewModel.orderedChannels.forEach(x => {
       expect(text).to.contain(x.value.name);
-    })
+    });
   });
-})
+
+  it('should re-render channels when we change the array', async function() {
+    await getResultAfterChange(viewModel, x => x.orderedChannels);
+
+    const result = mount(<div style={{width: 1000, height: 1000}}>
+      <MuiThemeProvider>
+        <ChannelListView viewModel={viewModel} />
+      </MuiThemeProvider>
+    </div>);
+
+    expect(result.find(ChannelListItem).length).to.equal(3);
+
+    store.joinedChannels.value.length = 0;
+    Platform.performMicrotaskCheckpoint();
+    await Promise.resolve(true);
+
+    await getResultAfterChange(viewModel, x => x.orderedChannels);
+
+    expect(viewModel.orderedChannels.length).to.equal(0);
+    expect(result.find(ChannelListItem).length).to.equal(0);
+  });
+});
