@@ -7,7 +7,7 @@ import * as isFunction from 'lodash.isfunction';
 import * as React from 'react';
 
 import { Model } from './model';
-import { detectTestRunner } from './utils';
+import { detectTestRunner, queueDeferredAction } from './utils';
 
 import './standard-operators';
 
@@ -100,12 +100,16 @@ export abstract class View<T extends Model, P extends HasViewModel<T>>
     extends React.PureComponent<P, null>
     implements AttachedLifecycle<P, null> {
   readonly lifecycle: Lifecycle<P, null>;
+  protected changeIndex: number;
+  protected renderIndex: number;
   customUpdateFunc: () => void;
   viewModel: T | null;
 
   constructor(props?: P, context?: any) {
     super(props, context);
     this.lifecycle = new ExplicitLifecycle<P, null>();
+    this.changeIndex = 0;
+    this.renderIndex = -1;
 
     if (View.isInTestRunner === undefined) {
       View.isInTestRunner = detectTestRunner();
@@ -118,12 +122,22 @@ export abstract class View<T extends Model, P extends HasViewModel<T>>
       null;
 
     this.lifecycle.didMount.map(() => null).concat(this.lifecycle.willReceiveProps)
-      .do(p => this.viewModel = p ? p.viewModel : this.viewModel)
+      .do(p => {
+        this.viewModel = p ? p.viewModel : this.viewModel;
+        this.renderIndex = -1;
+      })
       .switchMap(() => this.viewModel ? this.viewModel.changed : Observable.never())
+      .do(() => this.changeIndex++)
       .takeUntil(this.lifecycle.willUnmount)
+      .debounceTime(10)
       .subscribe(() => { if (this.viewModel) { this.queueUpdate(customUpdater); } });
 
+    this.lifecycle.willUpdate.subscribe(() => this.renderIndex = this.changeIndex);
     this.lifecycle.willUnmount.subscribe(() => { if (this.viewModel) this.viewModel.unsubscribe(); this.viewModel = null; });
+  }
+
+  hasUnrenderedViewModelChanges() {
+    return (this.renderIndex >= this.changeIndex);
   }
 
   componentWillMount() {
@@ -165,7 +179,6 @@ export abstract class View<T extends Model, P extends HasViewModel<T>>
 
   private static toUpdate: (View<any, any> | Function)[];
   private static currentRafToken: number;
-  private static isInFocus: boolean;
   private static isInFocusSub: Subscription;
   static isInTestRunner: boolean | undefined;
 
@@ -199,31 +212,12 @@ export abstract class View<T extends Model, P extends HasViewModel<T>>
     View.toUpdate = View.toUpdate || [];
     View.toUpdate.push(updater || this);
 
-    if (!View.isInFocusSub) {
-      View.isInFocusSub = Observable.fromEvent(window, 'focus').subscribe(() => {
-        // NB: If the window loses focus, then comes back, there could
-        // be an up-to-750ms delay between the window regaining focus
-        // and the idle setTimeout actually running. That's bad, we will
-        // instead cancel our lazy timer and fire a quick one
-        if (View.currentRafToken) {
-          clearTimeout(View.currentRafToken);
-          this.queueUpdate();
-        }
-      });
-    }
-
-    if (View.isInTestRunner) {
-      d('Immediately dispatching updates!');
-      View.dispatchUpdates();
-    }
-
-    if (View.currentRafToken === 0 || View.currentRafToken === undefined) {
-      View.currentRafToken = document.hasFocus() ?
-        requestAnimationFrame(View.dispatchUpdates) :
-        window.setTimeout(View.dispatchUpdates, 20);
-    }
+    queueDeferredAction(View.dispatchUpdates);
   }
 }
 
 export abstract class SimpleView<T extends Model> extends View<T, { viewModel: T }> {
+  shouldComponentUpdate(_nextProps: { viewModel: T }, _nextState: void): boolean {
+    return this.hasUnrenderedViewModelChanges();
+  }
 }

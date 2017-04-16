@@ -59,7 +59,7 @@
         "noUnusedParameters": true,
         "module": "commonjs",
         "sourceMap": false,
-        "target": "es5",
+        "target": "ESNext",
         "jsx": "react",
         "types": [
           "node"
@@ -89,7 +89,7 @@
         "noUnusedParameters": true,
         "sourceMap": false,
         "module": "commonjs",
-        "target": "es5",
+        "target": "ESNext",
         "jsx": "react",
         "types": [
           "node"

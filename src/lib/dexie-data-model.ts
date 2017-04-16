@@ -3,7 +3,7 @@ import { AsyncSubject } from 'rxjs/AsyncSubject';
 import Dexie from 'dexie';
 import { asyncMap } from './promise-extras';
 import { User, ChannelBase, Message } from './models/api-shapes';
-import { Pair } from './utils';
+import { Pair, queueDeferredAction } from './utils';
 import { Api } from './models/slack-api';
 
 import './standard-operators';
@@ -88,7 +88,7 @@ function deferredPut<T, Key>(this: Dexie.Table<T, Key>, item: T & Api, key: Key)
 function deferredGet<T, Key>(this: Dexie.Table<T, Key>, key: Key, database: Dexie): Promise<T> {
   let newItem = { key, completion: new AsyncSubject<T>() };
 
-  let createIdle = () => window.requestAnimationFrame(async () => {
+  let createIdle = () => queueDeferredAction(async () => {
     let itemsToGet = this.deferredGets;
     this.deferredGets = [];
 
@@ -121,7 +121,7 @@ function deferredGet<T, Key>(this: Dexie.Table<T, Key>, key: Key, database: Dexi
     }
 
     if (this.deferredGets.length > 0) {
-      this.idleGetHandle = createIdle();
+      queueDeferredAction(createIdle);
     }
   });
 
