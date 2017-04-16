@@ -1,8 +1,8 @@
 import { Observable } from 'rxjs/Observable';
 import { ISubscription, Subscription } from 'rxjs/Subscription';
 import { Subject } from 'rxjs/Subject';
-import * as isEqual from 'lodash.isequal';
 
+import * as isEqual from 'lodash.isequal';
 import * as debug from 'debug';
 
 import './standard-operators';
@@ -13,13 +13,13 @@ export interface ChangeNotification {
   sender: any;
   property: string;
   value?: any;
-};
+}
 
 export interface TypedChangeNotification<TSender, TVal> extends ChangeNotification {
   sender: TSender;
   property: string;
   value?: TVal;
-};
+}
 
 function getDescriptorsForProperty(name: string, descriptor: PropertyDescriptor) {
   let backingStoreName = `__${name}__`;
@@ -130,7 +130,7 @@ declare module 'rxjs/Observable' {
   }
 }
 
-export interface WhenSelector<TRet> { (...vals: Array<any>) : TRet; };
+export interface WhenSelector<TRet> { (...vals: Array<any>) : TRet; }
 
 export class Model {
   changing: Subject<ChangeNotification>;

@@ -63,7 +63,7 @@ export function createApi(token?: string): Api {
     return Observable.ajax(rq)
       .flatMap(x => {
         let resp = x.response as ApiCall;
-        if (!resp.ok) { return Observable.throw(new Error(resp.error)); };
+        if (!resp.ok) { return Observable.throw(new Error(resp.error)); }
         return Observable.of(resp);
       });
   });

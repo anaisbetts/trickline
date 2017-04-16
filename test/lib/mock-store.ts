@@ -29,17 +29,17 @@ export class MockStore implements Store {
       return seedData.channels ?
         Promise.resolve(seedData.channels[id]) :
         Promise.reject(`No channel for ${id}`);
-    });
+    }, 'merge');
 
     this.users = new InMemorySparseMap((id: string) => {
       return seedData.users ?
         Promise.resolve(seedData.users[id]) :
         Promise.reject(`No user for ${id}`);
-    });
+    }, 'merge');
 
     this.joinedChannels = new ArrayUpdatable<string>(() => {
       return seedData.joinedChannels ?
-        Promise.resolve(seedData.joinedChannels) :
+        Promise.resolve(Array.from(seedData.joinedChannels)) :
         Promise.reject(`Missing joined channels`);
     });
 

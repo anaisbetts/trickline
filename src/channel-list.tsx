@@ -8,14 +8,15 @@ import { channelSort, isChannel, isDM } from './lib/models/slack-api';
 import { ViewModelListHelper } from './lib/collection-view';
 import { fromObservable, notify, Model } from './lib/model';
 import { Store } from './lib/store';
-import { when, whenArray } from './lib/when';
+import { whenArray } from './lib/when';
 import { Updatable } from './lib/updatable';
-import { SimpleView, HasViewModel } from './lib/view';
+import { SimpleView, HasViewModel, View } from './lib/view';
 
 export interface IChannelList {
   selectedChannel?: ChannelBase;
   setSelectedChannel: (channel: ChannelBase) => void;
 }
+
 
 @notify('selectedChannel')
 export class ChannelListViewModel extends Model implements IChannelList {
@@ -57,6 +58,7 @@ export class ChannelListViewModel extends Model implements IChannelList {
 export class ChannelListView extends SimpleView<ChannelListViewModel> {
   viewModelCache: ViewModelListHelper<ChannelListViewModel, HasViewModel<ChannelListViewModel>, null>;
   listRef: List;
+  noAutoSize: boolean;
 
   constructor(props: { viewModel: ChannelListViewModel }, context?: any) {
     super(props, context);
@@ -86,6 +88,18 @@ export class ChannelListView extends SimpleView<ChannelListViewModel> {
 
   render() {
     let refBind = ((l: List) => this.listRef = l).bind(this);
+
+    // NB: We do this for the test suite so that autosizer
+    // doesn't immediately determine that our size is zero
+    if (View.isInTestRunner) {
+      return <List
+        ref={refBind}
+        width={1000}
+        height={1000}
+        rowHeight={32}
+        rowRenderer={this.rowRenderer.bind(this)}
+        rowCount={this.viewModelCache.getRowCount()} />;
+    }
 
     return <AutoSizer disableWidth={true}>
       {({ width, height }: { width: number, height: number }) => (

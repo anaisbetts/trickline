@@ -62,13 +62,13 @@ export class SortedArray<T> extends Array<T> {
 
     this.splice(pos + 1, 0, val);
     return pos + 1;
-  };
+  }
 
   insert(..._vals: T[]) {
     return Array.prototype.map.call(arguments, function(this: SortedArray<T>, val: any) {
       return this.insertOne(val);
     }, this);
-  };
+  }
 
   remove(pos: number) {
     this.splice(pos, 1);
@@ -92,7 +92,7 @@ export class SortedArray<T> extends Array<T> {
     }
 
     return (spos == 0 && this._compare(this[0], val) > 0) ? -1 : spos;
-  };
+  }
 
   key(val: T, bsResult: number | null = null) {
     if (bsResult == null) bsResult = this.bsearch(val);
@@ -102,7 +102,7 @@ export class SortedArray<T> extends Array<T> {
       return (pos + 1 < this.length && this._compare(this[pos + 1], val) == 0) ? pos + 1 : null;
     while (pos >= 1 && this._compare(this[pos - 1], val) == 0) pos--;
     return pos;
-  };
+  }
 
   getall(val: T, bsResult: number | null = null) {
     let ret = [];
@@ -120,7 +120,7 @@ export class SortedArray<T> extends Array<T> {
       pos++;
     }
     return ret.length ? ret : null;
-  };
+  }
 
   unique(createNew: boolean) {
     if (createNew) return this.filter(function(this: SortedArray<T>, v, k) {
@@ -137,11 +137,11 @@ export class SortedArray<T> extends Array<T> {
     }, this);
 
     return this;
-  };
+  }
 
   toArray() {
     return this.slice();
-  };
+  }
 
   static compares = {
     'number': function(a: number, b: number) {

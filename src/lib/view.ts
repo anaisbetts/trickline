@@ -7,8 +7,11 @@ import * as isFunction from 'lodash.isfunction';
 import * as React from 'react';
 
 import { Model } from './model';
+import { detectTestRunner } from './utils';
 
 import './standard-operators';
+
+const d = require('debug')('trickline-test:view');
 
 export interface AttachedLifecycle<P, S> {
   lifecycle: Lifecycle<P, S>;
@@ -97,11 +100,17 @@ export abstract class View<T extends Model, P extends HasViewModel<T>>
     extends React.PureComponent<P, null>
     implements AttachedLifecycle<P, null> {
   readonly lifecycle: Lifecycle<P, null>;
+  customUpdateFunc: () => void;
   viewModel: T | null;
 
   constructor(props?: P, context?: any) {
     super(props, context);
     this.lifecycle = new ExplicitLifecycle<P, null>();
+
+    if (View.isInTestRunner === undefined) {
+      View.isInTestRunner = detectTestRunner();
+    }
+
     if (props) this.viewModel = props.viewModel;
 
     const customUpdater = this.customUpdateFunc ?
@@ -158,6 +167,7 @@ export abstract class View<T extends Model, P extends HasViewModel<T>>
   private static currentRafToken: number;
   private static isInFocus: boolean;
   private static isInFocusSub: Subscription;
+  static isInTestRunner: boolean | undefined;
 
   private static seenViews: Set<any>;
   static dispatchUpdates() {
@@ -190,27 +200,27 @@ export abstract class View<T extends Model, P extends HasViewModel<T>>
     View.toUpdate.push(updater || this);
 
     if (!View.isInFocusSub) {
-      View.isInFocusSub = Observable.merge(
-        Observable.fromEvent(window, 'blur').map(() => false),
-        Observable.fromEvent(window, 'focus').map(() => true),
-      ).startWith(true).subscribe(x => {
-        View.isInFocus = x;
-
+      View.isInFocusSub = Observable.fromEvent(window, 'focus').subscribe(() => {
         // NB: If the window loses focus, then comes back, there could
         // be an up-to-750ms delay between the window regaining focus
         // and the idle setTimeout actually running. That's bad, we will
         // instead cancel our lazy timer and fire a quick one
-        if (x && View.currentRafToken) {
+        if (View.currentRafToken) {
           clearTimeout(View.currentRafToken);
           this.queueUpdate();
         }
       });
     }
 
+    if (View.isInTestRunner) {
+      d('Immediately dispatching updates!');
+      View.dispatchUpdates();
+    }
+
     if (View.currentRafToken === 0 || View.currentRafToken === undefined) {
-      View.currentRafToken = View.isInFocus ?
+      View.currentRafToken = document.hasFocus() ?
         requestAnimationFrame(View.dispatchUpdates) :
-        window.setTimeout(View.dispatchUpdates, 750);
+        window.setTimeout(View.dispatchUpdates, 20);
     }
   }
 }
