@@ -16,6 +16,7 @@ import './standard-operators';
 
 const identifier = /^[$A-Z_][0-9A-Z_$]*$/i;
 
+const typedIsFunction: (val: any) => val is Function = isFunction;
 export function whenPropertyInternal(target: any, valueOnly: boolean, ...propsAndSelector: Array<string|Function|string[]>): Observable<any> {
   if (propsAndSelector.length < 1) {
     throw new Error('Must specify at least one property!');
@@ -71,11 +72,10 @@ export function observableForPropertyChain(target: any, chain: (Array<string> | 
 
   if (Array.isArray(chain)) {
     props = chain;
-  } else if (isFunction(chain)) {
-    props = functionToPropertyChain(chain as Function);
+  } else if (typedIsFunction(chain)) {
+    props = functionToPropertyChain(chain);
   } else {
-    props = (chain as string).split('.');
-
+    props = chain.split('.');
     if (props.find((x) => x.match(identifier) === null)) {
       throw new Error("property name must be of the form 'foo.bar.baz'");
     }
